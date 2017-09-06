@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- NOTE: joint must match the name of the module -->
+  <xacro:macro name="mecanum-right" params="name">
+    <link name="${name}|INPUT_INTERFACE">
+      <visual>
+        <origin xyz="0 0 .03" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/mecanum.stl" scale="0.0015 0.0015 0.0015"/>
+        </geometry>
+        <xacro:black_material/>
+      </visual>
+    </link>
+  </xacro:macro>
+  <!-- NOTE: joint must match the name of the module -->
+  <xacro:macro name="mecanum-left" params="name">
+    <link name="${name}|INPUT_INTERFACE">
+      <visual>
+        <origin xyz="0 0 .03" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/mecanum.stl" scale="0.0015 -0.0015 0.0015"/>
+        </geometry>
+        <xacro:black_material/>
+      </visual>
+    </link>
+  </xacro:macro>
+</robot>
+

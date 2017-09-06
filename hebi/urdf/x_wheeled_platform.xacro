@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hebi_arm">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:property name="PI" value="3.1415926535897931" />
+
+  <!-- load macros for modules -->
+  <xacro:include filename="./x_series_common.xacro"/>
+  <xacro:include filename="./x5.xacro"/>
+  <xacro:include filename="./x_shoulder_bracket.xacro"/>
+  <xacro:include filename="./x_wrist_bracket.xacro"/>
+  <xacro:include filename="./x_tube_link.xacro"/>
+  <xacro:include filename="./mecanum.xacro"/>
+<!--
+  <xacro:include filename="./x_wrist_bracket.xacro"/>
+-->
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <!-- "box" of the base is 5 cm tall, 35 cm wide, and 45 cm long -->
+  <link name="base">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size=".025 .35 .05" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+    <visual>
+      <origin xyz=".2125 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size=".025 .35 .05" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+    <visual>
+      <origin xyz="-.2125 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size=".025 .35 .05" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+    <visual>
+      <origin xyz="0 .1625 0" rpy="0 0 0" />
+      <geometry>
+        <box size=".45 .025 .05" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+    <visual>
+      <origin xyz="0 -.1625 0" rpy="0 0 0" />
+      <geometry>
+        <box size=".45 .025 .05" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+  </link>
+
+  <!-- wheels -->
+  <joint name="base-motorFrontLeft" type="fixed">
+    <parent link="base"/>
+    <child link="motorFrontLeft|wheeledBase|INPUT_INTERFACE"/>
+    <origin xyz=".18 .175 0" rpy="-1.57 0 0"/>
+  </joint>
+  <xacro:mecanum-left name="wheelFrontLeft"/>
+  <xacro:x5 joint="motorFrontLeft|wheeledBase" child="wheelFrontLeft"/>
+
+  <joint name="base-motorFrontRight" type="fixed">
+    <parent link="base"/>
+    <child link="motorFrontRight|wheeledBase|INPUT_INTERFACE"/>
+    <origin xyz=".18 -.175 0" rpy="1.57 0 0"/>
+  </joint>
+  <xacro:mecanum-right name="wheelFrontRight"/>
+  <xacro:x5 joint="motorFrontRight|wheeledBase" child="wheelFrontRight"/>
+
+  <joint name="base-motorBackLeft" type="fixed">
+    <parent link="base"/>
+    <child link="motorBackLeft|wheeledBase|INPUT_INTERFACE"/>
+    <origin xyz="-.18 .175 0" rpy="-1.57 0 0"/>
+  </joint>
+  <xacro:mecanum-left name="wheelBackLeft"/>
+  <xacro:x5 joint="motorBackLeft|wheeledBase" child="wheelBackLeft"/>
+
+  <joint name="base-motorBackRight" type="fixed">
+    <parent link="base"/>
+    <child link="motorBackRight|wheeledBase|INPUT_INTERFACE"/>
+    <origin xyz="-.18 -.175 0" rpy="1.57 0 0"/>
+  </joint>
+  <xacro:mecanum-right name="wheelBackRight"/>
+  <xacro:x5 joint="motorBackRight|wheeledBase" child="wheelBackRight"/>
+
+  <!-- joints -->
+
+  <joint name="base-arm" type="fixed">
+    <parent link="base"/>
+    <child link="base|mobileArm|INPUT_INTERFACE"/>
+    <origin xyz="0 0 .025" rpy="0 0 0"/>
+  </joint>
+  <xacro:x5 joint="base|mobileArm" child="shoulder-bracket"/>
+  <xacro:x_shoulder_bracket name="shoulder-bracket" child="shoulder|mobileArm"/>
+  <xacro:x5 joint="shoulder|mobileArm" child="shoulder-elbow"/>
+  <xacro:x_tube_link name="shoulder-elbow" child="elbow|mobileArm" length="0.3302" twist="0"/>
+  <xacro:x5 joint="elbow|mobileArm" child="elbow-wrist1"/>
+  <xacro:x_tube_link name="elbow-wrist1" child="wrist1|mobileArm" length="0.2667" twist="0"/>
+  <xacro:x5 joint="wrist1|mobileArm" child="wrist1-wrist2"/>
+  <xacro:x_wrist_bracket name="wrist1-wrist2" child="wrist2|mobileArm"/>
+  <xacro:x5 joint="wrist2|mobileArm" child="end_effector"/>
+
+  <!-- test child... -->
+  <link name="end_effector|INPUT_INTERFACE">
+  </link>
+
+</robot>
