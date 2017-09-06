@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- NOTE: joint must match the name of the module -->
+  <xacro:macro name="x5" params="joint child">
+    <link name="${joint}|INPUT_INTERFACE">
+      <visual>
+        <origin xyz="0 0 0.0155" rpy="3.14157 0 0" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/x5.stl"/>
+        </geometry>
+        <xacro:red_material/>
+      </visual>
+    </link>
+    <joint name="${joint}" type="revolute">
+      <parent link="${joint}|INPUT_INTERFACE"/>
+      <child link="${child}|INPUT_INTERFACE"/>
+      <origin xyz="0 0 0.031" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="1.5" velocity="2.208932"/>
+    </joint>
+  </xacro:macro>
+</robot>
+

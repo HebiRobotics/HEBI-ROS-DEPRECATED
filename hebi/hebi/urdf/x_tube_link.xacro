@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- NOTE: joint must match the name of the module -->
+  <xacro:macro name="x_tube_link" params="name child length twist">
+    <link name="${name}|INPUT_INTERFACE">
+      <visual>
+        <origin xyz="-.04 .03 .0075" rpy="0 0 3.14157" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/x_output_bracket.stl"/>
+        </geometry>
+        <xacro:black_material/>
+      </visual>
+      <visual>
+        <origin xyz="${-length/2-.0254} 0 .016075" rpy="0 1.57075 0" />
+        <geometry>
+          <cylinder length="${length}" radius=".015875" />
+        </geometry>
+        <xacro:silver_material/>
+      </visual>
+      <visual>
+        <origin xyz="${-length-.0254} -.075 -.0125" rpy="1.57075 0 -1.57075" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/x_mounting_bracket.stl"/>
+        </geometry>
+        <xacro:black_material/>
+      </visual>
+    </link>
+    <joint name="${name}|OUTPUT_JOINT" type="fixed">
+      <parent link="${name}|INPUT_INTERFACE"/>
+      <child link="${child}|INPUT_INTERFACE"/>
+      <origin xyz="${-length-.05} 0 0" rpy="3.14157 0 0"/>
+    </joint>
+  </xacro:macro>
+</robot>
+
