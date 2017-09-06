@@ -97,7 +97,7 @@ class Roscore_Node {
     Lookup lookup;
     std::shared_ptr<Lookup::EntryList> entry_list;
     std::map<std::string, std::shared_ptr<Group>> groups;
-    std::string current_group;
+    std::map<std::string, GroupInfo*> group_infos;
 
     Roscore_Node (int argc, char **argv) {
       std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -157,13 +157,24 @@ class Roscore_Node {
       std::string group_name) {
       std::shared_ptr<Group> group = groups[group_name];
       GroupCommand group_command(group->size());
-      group->setCommandLifetimeMs(100);
 
+      Eigen::VectorXd position(group->size());
+      Eigen::VectorXd velocity(group->size());
       Eigen::VectorXd effort(group->size());
       for (int i = 0; i < group->size(); i++) {
-        effort(i) = data->effort[i];
+        if (i < data->position.size()) {
+          position(i) = data->position[i];
+        }
+        if (i < data->velocity.size()) {
+          velocity(i) = data->velocity[i];
+        }
+        if (i < data->effort.size()) {
+          effort(i) = data->effort[i];
+        }
       }
 
+      group_command.setPosition(position);
+      group_command.setVelocity(velocity);
       group_command.setEffort(effort);
       group->sendCommand(group_command);
     }
@@ -180,6 +191,7 @@ class Roscore_Node {
     }
 
     void register_group(std::string group_name) {
+
       publishers["/hebicore/"+group_name+"/feedback"] =
         n.advertise<sensor_msgs::JointState>("/hebicore/"+group_name+"/feedback", 100);
       subscribers["/hebicore/"+group_name+"/command"] = 
@@ -188,27 +200,32 @@ class Roscore_Node {
       services["/hebicore/"+group_name+"/size"] =
         n.advertiseService<size::Request, size::Response>("/hebicore/"+group_name+"/size",
         boost::bind(&Roscore_Node::srv_size, this, _1, _2, group_name));
+
+      std::shared_ptr<Group> group = groups[group_name];
+      group_infos[group_name] = new GroupInfo(group->size());
+      group->requestInfo(group_infos[group_name]);
+
+      group->addFeedbackHandler([this, group_name, group](const GroupFeedback& group_fbk) {
+        this->publish_group(group_name, group, group_fbk);
+      });
+
+      group->setFeedbackFrequencyHz(100);
+      group->setCommandLifetimeMs(100);
     }
 
-    void publish_group(std::string group_name, std::shared_ptr<Group> group) {
-      GroupInfo group_info(group->size());
-      GroupFeedback group_fbk(group->size());
-
-      group->requestInfo(&group_info);
-      group->sendFeedbackRequest();
-      group->getNextFeedback(&group_fbk);
+    void publish_group(std::string group_name, std::shared_ptr<Group> group,
+      const GroupFeedback& group_fbk) {
 
       sensor_msgs::JointState feedback_msg;
-      std::vector<std::string> names { "base", "shoulder", "elbow"};
+
       for (int i = 0; i < group->size(); i++) {
-        std::string name = group_info[i].settings().name().get();
-        std::string family = group_info[i].settings().family().get();
+        std::string name = (*group_infos[group_name])[i].settings().name().get();
+        std::string family = (*group_infos[group_name])[i].settings().family().get();
         float position = group_fbk[i].actuator().position().get();
         float velocity = group_fbk[i].actuator().velocity().get();
         float effort = group_fbk[i].actuator().effort().get();
 
         feedback_msg.name.push_back("/"+family+"/"+name);
-        feedback_msg.name.push_back("/HEBI/"+names[i]);
         feedback_msg.position.push_back(position);
         feedback_msg.velocity.push_back(velocity);
         feedback_msg.effort.push_back(effort);
@@ -221,11 +238,6 @@ class Roscore_Node {
       ros::Rate loop_rate(200);
 
       while(ros::ok()) {
-
-        for (auto& group_pair : groups) {
-          publish_group(group_pair.first, group_pair.second);
-        }
-
         ros::spinOnce();
         loop_rate.sleep();
       }
@@ -237,7 +249,7 @@ class Roscore_Node {
 int main(int argc, char **argv) {
 
   ros::init(argc, argv, "hebicore_node");
-  setupHandler();
+  //setupHandler();
   Roscore_Node node(argc, argv);
 
   return 0;
