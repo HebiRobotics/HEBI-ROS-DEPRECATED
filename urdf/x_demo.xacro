@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="arm_demo">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:property name="PI" value="3.1415926535897931" />
+
+  <!-- load macros for modules -->
+  <xacro:include filename="./x_series_common.xacro"/>
+  <xacro:include filename="./x5.xacro"/>
+  <xacro:include filename="./x_shoulder_bracket.xacro"/>
+  <xacro:include filename="./x_wrist_bracket.xacro"/>
+  <xacro:include filename="./x_tube_link.xacro"/>
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <!-- just for visualization: base post -->
+  <link name="base_link">
+    <visual>
+      <origin xyz=".125 0 -.0254" rpy="0 0 0" />
+      <geometry>
+        <box size="0.25 0.5 0.0508" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+  </link>
+  <joint name="base-base" type="fixed">
+    <parent link="base_link"/>
+    <child link="base|HEBI|INPUT_INTERFACE"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- joints -->
+  <xacro:x5 joint="base|HEBI" child="shoulder-bracket"/>
+  <xacro:x_wrist_bracket name="shoulder-bracket" child="shoulder|HEBI"/>
+  <xacro:x5 joint="shoulder|HEBI" child="shoulder-elbow"/>
+  <xacro:x_tube_link name="shoulder-elbow" child="elbow|HEBI" length="0.33" twist="0"/>
+  <xacro:x5 joint="elbow|HEBI" child="elbow-end"/>
+  <xacro:x_tube_link name="elbow-end" child="end_effector" length="0.325" twist="0"/>
+
+  <!-- test child...TODO CHANGE -->
+  <link name="end_effector|INPUT_INTERFACE">
+    <!--<visual>
+      <origin xyz="0 0 0.023" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0508 0.0508 0.0508" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>-->
+  </link>
+
+</robot>
