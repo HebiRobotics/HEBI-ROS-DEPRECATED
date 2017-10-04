@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="snake_monster">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:property name="PI" value="3.1415926535897931" />
+
+  <!-- load macros for modules -->
+  <xacro:include filename="./module_common.xacro"/>
+  <xacro:include filename="./rotary_module.xacro"/>
+  <xacro:include filename="./extension_module.xacro"/>
+  <xacro:include filename="./elbow_module_snake_monster.xacro"/>
+  <xacro:include filename="./leg.xacro"/> <!-- TODO: technically, this should include the elbow/extend/rotary/etc...are mult. def'ns OK? -->
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <xacro:property name="L1_1" value="SA014|MoJo" />
+  <xacro:property name="L1_2" value="SA013|MoJo" />
+  <xacro:property name="L1_3" value="SA023|MoJo" />
+
+  <xacro:property name="L2_1" value="SA037|MoJo" />
+  <xacro:property name="L2_2" value="SA049|MoJo" />
+  <xacro:property name="L2_3" value="SA030|MoJo" />
+
+  <xacro:property name="L3_1" value="SA036|MoJo" />
+  <xacro:property name="L3_2" value="SA046|MoJo" />
+  <xacro:property name="L3_3" value="SA038|MoJo" />
+
+  <xacro:property name="L4_1" value="SA022|MoJo" />
+  <xacro:property name="L4_2" value="SA050|MoJo" />
+  <xacro:property name="L4_3" value="SA031|MoJo" />
+
+  <xacro:property name="L5_1" value="SA002|MoJo" />
+  <xacro:property name="L5_2" value="SA003|MoJo" />
+  <xacro:property name="L5_3" value="SA048|MoJo" />
+
+  <xacro:property name="L6_1" value="SA043|MoJo" />
+  <xacro:property name="L6_2" value="SA005|MoJo" />
+  <xacro:property name="L6_3" value="SA001|MoJo" />
+
+  <xacro:property name="width" value=".185" />
+  <xacro:property name="length" value=".3" />
+  <xacro:property name="height" value=".0762" />
+  <xacro:property name="leg_y_offset" value=".125" />
+
+  <!-- base body -->
+  <link name="base">
+    <visual>
+      <origin xyz="0 0 ${height/2}" rpy="0 0 0" />
+      <geometry>
+        <box size="${width} ${length} ${height}" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+  </link>
+
+  <!-- leg outputs on the base -->
+  <joint name="leg1|OUTPUT_INTERFACE" type="fixed">
+    <parent link="base"/>
+    <child link="${L1_1}|INPUT_INTERFACE"/>
+    <origin xyz="${width/2} ${leg_y_offset} ${height/2}" rpy="-${PI/2} 0 -${PI/2}"/>
+  </joint>
+  <joint name="leg2|OUTPUT_INTERFACE" type="fixed">
+    <parent link="base"/>
+    <child link="${L2_1}|INPUT_INTERFACE"/>
+    <origin xyz="${width/2} 0 ${height/2}" rpy="-${PI/2} 0 -${PI/2}"/>
+  </joint>
+  <joint name="leg3|OUTPUT_INTERFACE" type="fixed">
+    <parent link="base"/>
+    <child link="${L3_1}|INPUT_INTERFACE"/>
+    <origin xyz="${width/2} -${leg_y_offset} ${height/2}" rpy="-${PI/2} 0 -${PI/2}"/>
+  </joint>
+  <joint name="leg6|OUTPUT_INTERFACE" type="fixed">
+    <parent link="base"/>
+    <child link="${L6_1}|INPUT_INTERFACE"/>
+    <origin xyz="${-width/2} ${leg_y_offset} ${height/2}" rpy="-${PI/2} 0 ${PI/2}"/>
+  </joint>
+  <joint name="leg5|OUTPUT_INTERFACE" type="fixed">
+    <parent link="base"/>
+    <child link="${L5_1}|INPUT_INTERFACE"/>
+    <origin xyz="${-width/2} 0 ${height/2}" rpy="-${PI/2} 0 ${PI/2}"/>
+  </joint>
+  <joint name="leg4|OUTPUT_INTERFACE" type="fixed">
+    <parent link="base"/>
+    <child link="${L4_1}|INPUT_INTERFACE"/>
+    <origin xyz="${-width/2} -${leg_y_offset} ${height/2}" rpy="-${PI/2} 0 ${PI/2}"/>
+  </joint>
+
+  <!-- legs -->
+  <xacro:leg leg="leg1" mod1="${L1_1}" mod2="${L1_2}" mod3="${L1_3}"/>
+  <xacro:leg leg="leg2" mod1="${L2_1}" mod2="${L2_2}" mod3="${L2_3}"/>
+  <xacro:leg leg="leg3" mod1="${L3_1}" mod2="${L3_2}" mod3="${L3_3}"/>
+  <xacro:leg leg="leg4" mod1="${L4_1}" mod2="${L4_2}" mod3="${L4_3}"/>
+  <xacro:leg leg="leg5" mod1="${L5_1}" mod2="${L5_2}" mod3="${L5_3}"/>
+  <xacro:leg leg="leg6" mod1="${L6_1}" mod2="${L6_2}" mod3="${L6_3}"/>
+
+</robot>

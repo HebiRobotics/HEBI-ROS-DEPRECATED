@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="rotary_module_in" params="name">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0.035" rpy="1.57075 0 0" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/rotary_input.stl"/>
+        </geometry>
+        <xacro:red_material/>
+      </visual>
+    </link>
+  </xacro:macro>
+  <xacro:macro name="rotary_module_joint" params="parent name child">
+    <joint name="${name}" type="revolute">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="0 0 0.0366" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="1.5" lower="-1.57" upper="1.57" velocity="2.208932"/>
+    </joint>
+  </xacro:macro>
+  <xacro:macro name="rotary_module_out" params="name">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="1.57075 0 0" />
+        <geometry>
+          <mesh filename="package://hebi/meshes/rotary_output.stl"/>
+        </geometry>
+        <xacro:red_material/>
+      </visual>
+    </link>
+  </xacro:macro>
+  <xacro:macro name="rotary_module_out_interface" params="parent name child">
+    <joint name="${name}" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="0 0 0.0273" rpy="0 0 -1.57075"/>
+    </joint>
+  </xacro:macro>
+  <!-- NOTE: joint must match the name of the module -->
+  <xacro:macro name="rotary_module" params="joint child">
+    <!-- first half of joint + collar -->
+    <xacro:rotary_module_in name="${joint}|INPUT_INTERFACE"/>
+    <xacro:collar parent="${joint}|INPUT_INTERFACE"/>
+    <!-- actual rotary joint component: -->
+    <xacro:rotary_module_joint parent="${joint}|INPUT_INTERFACE" name="${joint}" child="${joint}|OUTPUT_BODY"/>
+    <!-- second half of joint -->
+    <xacro:rotary_module_out name="${joint}|OUTPUT_BODY"/>
+    <!-- 90* turn at interface: -->
+    <xacro:rotary_module_out_interface parent="${joint}|OUTPUT_BODY" name="${joint}|OUTPUT_INTERFACE" child="${child}|INPUT_INTERFACE"/>
+  </xacro:macro>
+</robot>

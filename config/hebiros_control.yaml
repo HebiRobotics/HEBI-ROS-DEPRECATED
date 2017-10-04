@@ -1,0 +1,24 @@
+/hebiros/x_demo:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  # Position Controllers ---------------------------------------
+  HEBI/base/controller:
+    type: effort_controllers/JointEffortController
+    joint: HEBI/base
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+    publish_rate: 50
+
+  HEBI/shoulder/controller:
+    type: effort_controllers/JointEffortController
+    joint: HEBI/shoulder
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+    publish_rate: 50
+
+  HEBI/elbow/controller:
+    type: effort_controllers/JointEffortController
+    joint: HEBI/elbow
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+    publish_rate: 50

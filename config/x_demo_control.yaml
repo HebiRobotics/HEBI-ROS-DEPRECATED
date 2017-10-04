@@ -1,0 +1,13 @@
+x_demo:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    joints:
+      - base_HEBI
+      - shoulder_HEBI
+      - elbow_HEBI
+    gains: 
+      base_HEBI: {p: 100.0, i: 0.01, d: 10.0}
+      shoulder_HEBI: {p: 100.0, i: 0.01, d: 10.0}
+      elbow_HEBI: {p: 100.0, i: 0.01, d: 10.0}
+    publish_rate: 50
