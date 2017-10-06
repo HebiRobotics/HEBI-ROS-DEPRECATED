@@ -57,15 +57,8 @@
   <xacro:x5 joint="HEBI/elbow" child="elbow_end"/>
   <xacro:x_tube_link name="elbow_end" child="end_effector" length="0.325" twist="0"/>
 
-  <!-- test child...TODO CHANGE -->
+  <!-- end link -->
   <link name="end_effector/INPUT_INTERFACE">
-    <!--<visual>
-      <origin xyz="0 0 0.023" rpy="0 0 0" />
-      <geometry>
-        <box size="0.0508 0.0508 0.0508" />
-      </geometry>
-      <xacro:silver_material/>
-    </visual>-->
   </link>
 
   <gazebo reference="base">

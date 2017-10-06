@@ -1,3 +1,7 @@
+//Repeat example 3 by contructing a group from a urdf
+//This node can be run on either gazebo/physical modules with
+//the appropriate urdf and launch file/hardware
+
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 #include "hebiros/AddGroupFromUrdfSrv.h"
@@ -16,13 +20,14 @@ void feedback_callback(sensor_msgs::JointState data) {
 int main(int argc, char **argv) {
 
   //Initialize ROS node
-  ros::init(argc, argv, "gazebo_test_node");
+  ros::init(argc, argv, "example_gazebo_node");
   ros::NodeHandle n;
   ros::Rate loop_rate(200);
 
   std::string group_name = "x_demo";
 
   //Create a client which uses the service to create a group
+  //The urdf for x_demo must have already been set in the robot_description parameter
   ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromUrdfSrv>(
     "/hebiros/add_group_from_urdf");
 

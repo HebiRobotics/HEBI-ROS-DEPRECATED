@@ -5,6 +5,8 @@
 //Loop in place allowing callback functions to be run
 Hebiros_Node::Hebiros_Node (int argc, char **argv) {
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
   use_gazebo = false;
 
   for (int i = 2; i < argc; i += 2) {
@@ -16,7 +18,9 @@ Hebiros_Node::Hebiros_Node (int argc, char **argv) {
     }
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  if (!use_gazebo) {
+    n.setParam("/use_sim_time", false);
+  }
 
   services["/hebiros/entry_list"] = n.advertiseService(
     "/hebiros/entry_list", &Hebiros_Node::srv_entry_list, this);
@@ -28,8 +32,10 @@ Hebiros_Node::Hebiros_Node (int argc, char **argv) {
     "/hebiros/add_group_from_urdf", &Hebiros_Node::srv_add_group_from_urdf, this);
       
   n.param<int>("/hebiros/feedback_frequency", feedback_frequency, 100);
+  n.setParam("/hebiros/feedback_frequency", feedback_frequency);
       
   n.param<int>("/hebiros/command_lifetime", command_lifetime, 100);
+  n.setParam("/hebiros/command_lifetime", command_lifetime);
 
   ROS_INFO("Parameters:");
   ROS_INFO("/hebiros/feedback_frequency=%d", feedback_frequency);
@@ -70,6 +76,18 @@ bool Hebiros_Node::srv_add_group_from_names(
   if (!use_gazebo) {
     groups[req.group_name] = lookup.getGroupFromNames(req.families, req.names);
   }
+  else {
+    std::string type;
+    int publish_rate;
+
+    n.param<std::string>("/hebiros/"+req.group_name+"/joint_state_controller/type", type,
+      "joint_state_controller/JointStateController");
+    n.setParam("/hebiros/"+req.group_name+"/joint_state_controller/type", type);
+
+    n.param<int>("/hebiros/"+req.group_name+"/joint_state_controller/publish_rate", 
+      publish_rate, 50);
+    n.setParam("/hebiros/"+req.group_name+"/joint_state_controller/publish_rate", publish_rate);
+  }
 
   int joint_index = 0;
   ROS_INFO("Created group [%s]:", req.group_name.c_str());
@@ -78,6 +96,34 @@ bool Hebiros_Node::srv_add_group_from_names(
       ROS_INFO("/%s/%s/%s", req.group_name.c_str(),
         req.families[i].c_str(), req.names[j].c_str());
         group_joints[req.group_name][req.families[i]+"/"+req.names[j]] = joint_index;
+
+        if (use_gazebo) {
+          std::string controller_namespace = "/hebiros/"+req.group_name+"/"+
+            req.families[i]+"/"+req.names[j]+"/controller";
+
+          std::string type;
+          float p, i, d;
+          int publish_rate;
+
+          n.setParam(controller_namespace+"/joint", req.families[i]+"/"+req.names[j]);
+
+          n.param<std::string>(controller_namespace+"/type", type,
+            "effort_controllers/JointEffortController");
+          n.setParam(controller_namespace+"/type", type);
+
+          n.param<float>(controller_namespace+"/pid/p", p, 100.0);
+          n.setParam(controller_namespace+"/pid/p", p);
+
+          n.param<float>(controller_namespace+"/pid/i", i, 0.01);
+          n.setParam(controller_namespace+"/pid/i", i);
+
+          n.param<float>(controller_namespace+"/pid/d", d, 10.0);
+          n.setParam(controller_namespace+"/pid/d", d);
+
+          n.param<int>(controller_namespace+"/publish_rate", publish_rate, 50);
+          n.setParam(controller_namespace+"/publish_rate", publish_rate);
+        }
+
         joint_index++;
     }
   }
@@ -86,42 +132,53 @@ bool Hebiros_Node::srv_add_group_from_names(
   return true;
 }
 
-bool split(const std::string &orig, std::string &name, std::string &family)
+
+//Split a joint into name and family by '/'
+bool Hebiros_Node::split(const std::string &orig, std::string &name, std::string &family)
 {
   std::stringstream ss(orig);
-  if (!std::getline(ss, family, '/'))
+
+  if (!std::getline(ss, family, '/')) {
     return false;
+  }
+
   std::getline(ss, name);
   return true;
 }
 
-void add_joint_children(std::set<std::string>& names, std::set<std::string>& families, std::set<std::string>& full_names, const urdf::Link* link)
+//Creates a list of names and families from joints in a urdf
+void Hebiros_Node::add_joint_children(std::set<std::string>& names, std::set<std::string>& families, std::set<std::string>& full_names, const urdf::Link* link)
 {
-  for (auto& joint : link->child_joints)
-  {
-    // Actually add this if it is a joint.
-    if (joint->type != urdf::Joint::FIXED)
-    {
+  for (auto& joint : link->child_joints) {
+
+    if (joint->type != urdf::Joint::FIXED) {
       std::string name, family;
-      if (split(joint->name, name, family))
-      {
+
+      if (split(joint->name, name, family)) {
         names.insert(name);
         families.insert(family);
         full_names.insert(joint->name);
       }
     }
   }
-  // Recurse
-  for (auto& link_child : link->child_links)
+
+  for (auto& link_child : link->child_links) {
     add_joint_children(names, families, full_names, link_child.get());
+  }
 }
 
+//Given a group name and a robot_description on the parameter server,
+//create and store a shared pointer to a single group
 bool Hebiros_Node::srv_add_group_from_urdf(
   AddGroupFromUrdfSrv::Request &req, AddGroupFromUrdfSrv::Response &res) {
 
   std::string urdf_name("robot_description");
   urdf::Model urdf_model;
-  urdf_model.initParam(urdf_name);
+  if (!urdf_model.initParam(urdf_name))
+  {
+    ROS_INFO("Could not load robot_description");
+    return false;
+  }
 
   std::set<std::string> joint_names;
   std::set<std::string> family_names;
@@ -175,6 +232,8 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState c
   group->sendCommand(group_command);
 }
 
+
+//Subscriber callback which publishes feedback topics for a group in gazebo
 void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs::JointState const>
   data, std::string group_name) {
   int size = data->name.size();
@@ -224,6 +283,11 @@ void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs:
 //Service callback which returns the size of a group
 bool Hebiros_Node::srv_size(
   SizeSrv::Request &req, SizeSrv::Response &res, std::string group_name) {
+  if (use_gazebo) {
+    res.size = group_joints[group_name].size();
+    return true;
+  }
+
   std::shared_ptr<Group> group = groups[group_name];
 
   if (group) {

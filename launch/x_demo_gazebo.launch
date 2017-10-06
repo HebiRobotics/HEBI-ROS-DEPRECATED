@@ -1,8 +1,7 @@
 <launch>
   <param name="robot_description" command="cat $(find hebiros)/urdf/x_demo.urdf"/>
 
-  <!-- Load joint controller configurations from YAML file to parameter server -->
-  <rosparam file="$(find hebiros)/config/hebiros_control.yaml" command="load"/>
+  <node name="example_gazebo_node" pkg="hebiros" type="example_gazebo_node"/>
 
   <!-- load the controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
@@ -14,6 +13,6 @@
     <remap from="/joint_states" to="/hebiros/x_demo/joint_states"/>
   </node>
 
-  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find hebiros)/urdf/x_demo.urdf -urdf -z 1 -model demo"/>
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find hebiros)/urdf/x_demo.urdf -urdf -z 1 -model x_demo"/>
 
 </launch>

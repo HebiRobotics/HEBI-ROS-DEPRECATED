@@ -99,6 +99,11 @@ class Hebiros_Node {
     void unregister_group(std::string group_name);
 
     /* General */
+    bool split(const std::string &orig, std::string &name, std::string &family);
+
+    void add_joint_children(std::set<std::string>& names, std::set<std::string>& families, 
+      std::set<std::string>& full_names, const urdf::Link* link);
+
     void cleanup();
 
     void loop();

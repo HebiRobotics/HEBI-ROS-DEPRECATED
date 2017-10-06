@@ -340,15 +340,8 @@
   <gazebo reference="elbow_end/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>
   </gazebo>
-  <!-- test child...TODO CHANGE -->
+  <!-- end link -->
   <link name="end_effector/INPUT_INTERFACE">
-    <!--<visual>
-      <origin xyz="0 0 0.023" rpy="0 0 0" />
-      <geometry>
-        <box size="0.0508 0.0508 0.0508" />
-      </geometry>
-      <xacro:silver_material/>
-    </visual>-->
   </link>
   <gazebo reference="base">
     <selfCollide>true</selfCollide>

@@ -48,9 +48,9 @@ int main(int argc, char **argv) {
   //Construct a JointState to command to the modules
   //This may potentially contain a name, position, velocity, and effort for each module
   sensor_msgs::JointState command_msg;
-  command_msg.name.push_back("/HEBI/base");
-  command_msg.name.push_back("/HEBI/shoulder");
-  command_msg.name.push_back("/HEBI/elbow");
+  command_msg.name.push_back("HEBI/base");
+  command_msg.name.push_back("HEBI/shoulder");
+  command_msg.name.push_back("HEBI/elbow");
   command_msg.effort.resize(3);
 
   feedback.position.reserve(3);
