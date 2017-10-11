@@ -1,13 +1,16 @@
 #include "ros/ros.h"
+#include "std_msgs/Float64.h"
 #include "sensor_msgs/JointState.h"
 #include "sensor_msgs/Imu.h"
 #include "tf/transform_broadcaster.h"
+#include "urdf/model.h"
 
 #include "hebiros/EntryMsg.h"
 #include "hebiros/EntryListMsg.h"
 #include "hebiros/FeedbackMsg.h"
 #include "hebiros/EntryListSrv.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
+#include "hebiros/AddGroupFromUrdfSrv.h"
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
@@ -50,9 +53,12 @@ class Hebiros_Node {
     std::shared_ptr<Lookup::EntryList> entry_list;
     std::map<std::string, std::shared_ptr<Group>> groups;
     std::map<std::string, GroupInfo*> group_infos;
+    std::map<std::string, std::map<std::string, int>> group_joints;
 
     int feedback_frequency;
     int command_lifetime;
+
+    bool use_gazebo;
 
     Hebiros_Node (int argc, char **argv);
     ~Hebiros_Node() noexcept(false) {}
@@ -63,6 +69,9 @@ class Hebiros_Node {
 
     bool srv_add_group_from_names(
       AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);
+
+    bool srv_add_group_from_urdf(
+      AddGroupFromUrdfSrv::Request &req, AddGroupFromUrdfSrv::Response &res);
 
     bool srv_size(
       SizeSrv::Request &req, SizeSrv::Response &res, std::string group_name);
@@ -79,6 +88,9 @@ class Hebiros_Node {
     void sub_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
       std::string group_name);
 
+    void sub_publish_group_gazebo(
+      const boost::shared_ptr<sensor_msgs::JointState const> data, std::string group_name);
+
     /* Individual group functions */
     void register_group(std::string group_name);
 
@@ -87,6 +99,11 @@ class Hebiros_Node {
     void unregister_group(std::string group_name);
 
     /* General */
+    bool split(const std::string &orig, std::string &name, std::string &family);
+
+    void add_joint_children(std::set<std::string>& names, std::set<std::string>& families, 
+      std::set<std::string>& full_names, const urdf::Link* link);
+
     void cleanup();
 
     void loop();

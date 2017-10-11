@@ -1,0 +1,5 @@
+<launch>
+  <param name="robot_description" command="cat $(find hebiros)/urdf/x_demo.urdf"/>
+
+  <node name="example_gazebo_node" pkg="hebiros" type="example_gazebo_node"/>
+</launch>
