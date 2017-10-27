@@ -352,7 +352,8 @@ class Feedback final
             receive_time_(internal, HebiFeedbackUInt64ReceiveTime),
             transmit_time_(internal, HebiFeedbackUInt64TransmitTime),
             hardware_receive_time_(internal, HebiFeedbackUInt64HardwareReceiveTime),
-            hardware_transmit_time_(internal, HebiFeedbackUInt64HardwareTransmitTime)
+            hardware_transmit_time_(internal, HebiFeedbackUInt64HardwareTransmitTime),
+            sender_id_(internal, HebiFeedbackUInt64SequenceNumber)
         {
         }
         #endif // DOXYGEN_OMIT_INTERNAL
@@ -400,6 +401,8 @@ class Feedback final
         const UInt64Field& hardwareReceiveTime() const { return hardware_receive_time_; }
         /// Timestamp of when message was transmitted from module (remote)
         const UInt64Field& hardwareTransmitTime() const { return hardware_transmit_time_; }
+        /// Unique ID of the module transmitting this feedback
+        const UInt64Field& senderId() const { return sender_id_; }
     
       private:
         HebiFeedbackPtr const internal_;
@@ -423,6 +426,7 @@ class Feedback final
         UInt64Field transmit_time_;
         UInt64Field hardware_receive_time_;
         UInt64Field hardware_transmit_time_;
+        UInt64Field sender_id_;
     
         HEBI_DISABLE_COPY_MOVE(Actuator)
     };

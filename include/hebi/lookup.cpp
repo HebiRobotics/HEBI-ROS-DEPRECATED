@@ -35,10 +35,10 @@ std::shared_ptr<Group> Lookup::getGroupFromNames(const std::vector<std::string>&
 std::shared_ptr<Group> Lookup::getGroupFromMacs(const std::vector<MacAddress>& addresses, long timeout_ms)
 {
   std::shared_ptr<Group> ptr;
-  std::vector<HebiMacAddress> addresses_c;
+  std::vector<const HebiMacAddress*> addresses_c;
   addresses_c.reserve(addresses.size());
   std::transform(std::begin(addresses), std::end(addresses),
-    std::back_inserter(addresses_c), [] (const MacAddress& addr) { return addr.internal_; });
+    std::back_inserter(addresses_c), [] (const MacAddress& addr) { return &addr.internal_; });
   HebiGroupPtr group = hebiGroupCreateFromMacs(lookup_, addresses_c.data(), addresses.size(), timeout_ms);
   if (group != nullptr)
     return std::make_shared<Group>(group);
@@ -138,7 +138,8 @@ Lookup::EntryList::Entry Lookup::EntryList::getEntry(int index) const
   std::string family(buffer, required_size-1);
   delete[] buffer;
 
-  HebiMacAddress mac_int = hebiLookupEntryListGetMacAddress(lookup_list_, index);
+  HebiMacAddress mac_int;
+  hebiLookupEntryListGetMacAddress(lookup_list_, index, &mac_int);
   MacAddress mac;
   mac.internal_ = mac_int;
 
