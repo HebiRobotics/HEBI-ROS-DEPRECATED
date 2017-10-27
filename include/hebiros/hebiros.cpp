@@ -214,21 +214,35 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState c
   Eigen::VectorXd position(group->size());
   Eigen::VectorXd velocity(group->size());
   Eigen::VectorXd effort(group->size());
+
+  bool use_position = false;
+  bool use_velocity = false;
+  bool use_effort = false;
+
   for (int i = 0; i < group->size(); i++) {
     if (i < data->position.size()) {
       position(i) = data->position[i];
+      use_position = true;
     }
     if (i < data->velocity.size()) {
       velocity(i) = data->velocity[i];
+      use_velocity = true;
     }
     if (i < data->effort.size()) {
       effort(i) = data->effort[i];
+      use_effort = true;
     }
   }
 
-  group_command.setPosition(position);
-  group_command.setVelocity(velocity);
-  group_command.setEffort(effort);
+  if (use_position) {
+    group_command.setPosition(position);
+  }
+  if (use_velocity) {
+    group_command.setVelocity(velocity);
+  }
+  if (use_effort) {  
+    group_command.setEffort(effort);
+  }
   group->sendCommand(group_command);
 }
 
