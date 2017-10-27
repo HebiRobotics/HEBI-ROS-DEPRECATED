@@ -119,7 +119,8 @@ Color Info::LedField::getColor() const
 Info::Info(HebiInfoPtr info)
   : internal_(info),
     settings_(internal_),
-    led_(internal_, HebiInfoLedLed)
+    led_(internal_, HebiInfoLedLed),
+    serial_(internal_, HebiInfoStringSerial)
 {
 }
 Info::~Info() noexcept
@@ -129,7 +130,8 @@ Info::~Info() noexcept
 Info::Info(Info&& other)
   : internal_(other.internal_),
     settings_(internal_),
-    led_(internal_, HebiInfoLedLed)
+    led_(internal_, HebiInfoLedLed),
+    serial_(internal_, HebiInfoStringSerial)
 {
   // NOTE: it would be nice to also cleanup the actual internal pointer of other
   // but alas we cannot change a const variable.

@@ -152,6 +152,7 @@ typedef enum HebiFeedbackUInt64Field {
   HebiFeedbackUInt64TransmitTime, ///Timestamp of when message was transmitted to module (local)
   HebiFeedbackUInt64HardwareReceiveTime, ///Timestamp of when message was received by module (remote)
   HebiFeedbackUInt64HardwareTransmitTime, ///Timestamp of when message was transmitted from module (remote)
+  HebiFeedbackUInt64SenderId, ///Unique ID of the module transmitting this feedback
 } HebiFeedbackUInt64Field;
 
 typedef enum HebiFeedbackVector3fField {
@@ -226,8 +227,9 @@ typedef enum HebiInfoBoolField {
 } HebiInfoBoolField;
 
 typedef enum HebiInfoStringField {
-  HebiInfoStringName, ///Sets the name for this module. Name must be null-terminated character string for the name; must be <= 20 characters.
-  HebiInfoStringFamily, ///Sets the family for this module. Name must be null-terminated character string for the family; must be <= 20 characters.
+  HebiInfoStringName, ///Gets the name for this module.
+  HebiInfoStringFamily, ///Gets the family for this module.
+  HebiInfoStringSerial, ///Gets the serial number for this module (e.g., X5-0001).
 } HebiInfoStringField;
 
 typedef enum HebiInfoFlagField {
@@ -508,8 +510,14 @@ HebiStatusCode hebiLookupEntryListGetFamily(HebiLookupEntryListPtr lookup_list, 
  *
  * \param lookup_list A valid HebiLookupEntryList object.
  * \param index The entry index that is being queried.
+ * \param mac_address A pointer to an allocated HebiMacAddress structure that
+ * the function will update with the mac address of the given entry.
+ *
+ * \returns HebiStatusSuccess on success, HebiStatusInvalidArgument if the
+ * mac_address parameter is null, or HebiStatusArgumentOutOfRange if there is
+ * no entry with the given index.
  */
-HebiMacAddress hebiLookupEntryListGetMacAddress(HebiLookupEntryListPtr lookup_list, int index);
+HebiStatusCode hebiLookupEntryListGetMacAddress(HebiLookupEntryListPtr lookup_list, int index, HebiMacAddress* mac_address);
 
 /**
  * \brief Release resources for a given lookup entry list; list should not be
@@ -559,7 +567,7 @@ HebiGroupPtr hebiGroupCreateImitation(unsigned int size);
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress* addresses,
+HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress* const* addresses,
   int num_addresses, long timeout_ms);
 
 /**
@@ -1515,67 +1523,6 @@ void hebiKinematicsGetEndEffector(HebiKinematicsPtr kinematics, HebiFrameType fr
  */
 void hebiKinematicsRelease(HebiKinematicsPtr kinematics);
 
-// Some geometric/transform related helper functions for kinematics:
-
-/*
- * Internal helper function to set values in a vector.
- */
-static void hebiKinematicsSetVector3f(float* vector, float x, float y, float z)
-{
-  vector[0] = x;
-  vector[1] = y;
-  vector[2] = z;
-}
-
-/*
- * Internal helper function to set values in a homogenous transform.
- */
-static void hebiKinematicsSetMatrix4fIdentity(float* matrix)
-{
-  matrix[0] = 1;
-  matrix[1] = 0;
-  matrix[2] = 0;
-  matrix[3] = 0;
-  matrix[4] = 0;
-  matrix[5] = 1;
-  matrix[6] = 0;
-  matrix[7] = 0;
-  matrix[8] = 0;
-  matrix[9] = 0;
-  matrix[10] = 1;
-  matrix[11] = 0;
-  matrix[12] = 0;
-  matrix[13] = 0;
-  matrix[14] = 0;
-  matrix[15] = 1;
-}
-
-/*
- * Internal helper function to set values in a homogenous transform.
- */
-static void hebiKinematicsSetMatrix4fRotX(float* matrix, float radians)
-{
-  matrix[0] = 1;
-  matrix[1] = 0;
-  matrix[2] = 0;
-  matrix[4] = 0;
-  matrix[5] = cos(radians);
-  matrix[6] = -sin(radians);
-  matrix[8] = 0;
-  matrix[9] = sin(radians);
-  matrix[10] = cos(radians);
-}
-
-/*
- * Internal helper function to set values in a homogenous transform.
- */
-static void hebiKinematicsSetMatrix4fTranslate(float* matrix, float x, float y, float z)
-{
-  matrix[3] = x;
-  matrix[7] = y;
-  matrix[11] = z;
-}
-
 // Helper functions for returning parameters for specific kinematic bodies.
 
 /**
@@ -1584,20 +1531,7 @@ static void hebiKinematicsSetMatrix4fTranslate(float* matrix, float x, float y, 
  *
  * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
  */
-static HebiStatusCode hebiKinematicParametersX5(HebiKinematicParametersActuator* params)
-{
-  // Ignore null pointers
-  if (!params)
-    return HebiStatusInvalidArgument;
-
-  hebiKinematicsSetVector3f(params->com, 0, 0, 0.0155f); 
-  hebiKinematicsSetMatrix4fIdentity(params->input_to_joint);
-  hebiKinematicsSetMatrix4fTranslate(params->input_to_joint, 0, 0, 0.03105f);
-  // z axis rotation
-  hebiKinematicsSetVector3f(params->joint_rotation_axis, 0, 0, 1);
-  hebiKinematicsSetMatrix4fIdentity(params->joint_to_output);
-  return HebiStatusSuccess;
-}
+HebiStatusCode hebiKinematicParametersX5(HebiKinematicParametersActuator* params);
 
 /**
  * Sets the input parameter to the kinematic parameters for an X8-series
@@ -1605,20 +1539,7 @@ static HebiStatusCode hebiKinematicParametersX5(HebiKinematicParametersActuator*
  *
  * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
  */
-static HebiStatusCode hebiKinematicParametersX8(HebiKinematicParametersActuator* params)
-{
-  // Ignore null pointers
-  if (!params)
-    return HebiStatusInvalidArgument;
-
-  hebiKinematicsSetVector3f(params->com, 0, 0, 0.0226f); 
-  hebiKinematicsSetMatrix4fIdentity(params->input_to_joint);
-  hebiKinematicsSetMatrix4fTranslate(params->input_to_joint, 0, 0, 0.0451f);
-  // z axis rotation
-  hebiKinematicsSetVector3f(params->joint_rotation_axis, 0, 0, 1);
-  hebiKinematicsSetMatrix4fIdentity(params->joint_to_output);
-  return HebiStatusSuccess;
-}
+HebiStatusCode hebiKinematicParametersX8(HebiKinematicParametersActuator* params);
 
 /**
  * Sets the input parameter to the kinematic parameters for an X5-series
@@ -1628,25 +1549,8 @@ static HebiStatusCode hebiKinematicParametersX8(HebiKinematicParametersActuator*
  *
  * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
  */
-static HebiStatusCode hebiKinematicParametersX5LightBracket(
-  HebiKinematicParametersStaticBody* params, HebiMountingType mounting)
-{
-  // Ignore null pointers and invalid parameters
-  if (!params)
-    return HebiStatusInvalidArgument;
-  if (mounting != HebiMountingTypeLeft && mounting != HebiMountingTypeRight)
-    return HebiStatusInvalidArgument;
-
-  float mult = 1;
-  if (mounting == HebiMountingTypeRight)
-    mult = -1; 
- 
-  hebiKinematicsSetVector3f(params->com, 0, mult * 0.0215f, 0.02f);
-  hebiKinematicsSetMatrix4fIdentity(params->output);
-  hebiKinematicsSetMatrix4fRotX(params->output, mult * (-M_PI / 2.0f));
-  hebiKinematicsSetMatrix4fTranslate(params->output, 0, mult * .043f, 0.04f);
-  return HebiStatusSuccess;
-}
+HebiStatusCode hebiKinematicParametersX5LightBracket(
+  HebiKinematicParametersStaticBody* params, HebiMountingType mounting);
 
 /**
  * Sets the input parameter to the kinematic parameters for an X5-series
@@ -1657,32 +1561,8 @@ static HebiStatusCode hebiKinematicParametersX5LightBracket(
  *
  * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
  */
-static HebiStatusCode hebiKinematicParametersX5HeavyBracket(
-  HebiKinematicParametersStaticBody* params, HebiMountingType mounting)
-{
-  // Ignore null pointers and invalid parameters
-  if (!params)
-    return HebiStatusInvalidArgument;
-  if (mounting != HebiMountingTypeLeftInside &&
-      mounting != HebiMountingTypeLeftOutside &&
-      mounting != HebiMountingTypeRightInside &&
-      mounting != HebiMountingTypeRightOutside)
-    return HebiStatusInvalidArgument;
-
-  float lr_mult = 1;
-  if (mounting == HebiMountingTypeRightInside || mounting == HebiMountingTypeRightOutside)
-    lr_mult = -1; 
-
-  float y_dist = -0.0225f; // Inside
-  if (mounting == HebiMountingTypeLeftOutside || mounting == HebiMountingTypeRightOutside)
-    y_dist = 0.0375f; // Outside
- 
-  hebiKinematicsSetVector3f(params->com, 0, lr_mult * 0.5f * y_dist, 0.0275f);
-  hebiKinematicsSetMatrix4fIdentity(params->output);
-  hebiKinematicsSetMatrix4fRotX(params->output, lr_mult * (-M_PI / 2.0f));
-  hebiKinematicsSetMatrix4fTranslate(params->output, 0, lr_mult * y_dist, 0.055f);
-  return HebiStatusSuccess;
-}
+HebiStatusCode hebiKinematicParametersX5HeavyBracket(
+  HebiKinematicParametersStaticBody* params, HebiMountingType mounting);
 
 /**
  * The kinematic parameters for an X5-series tube link.
@@ -1693,26 +1573,8 @@ static HebiStatusCode hebiKinematicParametersX5HeavyBracket(
  * refers to an input and output frame that are aligned in rotation, but offset
  * in the z-direction.
  */
-static HebiStatusCode hebiKinematicParametersX5Link(
-  HebiKinematicParametersStaticBody* params, float extension, float twist)
-{
-  // Ignore null pointers and invalid parameters
-  if (!params)
-    return HebiStatusInvalidArgument;
-
-  // Edge of bracket to center of pipe.
-  float edge_to_center = .0175f;
-
-  // Note that this ignores the effect of the end brackets on moving the com
-  // slightly off center.
-  hebiKinematicsSetVector3f(params->com, extension * 0.5f, 0, edge_to_center);
-  hebiKinematicsSetMatrix4fIdentity(params->output);
-  hebiKinematicsSetMatrix4fRotX(params->output, twist);
-  hebiKinematicsSetMatrix4fTranslate(params->output, extension,
-                                     -edge_to_center * sin(twist),
-                                     edge_to_center * (1 + cos(twist)));
-  return HebiStatusSuccess;
-}
+HebiStatusCode hebiKinematicParametersX5Link(
+  HebiKinematicParametersStaticBody* params, float extension, float twist);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Inverse Kinematics API
