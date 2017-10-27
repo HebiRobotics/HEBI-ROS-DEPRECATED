@@ -145,8 +145,9 @@ class KinematicBody
      * \brief Creates a body with the kinematics of a light bracket between two
      * X series actuators.
      *
-     * \param mounting This can be set to "Left" or "Right"; invalid options
-     * will result in an empty returned unique pointer.
+     * \param mounting This can be set to "HebiMountingTypeLeft" or
+     * "HebiMountingTypeRight"; invalid options will result in an empty returned
+     * unique pointer.
      */ 
     static std::unique_ptr<KinematicBody> createX5LightBracket(HebiMountingType mounting);
 
@@ -154,8 +155,9 @@ class KinematicBody
      * \brief Creates a body with the kinematics of a heavy bracket between two
      * X series actuators.
      *
-     * \param mounting This can be set to "LeftInside", "LeftOutside",
-     * "RightInside", or "RightOutside"; invalid options will result in an empty
+     * \param mounting This can be set to "HebiMountingTypeLeftInside",
+     * "HebiMountingTypeLeftOutside", "HebiMountingTypeRightInside", or
+     * "HebiMountingTypeRightOutside"; invalid options will result in an empty
      * returned unique pointer.
      */ 
     static std::unique_ptr<KinematicBody> createX5HeavyBracket(HebiMountingType mounting);
@@ -189,30 +191,26 @@ class Kinematics final
     const HebiKinematicsPtr internal_;
 
     /**
-     * Internal function for resolving variadic template (stops recursion).
-     */
-    HebiStatusCode addObjectives(HebiIKPtr ik, const Objective& objective) const
-    {
-      return objective.addObjective(ik);
-    }
-    /**
      * Internal function for resolving variadic template (stops recursion and
      * detects invalid arguments).
      */
     template<typename T>
-    HebiStatusCode addObjectives(HebiIKPtr ik, const T& not_an_objective) const
+    HebiStatusCode addObjectives(HebiIKPtr ik, const T& objective) const
     {
       static_assert(std::is_convertible<T*, Objective*>::value,
                     "Must pass arguments of base type hebi::kinematics::Objective to the variable args of solveIK!");
-      return HebiStatusInvalidArgument;
+      return static_cast<const Objective*>(&objective)->addObjective(ik);
     }
+
     /**
      * Internal function for resolving variadic template.
      */
-    template<typename ... Args>
-    HebiStatusCode addObjectives(HebiIKPtr ik, const Objective& objective, Args ... args) const
+    template<typename T, typename ... Args>
+    HebiStatusCode addObjectives(HebiIKPtr ik, const T& objective, Args ... args) const
     {
-      auto res = objective.addObjective(ik);
+      static_assert(std::is_convertible<T*, Objective*>::value,
+                    "Must pass arguments of base type hebi::kinematics::Objective to the variable args of solveIK!");
+      auto res = static_cast<const Objective*>(&objective)->addObjective(ik);
       if (res != HebiStatusSuccess)
         return res;
       return addObjectives(ik, args ...);

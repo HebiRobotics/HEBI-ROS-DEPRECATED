@@ -543,9 +543,9 @@ class Info final
     
         // Subfields ----------------
     
-        /// Sets the name for this module. Name must be null-terminated character string for the name; must be <= 20 characters.
+        /// Gets the name for this module.
         const StringField& name() const { return name_; }
-        /// Sets the family for this module. Name must be null-terminated character string for the family; must be <= 20 characters.
+        /// Gets the family for this module.
         const StringField& family() const { return family_; }
         /// Indicates if the module should save the current values of all of its settings.
         const FlagField& saveCurrentSettings() const { return save_current_settings_; }
@@ -599,10 +599,15 @@ class Info final
     /// The module's LED.
     const LedField& led() const;
 
+    /// Gets the serial number for this module (e.g., X5-0001). 
+    const StringField& serial() const { return serial_; }
+
   private:
     Settings settings_;
 
     LedField led_;
+
+    StringField serial_;
 
     /**
      * Disable copy constructor/assignment operators
