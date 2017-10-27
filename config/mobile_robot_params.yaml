@@ -1,0 +1,8 @@
+TrajectoryPlannerROS:
+  meter_scoring: true
+
+global_costmap:
+    footprint: [[0.4,0],[0.2,0.2],[-0.2,0.2],[-0.2,-0.2],[0.2,-0.2]]
+
+local_costmap:
+    footprint: [[0.4,0],[0.2,0.2],[-0.2,0.2],[-0.2,-0.2],[0.2,-0.2]]

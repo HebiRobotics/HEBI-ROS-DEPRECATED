@@ -171,6 +171,7 @@ add_executable(example_02_feedback_node src/example_02_feedback_node.cpp)
 add_executable(example_03_command_node src/example_03_command_node.cpp)
 add_executable(example_gazebo_node src/example_gazebo_node.cpp)
 add_executable(example_moveit_node src/example_moveit_node.cpp)
+add_executable(example_mobile_robot_node src/example_mobile_robot_node.cpp)
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 
@@ -196,6 +197,7 @@ target_link_libraries(example_02_feedback_node ${catkin_LIBRARIES} ${CMAKE_SOURC
 target_link_libraries(example_03_command_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_gazebo_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_moveit_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
+target_link_libraries(example_mobile_robot_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 
 #############
 ## Install ##
