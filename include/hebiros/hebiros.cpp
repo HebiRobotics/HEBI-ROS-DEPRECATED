@@ -217,12 +217,18 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState c
   for (int i = 0; i < group->size(); i++) {
     if (i < data->position.size()) {
       position(i) = data->position[i];
+    } else {
+      position(i) = std::numeric_limits<double>::quiet_NaN();
     }
     if (i < data->velocity.size()) {
       velocity(i) = data->velocity[i];
+    } else {
+      velocity(i) = std::numeric_limits<double>::quiet_NaN();
     }
     if (i < data->effort.size()) {
       effort(i) = data->effort[i];
+    } else {
+      effort(i) = std::numeric_limits<double>::quiet_NaN();
     }
   }
 
