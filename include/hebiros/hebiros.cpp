@@ -5,7 +5,7 @@
 //Loop in place allowing callback functions to be run
 Hebiros_Node::Hebiros_Node (int argc, char **argv) {
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  //std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   use_gazebo = false;
 
@@ -73,8 +73,17 @@ bool Hebiros_Node::srv_entry_list(
 //create and store a shared pointer to a single group
 bool Hebiros_Node::srv_add_group_from_names(
   AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
+
+  if (groups[req.group_name]) {
+    ROS_WARN("Group [%s] already exists", req.group_name.c_str());
+    return true;
+  }
+
   if (!use_gazebo) {
-    groups[req.group_name] = lookup.getGroupFromNames(req.families, req.names);
+    if (!(groups[req.group_name] = lookup.getGroupFromNames(req.families, req.names))) {
+      ROS_WARN("Lookup of group [%s] failed", req.group_name.c_str());
+      return false;
+    }
   }
   else {
     std::string type;
@@ -446,8 +455,10 @@ void Hebiros_Node::publish_group(std::string group_name, const GroupFeedback& gr
 
 //Deconstruction of a group
 void Hebiros_Node::unregister_group(std::string group_name) {
-  std::shared_ptr<Group> group = groups[group_name];
-  group->clearFeedbackHandlers();
+  if (groups[group_name]) {
+    std::shared_ptr<Group> group = groups[group_name];
+    group->clearFeedbackHandlers();
+  }
 }
 
 void Hebiros_Node::cleanup() {
