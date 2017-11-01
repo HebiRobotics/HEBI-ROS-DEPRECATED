@@ -1,0 +1,45 @@
+<launch>
+
+  <group ns="rtabmap">
+
+   <node pkg="tf" type="static_transform_publisher"  name="base_to_camera"
+      args="0 0 0 0 0 0 /base_link /camera_link 100" />
+
+    <!-- Odometry -->
+    <node pkg="rtabmap_ros" type="rgbd_odometry" name="rgbd_odometry" output="screen">
+      <remap from="rgb/image"       to="/camera/infra1/image_raw"/>
+      <remap from="depth/image"     to="/camera/depth/image_raw"/>
+      <remap from="rgb/camera_info" to="/camera/infra1/camera_info"/>
+
+      <param name="frame_id" type="string" value="camera_link"/>
+    </node>
+
+    <node name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen" args="--delete_db_on_start">
+      <param name="frame_id" type="string" value="camera_link"/>
+      <param name="subscribe_depth" type="bool" value="true"/>
+
+      <remap from="odom" to="odom"/>
+      <remap from="rgb/image" to="/camera/infra1/image_raw"/>
+      <remap from="depth/image" to="/camera/depth/image_raw"/>
+      <remap from="rgb/camera_info" to="/camera/infra1/camera_info"/>
+
+      <param name="queue_size" type="int" value="10"/>
+
+      <!-- RTAB-Map's parameters -->
+      <param name="RGBD/AngularUpdate" type="string" value="0.01"/>
+      <param name="RGBD/LinearUpdate" type="string" value="0.01"/>
+      <param name="Rtabmap/TimeThr" type="string" value="700"/>
+      <param name="Mem/RehearsalSimilarity" type="string" value="0.45"/>
+      <param name="RGBD/OptimizeFromGraphEnd" type="string" value="true"/>
+    </node>
+
+    <node pkg="rtabmap_ros" type="rtabmapviz" name="rtabmapviz" output="screen">
+    
+      <remap from="rgb/image"       to="/camera/infra1/image_raw"/>
+      <remap from="depth/image"     to="/camera/depth/image_raw"/>
+      <remap from="rgb/camera_info" to="/camera/infra1/camera_info"/>
+      
+    </node>
+
+  </group>
+</launch>

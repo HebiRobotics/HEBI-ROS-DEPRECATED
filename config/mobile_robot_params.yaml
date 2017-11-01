@@ -2,7 +2,15 @@ TrajectoryPlannerROS:
   meter_scoring: true
 
 global_costmap:
-    footprint: [[0.4,0],[0.2,0.2],[-0.2,0.2],[-0.2,-0.2],[0.2,-0.2]]
+  footprint: [[0.4,0],[0.2,0.2],[-0.2,0.2],[-0.2,-0.2],[0.2,-0.2]]
+  origin_x: -25.0
+  origin_y: -25.0
+  height: 50.0
+  width: 50.0
 
 local_costmap:
-    footprint: [[0.4,0],[0.2,0.2],[-0.2,0.2],[-0.2,-0.2],[0.2,-0.2]]
+  footprint: [[0.4,0],[0.2,0.2],[-0.2,0.2],[-0.2,-0.2],[0.2,-0.2]]
+  origin_x: -25.0
+  origin_y: -25.0
+  height: 50.0
+  width: 50.0

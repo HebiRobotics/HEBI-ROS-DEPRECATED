@@ -5,7 +5,7 @@
 //Loop in place allowing callback functions to be run
 Hebiros_Node::Hebiros_Node (int argc, char **argv) {
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  //std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
   use_gazebo = false;
 

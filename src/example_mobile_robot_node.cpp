@@ -11,6 +11,7 @@ using namespace hebiros;
 double x = 0.0;
 double y = 0.0;
 double th = 0.0;
+geometry_msgs::Quaternion odom_quat;
 
 double vx = 0;
 double vy = 0;
@@ -19,7 +20,7 @@ double vth = 0;
 double wheel_radius = 0.2;
 double wheel_distance = 0.2;
 
-void odometry_callback(geometry_msgs::Twist msg){
+void cmd_vel_callback(geometry_msgs::Twist msg){
   vx = msg.linear.x;
   vth = msg.angular.z;
 }
@@ -32,14 +33,22 @@ bool reset_callback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &re
   return true;
 }
 
+void odometry_callback(nav_msgs::Odometry data) {
+  x = data.pose.pose.position.x;
+  y = data.pose.pose.position.y;
+  odom_quat = data.pose.pose.orientation;
+}
+
 
 int main(int argc, char** argv){
   ros::init(argc, argv, "example_mobile_robot_node");
   ros::NodeHandle node;
 
+  odom_quat.w = 1.0;
+
   ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 50);
 
-  ros::Subscriber cmd_vel_subscriber = node.subscribe("/cmd_vel", 10, &odometry_callback);
+  ros::Subscriber cmd_vel_subscriber = node.subscribe("/cmd_vel", 10, &cmd_vel_callback);
 
   tf::TransformBroadcaster map_broadcaster;
   tf::TransformBroadcaster odom_broadcaster;
@@ -67,6 +76,8 @@ int main(int argc, char** argv){
   ros::ServiceServer reset_service = node.advertiseService(
     "/example_mobile_robot_node/reset", &reset_callback);
 
+  ros::Subscriber odometry_subscriber = node.subscribe(
+    "/rtabmap/odom", 100, odometry_callback);
 
   ros::Time current_time, last_time;
   current_time = ros::Time::now();
@@ -81,27 +92,27 @@ int main(int argc, char** argv){
 
     map_broadcaster.sendTransform(
       tf::StampedTransform(
-        tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(5, 5, 0.0)),
+        tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.0, 0.0, 0.0)),
         current_time,"map", "odom"));
 
 
-    command_msg.velocity[0] = 1 * ((vx - (wheel_distance * vth)) / wheel_radius);
-    command_msg.velocity[1] = -1 * ((vx + (wheel_distance * vth)) / wheel_radius);
+    command_msg.velocity[0] = 0.5 * ((vx - (wheel_distance * vth)) / wheel_radius);
+    command_msg.velocity[1] = -0.5 * ((vx + (wheel_distance * vth)) / wheel_radius);
     command_publisher.publish(command_msg);
 
 
     //compute odometry in a typical way given the velocities of the robot
-    double dt = (current_time - last_time).toSec();
-    double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
-    double delta_y = (vx * sin(th) + vy * cos(th)) * dt;
-    double delta_th = vth * dt;
+    //double dt = (current_time - last_time).toSec();
+    //double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
+    //double delta_y = (vx * sin(th) + vy * cos(th)) * dt;
+    //double delta_th = vth * dt;
 
-    x += delta_x;
-    y += delta_y;
-    th += delta_th;
+    //x += delta_x;
+    //y += delta_y;
+    //th += delta_th;
 
     //since all odometry is 6DOF we'll need a quaternion created from yaw
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
+    //geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
 
     //first, we'll publish the transform over tf
     geometry_msgs::TransformStamped odom_trans;
