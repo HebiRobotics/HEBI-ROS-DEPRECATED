@@ -4,16 +4,19 @@
 #include "sensor_msgs/Imu.h"
 #include "tf/transform_broadcaster.h"
 #include "urdf/model.h"
+#include "actionlib/server/simple_action_server.h"
 
 #include "hebiros/EntryMsg.h"
 #include "hebiros/EntryListMsg.h"
 #include "hebiros/FeedbackMsg.h"
+#include "hebiros/WaypointMsg.h"
 #include "hebiros/EntryListSrv.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/AddGroupFromUrdfSrv.h"
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
+#include "hebiros/TrajectoryAction.h"
 
 #include "color.hpp"
 #include "command.hpp"
@@ -49,12 +52,18 @@ class Hebiros_Node {
     std::map<std::string, ros::Subscriber> subscribers;
     std::map<std::string, ros::ServiceServer> services;
 
+    std::map<std::string, std::shared_ptr<actionlib::SimpleActionServer<TrajectoryAction>>>   
+      trajectory_actions;
+
     Lookup lookup;
     std::shared_ptr<Lookup::EntryList> entry_list;
     std::map<std::string, std::shared_ptr<Group>> groups;
     std::map<std::string, GroupInfo*> group_infos;
     std::map<std::string, std::map<std::string, int>> group_joints;
+    std::map<std::string, FeedbackMsg> group_feedback_msgs;
 
+    int node_frequency;
+    int action_frequency;
     int feedback_frequency;
     int command_lifetime;
 
@@ -90,6 +99,9 @@ class Hebiros_Node {
 
     void sub_publish_group_gazebo(
       const boost::shared_ptr<sensor_msgs::JointState const> data, std::string group_name);
+
+    /* Action execution functions */
+    void action_trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name);
 
     /* Individual group functions */
     void register_group(std::string group_name);

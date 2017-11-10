@@ -16,6 +16,9 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   urdf
   message_generation
+  genmsg
+  actionlib_msgs
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -57,6 +60,7 @@ add_message_files(
   EntryMsg.msg
   EntryListMsg.msg
   FeedbackMsg.msg
+  WaypointMsg.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -71,17 +75,17 @@ add_service_files(
 )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+  FILES
+  Trajectory.action
+)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   std_msgs
   sensor_msgs
+  actionlib_msgs
 )
 
 ################################################
@@ -169,7 +173,10 @@ add_executable(hebiros_node src/hebiros_node.cpp
 add_executable(example_01_lookup_node src/example_01_lookup_node.cpp)
 add_executable(example_02_feedback_node src/example_02_feedback_node.cpp)
 add_executable(example_03_command_node src/example_03_command_node.cpp)
+add_executable(example_04_trajectory_node src/example_04_trajectory_node.cpp)
 add_executable(example_gazebo_node src/example_gazebo_node.cpp)
+add_executable(example_moveit_node src/example_moveit_node.cpp)
+add_executable(example_mobile_robot_node src/example_mobile_robot_node.cpp)
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 
@@ -193,8 +200,10 @@ target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PRO
 target_link_libraries(example_01_lookup_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_02_feedback_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_03_command_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
+target_link_libraries(example_04_trajectory_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_gazebo_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
-
+target_link_libraries(example_moveit_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
+target_link_libraries(example_mobile_robot_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 
 #############
 ## Install ##
