@@ -206,8 +206,6 @@ target_link_libraries(example_02_feedback_node ${catkin_LIBRARIES} ${CMAKE_SOURC
 target_link_libraries(example_03_command_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_04_trajectory_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 target_link_libraries(example_gazebo_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
-target_link_libraries(example_moveit_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
-target_link_libraries(example_mobile_robot_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
 
 #############
 ## Install ##
