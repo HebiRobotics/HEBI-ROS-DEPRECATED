@@ -175,10 +175,14 @@ add_executable(example_02_feedback_node src/example_02_feedback_node.cpp)
 add_executable(example_03_command_node src/example_03_command_node.cpp)
 add_executable(example_04_trajectory_node src/example_04_trajectory_node.cpp)
 add_executable(example_gazebo_node src/example_gazebo_node.cpp)
-add_executable(example_moveit_node src/example_moveit_node.cpp)
-add_executable(example_mobile_robot_node src/example_mobile_robot_node.cpp)
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
+add_dependencies(example_01_lookup_node hebiros_generate_messages_cpp)
+add_dependencies(example_02_feedback_node hebiros_generate_messages_cpp)
+add_dependencies(example_03_command_node hebiros_generate_messages_cpp)
+add_dependencies(example_04_trajectory_node hebiros_generate_messages_cpp)
+add_dependencies(example_gazebo_node hebiros_generate_messages_cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
