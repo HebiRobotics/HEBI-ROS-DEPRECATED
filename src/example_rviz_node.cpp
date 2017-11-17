@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "hebiros/FeedbackMsg.h"
-#include "hebiros/AddGroupFromNamesSrv.h"
+#include "hebiros/AddGroupFromUrdfSrv.h"
 
 using namespace hebiros;
 
@@ -23,21 +23,19 @@ int main(int argc, char **argv) {
   std::string group_name = "x_demo";
 
   //Create a client which uses the service to create a group
-  ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromNamesSrv>(
-    "/hebiros/add_group_from_names");
+  ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromUrdfSrv>(
+    "/hebiros/add_group_from_urdf");
 
   //Create a subscriber to receive feedback from a group
   //Register feedback_callback as a callback which runs when feedback is received
   ros::Subscriber feedback_subscriber = n.subscribe(
     "/hebiros/"+group_name+"/feedback", 100, feedback_callback);
 
-  AddGroupFromNamesSrv add_group_srv;
+  AddGroupFromUrdfSrv add_group_srv;
 
-  //Construct a group using 3 known modules
+  //Construct a group using a urdf
   add_group_srv.request.group_name = group_name;
-  add_group_srv.request.names = {"base", "shoulder", "elbow"};
-  add_group_srv.request.families = {"HEBI"};
-  //Call the add_group_from_names service to create a group
+  //Call the add_group_from_urdf service to create a group
   //Specific topics and services will now be available under this group's namespace
   add_group_client.call(add_group_srv);
 
