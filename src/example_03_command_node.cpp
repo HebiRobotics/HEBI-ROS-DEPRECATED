@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   //Specific topics and services will now be available under this group's namespace
   add_group_client.call(add_group_srv);
 
-  //Construct a JointState to command to the modules
+  //Construct a JointState to command the modules
   //This may potentially contain a name, position, velocity, and effort for each module
   sensor_msgs::JointState command_msg;
   command_msg.name.push_back("HEBI/base");
