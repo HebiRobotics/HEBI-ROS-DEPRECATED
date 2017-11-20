@@ -5,8 +5,6 @@
 //Loop in place allowing callback functions to be run
 Hebiros_Node::Hebiros_Node (int argc, char **argv) {
 
-  //std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-
   use_gazebo = false;
 
   for (int i = 2; i < argc; i += 2) {
@@ -30,7 +28,13 @@ Hebiros_Node::Hebiros_Node (int argc, char **argv) {
 
   services["/hebiros/add_group_from_urdf"] = n.advertiseService(
     "/hebiros/add_group_from_urdf", &Hebiros_Node::srv_add_group_from_urdf, this);
-      
+
+  n.param<int>("/hebiros/node_frequency", node_frequency, 200);
+  n.setParam("/hebiros/node_frequency", node_frequency);
+
+  n.param<int>("/hebiros/action_frequency", action_frequency, 200);
+  n.setParam("/hebiros/action_frequency", action_frequency);
+
   n.param<int>("/hebiros/feedback_frequency", feedback_frequency, 100);
   n.setParam("/hebiros/feedback_frequency", feedback_frequency);
       
@@ -38,6 +42,8 @@ Hebiros_Node::Hebiros_Node (int argc, char **argv) {
   n.setParam("/hebiros/command_lifetime", command_lifetime);
 
   ROS_INFO("Parameters:");
+  ROS_INFO("/hebiros/node_frequency=%d", node_frequency);
+  ROS_INFO("/hebiros/action_frequency=%d", action_frequency);
   ROS_INFO("/hebiros/feedback_frequency=%d", feedback_frequency);
   ROS_INFO("/hebiros/command_lifetime=%d", command_lifetime);
 
@@ -293,6 +299,7 @@ void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs:
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
+  group_feedback_msgs[group_name] = feedback_msg;
 }
 
 //Service callback which returns the size of a group
@@ -348,6 +355,96 @@ bool Hebiros_Node::srv_set_command_lifetime(
   return true;
 }
 
+//Action callback which controls following a trajectory
+void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name) {
+
+  std::shared_ptr<actionlib::SimpleActionServer<TrajectoryAction>> action_server =
+    trajectory_actions[group_name];
+
+  int num_waypoints = goal->waypoints.size();
+  if (num_waypoints < 1) {
+    return;
+  }
+  int num_joints = goal->waypoints[0].names.size();
+
+  Eigen::MatrixXd positions(num_joints, num_waypoints);
+  Eigen::MatrixXd velocities(num_joints, num_waypoints);
+  Eigen::MatrixXd accelerations(num_joints, num_waypoints);
+  Eigen::VectorXd time(num_waypoints);
+
+  for (int i = 0; i < num_waypoints; i++) {
+    time(i) = goal->times[i];
+  }
+
+  for (int i = 0; i < num_joints; i++) {
+    std::string joint_name = goal->waypoints[0].names[i];
+    int joint_index = group_joints[group_name][joint_name];
+
+    for (int j = 0; j < num_waypoints; j++) {
+      double position = goal->waypoints[j].positions[i];
+      double velocity = goal->waypoints[j].velocities[i];
+      double acceleration = goal->waypoints[j].accelerations[i];
+
+      positions(joint_index, j) = position;
+      velocities(joint_index, j) = velocity;
+      accelerations(joint_index, j) = acceleration;
+    }
+  }
+
+  auto trajectory = trajectory::Trajectory::createUnconstrainedQp(
+    time, positions, &velocities, &accelerations);
+  Eigen::VectorXd position_command(num_joints);
+  Eigen::VectorXd velocity_command(num_joints);
+
+  double trajectory_duration = trajectory->getDuration();
+  double previous_time;
+  double current_time;
+  double loop_duration;
+  TrajectoryFeedback feedback;
+
+  ros::Rate loop_rate(action_frequency);
+
+  ROS_INFO("Group [%s]: executing trajectory", group_name.c_str());
+  previous_time = ros::Time::now().toSec();
+  for (double t = 0; t < trajectory_duration; t += loop_duration)
+  {
+    if (action_server->isPreemptRequested() || !ros::ok()) {
+      ROS_INFO("Group [%s]: Preempted trajectory", group_name.c_str());
+      action_server->setPreempted();
+      return;
+    }
+
+    feedback.percent_complete = (t / trajectory_duration) * 100;
+    action_server->publishFeedback(feedback);
+
+    trajectory->getState(t, &position_command, &velocity_command, nullptr);
+    sensor_msgs::JointState command_msg;
+    command_msg.name.resize(num_joints);
+    command_msg.position.resize(num_joints);
+    command_msg.velocity.resize(num_joints);
+
+    for (int i = 0; i < num_joints; i++) {
+      std::string joint_name = goal->waypoints[0].names[i];
+      int joint_index = group_joints[group_name][joint_name];
+      command_msg.name[joint_index] = joint_name;
+      command_msg.position[joint_index] = position_command(i);
+      command_msg.velocity[joint_index] = velocity_command(i);
+    }
+    publishers["/hebiros/"+group_name+"/command/joint_state"].publish(command_msg);
+
+    ros::spinOnce();
+    loop_rate.sleep();
+    current_time = ros::Time::now().toSec();
+    loop_duration = current_time - previous_time;
+    previous_time = current_time;
+  }
+
+  TrajectoryResult result;
+  result.final_state = group_feedback_msgs[group_name].joint_state;
+  action_server->setSucceeded(result);
+  ROS_INFO("Group [%s]: Finished executing trajectory", group_name.c_str());
+}
+
 //Advertise topics and services for a group
 //Setup a feedback handler to receive feedback from a group
 void Hebiros_Node::register_group(std::string group_name) {
@@ -357,6 +454,9 @@ void Hebiros_Node::register_group(std::string group_name) {
 
   publishers["/hebiros/"+group_name+"/feedback/joint_state"] =
     n.advertise<sensor_msgs::JointState>("/hebiros/"+group_name+"/feedback/joint_state", 100);
+
+  publishers["/hebiros/"+group_name+"/command/joint_state"] =   
+    n.advertise<sensor_msgs::JointState>("/hebiros/"+group_name+"/command/joint_state", 100);
 
   subscribers["/hebiros/"+group_name+"/command/joint_state"] = 
     n.subscribe<sensor_msgs::JointState>("/hebiros/"+group_name+"/command/joint_state", 100,
@@ -377,6 +477,13 @@ void Hebiros_Node::register_group(std::string group_name) {
     SetCommandLifetimeSrv::Response>(
     "/hebiros/"+group_name+"/set_command_lifetime",
     boost::bind(&Hebiros_Node::srv_set_command_lifetime, this, _1, _2, group_name));
+
+  trajectory_actions[group_name] = std::make_shared<
+    actionlib::SimpleActionServer<TrajectoryAction>>(
+    n, "/hebiros/"+group_name+"/trajectory",
+    boost::bind(&Hebiros_Node::action_trajectory, this, _1, group_name), false);
+
+  trajectory_actions[group_name]->start();
 
   if (!use_gazebo) {
     std::shared_ptr<Group> group = groups[group_name];
@@ -441,6 +548,7 @@ void Hebiros_Node::publish_group(std::string group_name, const GroupFeedback& gr
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
+  group_feedback_msgs[group_name] = feedback_msg;
 } 
 
 //Deconstruction of a group
@@ -459,7 +567,7 @@ void Hebiros_Node::cleanup() {
 
 
 void Hebiros_Node::loop() {
-  ros::Rate loop_rate(200);
+  ros::Rate loop_rate(node_frequency);
 
   while(ros::ok()) {
     ros::spinOnce();
