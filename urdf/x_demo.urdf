@@ -108,7 +108,6 @@
   <joint name="shoulder_bracket/OUTPUT_INTERFACE" type="fixed">
     <parent link="shoulder_bracket/INPUT_INTERFACE"/>
     <child link="HEBI/shoulder/INPUT_INTERFACE"/>
-    <!--    <origin xyz="0 .03685 .05715" rpy="-1.57075 0 3.14157"/> -->
     <origin rpy="-1.57075 0 0" xyz="0 .04235 .04015"/>
   </joint>
   <gazebo reference="shoulder_bracket/INPUT_INTERFACE">
