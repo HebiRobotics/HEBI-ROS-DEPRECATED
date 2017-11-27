@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- NOTE: joint must match the name of the module -->
+  <xacro:macro name="x_tube_link" params="name child length twist">
+    <link name="${name}/INPUT_INTERFACE">
+      <visual>
+        <origin xyz="-.04 .03 .0075" rpy="0 0 3.14157" />
+        <geometry>
+          <mesh filename="package://hebiros_description/meshes/x_output_bracket.stl"/>
+        </geometry>
+        <xacro:black_material/>
+      </visual>
+      <visual>
+        <origin xyz="${-length/2-.0254} 0 .016075" rpy="0 1.57075 0" />
+        <geometry>
+          <cylinder length="${length}" radius=".015875" />
+        </geometry>
+        <xacro:silver_material/>
+      </visual>
+      <visual>
+        <origin xyz="${-length-.0254} -.075 -.0125" rpy="1.57075 0 -1.57075" />
+        <geometry>
+          <mesh filename="package://hebiros_description/meshes/x_mounting_bracket.stl"/>
+        </geometry>
+        <xacro:black_material/>
+      </visual>
+      <collision>
+        <origin xyz="-.04 .03 .0075" rpy="0 0 3.14157" />
+        <geometry>
+          <mesh filename="package://hebiros_description/meshes/x_output_bracket.stl"/>
+        </geometry>
+      </collision>
+      <collision>
+        <origin xyz="${-length/2-.0254} 0 .016075" rpy="0 1.57075 0" />
+        <geometry>
+          <cylinder length="${length}" radius=".015875" />
+        </geometry>
+      </collision>
+      <collision>
+        <origin xyz="${-length-.0254} -.075 -.0125" rpy="1.57075 0 -1.57075" />
+        <geometry>
+          <mesh filename="package://hebiros_description/meshes/x_mounting_bracket.stl"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-.04 .03 .0075" rpy="0 0 3.14157" />
+        <mass value="0.01"/>
+        <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
+      </inertial>
+      <inertial>
+        <origin xyz="${-length/2-.0254} 0 .016075" rpy="0 1.57075 0" />
+        <mass value="${length + 0.05}"/>
+        <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
+      </inertial>
+      <inertial>
+        <origin xyz="${-length-.0254} -.075 -.0125" rpy="1.57075 0 -1.57075" />
+        <mass value="0.01"/>
+        <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
+      </inertial>
+    </link>
+    <joint name="${name}/OUTPUT_JOINT" type="fixed">
+      <parent link="${name}/INPUT_INTERFACE"/>
+      <child link="${child}/INPUT_INTERFACE"/>
+      <origin xyz="${-length-.05} 0 0" rpy="3.14157 0 0"/>
+    </joint>
+    <gazebo reference="${name}/INPUT_INTERFACE">
+      <selfCollide>true</selfCollide>
+    </gazebo> 
+  </xacro:macro>
+</robot>
+

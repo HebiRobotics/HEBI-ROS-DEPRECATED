@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>hebiros_advanced_examples</name>
+  <version>0.0.1</version>
+  <description>Advanced examples for hebiros with additional dependencies</description>
+
+  <maintainer email="x@hebirobotics.com">Xavier Artache</maintainer>
+
+  <license>TODO</license>
+
+  <author email="x@hebirobotics.com">Xavier Artache</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>hebiros</build_depend>
+  <run_depend>hebiros</run_depend>
+
+  <export>
+  </export>
+</package>

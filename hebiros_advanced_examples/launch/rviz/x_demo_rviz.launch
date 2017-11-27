@@ -1,0 +1,16 @@
+<launch>
+  <param name="robot_description" command="cat $(find hebiros_description)/urdf/x_demo.urdf"/>
+
+  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" respawn="false" output="screen"/>
+
+  <node name="example_rviz_node" pkg="hebiros_advanced_examples" type="example_rviz_node"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    <remap from="/joint_states" to="/hebiros/x_demo/feedback/joint_state"/>
+    <param name="ignore_timestamp" value="true"/>
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz"/>
+
+</launch>

@@ -1,0 +1,3 @@
+<launch>
+  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" respawn="false" output="screen"/>
+</launch>

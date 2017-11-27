@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="x_wrist_bracket"
+               params="name child">
+  <link name="${name}/INPUT_INTERFACE">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.57075 0 1.57075"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/x_wrist.stl"/>
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57075 0 1.57075"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/x_wrist.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="1.57075 0 1.57075"/>
+      <mass value="0.1"/>
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
+    </inertial>
+  </link>
+  <joint name="${name}/OUTPUT_INTERFACE" type="fixed">
+    <parent link="${name}/INPUT_INTERFACE"/>
+    <child link="${child}/INPUT_INTERFACE"/>
+    <origin xyz="0 .04235 .04015" rpy="-1.57075 0 0"/>
+  </joint>
+  <gazebo reference="${name}/INPUT_INTERFACE">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  </xacro:macro>
+</robot>
