@@ -8,7 +8,7 @@ notifications:
   email:
     on_failure: always
     recipients:
-      - 130s@2000.jukuin.keio.ac.jp
+      - developer@hebirobotics.com
 env:
   matrix:
     - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu VERBOSE_OUTPUT=true
