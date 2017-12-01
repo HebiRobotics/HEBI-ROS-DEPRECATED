@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>hebiros_basic_examples</name>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <description>Basic examples for hebiros with no additional dependencies</description>
 
   <maintainer email="x@hebirobotics.com">Xavier Artache</maintainer>
