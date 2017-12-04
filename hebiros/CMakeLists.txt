@@ -192,10 +192,10 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 # )
 
 if ( ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_x86_64/libhebi.so)
+  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
 elseif ( ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "i686")
-  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/lib/linux_i686/libhebi.so)
+  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_i686/libhebi.so)
 
 endif()
 
