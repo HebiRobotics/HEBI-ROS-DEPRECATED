@@ -229,21 +229,24 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState c
   Eigen::VectorXd position(group->size());
   Eigen::VectorXd velocity(group->size());
   Eigen::VectorXd effort(group->size());
+
   for (int i = 0; i < group->size(); i++) {
+    position(i) = std::numeric_limits<double>::quiet_NaN();
+    velocity(i) = std::numeric_limits<double>::quiet_NaN();
+    effort(i) = std::numeric_limits<double>::quiet_NaN();
+  }
+
+  for (int i = 0; i < data->name.size(); i++) {
+    int joint_index = group_joints[group_name][data->name[i]];
+
     if (i < data->position.size()) {
-      position(i) = data->position[i];
-    } else {
-      position(i) = std::numeric_limits<double>::quiet_NaN();
+      position(joint_index) = data->position[i];
     }
     if (i < data->velocity.size()) {
-      velocity(i) = data->velocity[i];
-    } else {
-      velocity(i) = std::numeric_limits<double>::quiet_NaN();
+      velocity(joint_index) = data->velocity[i];
     }
     if (i < data->effort.size()) {
-      effort(i) = data->effort[i];
-    } else {
-      effort(i) = std::numeric_limits<double>::quiet_NaN();
+      effort(joint_index) = data->effort[i];
     }
   }
 
@@ -404,7 +407,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
 
   ros::Rate loop_rate(action_frequency);
 
-  ROS_INFO("Group [%s]: executing trajectory", group_name.c_str());
+  ROS_INFO("Group [%s]: Executing trajectory", group_name.c_str());
   previous_time = ros::Time::now().toSec();
   for (double t = 0; t < trajectory_duration; t += loop_duration)
   {
