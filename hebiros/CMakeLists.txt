@@ -192,7 +192,10 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 # )
 
 
-if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armhf")
+if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386")
+  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_i686/libhebi.so)
+
+elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
   target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_i686/libhebi.so)
 
 else ()
