@@ -191,17 +191,8 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-string(FIND ${CATKIN_DEVEL_PREFIX} "i686" IS_32)
-message(STATUS "Architecture is apparently 32 (-1 for no): ${IS_32}")
-if(${IS_32} STREQUAL "-1")
-if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-set(IS_32 FALSE)
-else()
-set(IS_32 TRUE)
-endif()
-endif()
 
-if (IS_32)
+if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
   target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_i686/libhebi.so)
 
 else ()
