@@ -190,22 +190,8 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-message("##########################################################################################")
-message("################################# CMAKE_SYSTEM_PROCESSOR #################################")
-message("##########################################################################################")
-message(${CMAKE_SYSTEM_PROCESSOR})
 
-if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i386")
-  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_i686/libhebi.so)
-
-elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
-  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_i686/libhebi.so)
-
-else ()
-  target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-endif()
-
+target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
 #############
 ## Install ##
