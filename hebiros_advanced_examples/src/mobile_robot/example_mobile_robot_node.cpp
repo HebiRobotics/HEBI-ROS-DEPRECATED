@@ -89,7 +89,7 @@ int main(int argc, char** argv){
   add_group_srv.request.group_name = group_name;
   add_group_srv.request.names = {"Left", "Right"};
   add_group_srv.request.families = {"Wheels"};
-  add_group_client.call(add_group_srv);
+  while(!add_group_client.call(add_group_srv)) {}
 
   //Construct a JointState to command the modules
   sensor_msgs::JointState command_msg;
