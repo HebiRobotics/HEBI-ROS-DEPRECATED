@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
 
   //Construct a group using a urdf
   add_group_srv.request.group_name = group_name;
-  //Call the add_group_from_urdf service to create a group
+  //Call the add_group_from_urdf service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
-  add_group_client.call(add_group_srv);
+  while(!add_group_client.call(add_group_srv)) {}
 
   while(ros::ok()) {
 

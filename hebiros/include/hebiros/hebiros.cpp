@@ -191,7 +191,7 @@ bool Hebiros_Node::srv_add_group_from_urdf(
   urdf::Model urdf_model;
   if (!urdf_model.initParam(urdf_name))
   {
-    ROS_INFO("Could not load robot_description");
+    ROS_WARN("Could not load robot_description");
     return false;
   }
 
@@ -229,21 +229,30 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState c
   Eigen::VectorXd position(group->size());
   Eigen::VectorXd velocity(group->size());
   Eigen::VectorXd effort(group->size());
+
   for (int i = 0; i < group->size(); i++) {
-    if (i < data->position.size()) {
-      position(i) = data->position[i];
-    } else {
-      position(i) = std::numeric_limits<double>::quiet_NaN();
+    position(i) = std::numeric_limits<double>::quiet_NaN();
+    velocity(i) = std::numeric_limits<double>::quiet_NaN();
+    effort(i) = std::numeric_limits<double>::quiet_NaN();
+  }
+
+  for (int i = 0; i < data->name.size(); i++) {
+    if (group_joints[group_name].find(data->name[i]) != group_joints[group_name].end()) {
+
+      int joint_index = group_joints[group_name][data->name[i]];
+
+      if (i < data->position.size()) {
+        position(joint_index) = data->position[i];
+      }
+      if (i < data->velocity.size()) {
+        velocity(joint_index) = data->velocity[i];
+      }
+      if (i < data->effort.size()) {
+        effort(joint_index) = data->effort[i];
+      }
     }
-    if (i < data->velocity.size()) {
-      velocity(i) = data->velocity[i];
-    } else {
-      velocity(i) = std::numeric_limits<double>::quiet_NaN();
-    }
-    if (i < data->effort.size()) {
-      effort(i) = data->effort[i];
-    } else {
-      effort(i) = std::numeric_limits<double>::quiet_NaN();
+    else {
+      ROS_WARN("Unable to find joint: %s.  Command not sent.", data->name[i].c_str());
     }
   }
 
@@ -260,18 +269,16 @@ void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs:
   int size = data->name.size();
 
   FeedbackMsg feedback_msg;
-  feedback_msg.imu_vector.resize(size);
+  feedback_msg.name.resize(size);
+  feedback_msg.position.resize(size);
+  feedback_msg.velocity.resize(size);
+  feedback_msg.effort.resize(size);
 
   sensor_msgs::JointState joint_state_msg;
   joint_state_msg.name.resize(size);
   joint_state_msg.position.resize(size);
   joint_state_msg.velocity.resize(size);
   joint_state_msg.effort.resize(size);
-
-  sensor_msgs::Imu imu_msg;
-  imu_msg.orientation_covariance[0] = -1;
-  imu_msg.angular_velocity_covariance[0] = -1;
-  imu_msg.linear_acceleration_covariance[0] = -1;
 
   for (int i = 0; i < size; i++) {
 
@@ -286,20 +293,15 @@ void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs:
     joint_state_msg.velocity[joint_index] = velocity;
     joint_state_msg.effort[joint_index] = effort;
 
-    imu_msg.linear_acceleration.x = 0;
-    imu_msg.linear_acceleration.y = 0;
-    imu_msg.linear_acceleration.z = 0;
-    imu_msg.angular_velocity.x = 0;
-    imu_msg.angular_velocity.y = 0;
-    imu_msg.angular_velocity.z = 0;
-    feedback_msg.imu_vector[joint_index] = imu_msg;
+    feedback_msg.name[joint_index] = joint_name;
+    feedback_msg.position[joint_index] = position;
+    feedback_msg.velocity[joint_index] = velocity;
+    feedback_msg.effort[joint_index] = effort;
   }
-
-  feedback_msg.joint_state = joint_state_msg;
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
-  group_feedback_msgs[group_name] = feedback_msg;
+  group_joint_states[group_name] = joint_state_msg;
 }
 
 //Service callback which returns the size of a group
@@ -363,6 +365,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
 
   int num_waypoints = goal->waypoints.size();
   if (num_waypoints < 1) {
+    ROS_WARN("No waypoints sent.");
     return;
   }
   int num_joints = goal->waypoints[0].names.size();
@@ -404,7 +407,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
 
   ros::Rate loop_rate(action_frequency);
 
-  ROS_INFO("Group [%s]: executing trajectory", group_name.c_str());
+  ROS_INFO("Group [%s]: Executing trajectory", group_name.c_str());
   previous_time = ros::Time::now().toSec();
   for (double t = 0; t < trajectory_duration; t += loop_duration)
   {
@@ -440,7 +443,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
   }
 
   TrajectoryResult result;
-  result.final_state = group_feedback_msgs[group_name].joint_state;
+  result.final_state = group_joint_states[group_name];
   action_server->setSucceeded(result);
   ROS_INFO("Group [%s]: Finished executing trajectory", group_name.c_str());
 }
@@ -516,39 +519,67 @@ void Hebiros_Node::publish_group(std::string group_name, const GroupFeedback& gr
   FeedbackMsg feedback_msg;
   sensor_msgs::JointState joint_state_msg;
 
-  sensor_msgs::Imu imu_msg;
-  imu_msg.orientation_covariance[0] = -1;
-  imu_msg.angular_velocity_covariance[0] = -1;
-  imu_msg.linear_acceleration_covariance[0] = -1;
-
   for (int i = 0; i < group_fbk.size(); i++) {
     std::string name = (*group_infos[group_name])[i].settings().name().get();
     std::string family = (*group_infos[group_name])[i].settings().family().get();
-    float position = group_fbk[i].actuator().position().get();
-    float velocity = group_fbk[i].actuator().velocity().get();
-    float effort = group_fbk[i].actuator().effort().get();
+    double position = group_fbk[i].actuator().position().get();
+    double velocity = group_fbk[i].actuator().velocity().get();
+    double effort = group_fbk[i].actuator().effort().get();
 
     joint_state_msg.name.push_back(family+"/"+name);
     joint_state_msg.position.push_back(position);
     joint_state_msg.velocity.push_back(velocity);
     joint_state_msg.effort.push_back(effort);
 
-    hebi::Vector3f accelerometer = group_fbk[i].imu().accelerometer().get();
-    hebi::Vector3f gyro = group_fbk[i].imu().gyro().get();
-    imu_msg.linear_acceleration.x = accelerometer.getX();
-    imu_msg.linear_acceleration.y = accelerometer.getY();
-    imu_msg.linear_acceleration.z = accelerometer.getZ();
-    imu_msg.angular_velocity.x = gyro.getX();
-    imu_msg.angular_velocity.y = gyro.getY();
-    imu_msg.angular_velocity.z = gyro.getZ();
-    feedback_msg.imu_vector.push_back(imu_msg);
+    feedback_msg.name.push_back(family+"/"+name);
+    feedback_msg.position.push_back(position);
+    feedback_msg.velocity.push_back(velocity);
+    feedback_msg.effort.push_back(effort);
+    feedback_msg.position_command.push_back(group_fbk[i].actuator().positionCommand().get());
+    feedback_msg.velocity_command.push_back(group_fbk[i].actuator().velocityCommand().get());
+    feedback_msg.effort_command.push_back(group_fbk[i].actuator().effortCommand().get());
+    geometry_msgs::Vector3 accelerometer_msg;
+    accelerometer_msg.x = group_fbk[i].imu().accelerometer().get().getX();
+    accelerometer_msg.y = group_fbk[i].imu().accelerometer().get().getY();
+    accelerometer_msg.z = group_fbk[i].imu().accelerometer().get().getZ();
+    feedback_msg.accelerometer.push_back(accelerometer_msg);
+    geometry_msgs::Vector3 gyro_msg;
+    gyro_msg.x = group_fbk[i].imu().gyro().get().getX();
+    gyro_msg.y = group_fbk[i].imu().gyro().get().getY();
+    gyro_msg.z = group_fbk[i].imu().gyro().get().getZ();
+    feedback_msg.gyro.push_back(gyro_msg);
+    feedback_msg.deflection.push_back(group_fbk[i].actuator().deflection().get());
+    feedback_msg.deflection_velocity.push_back(group_fbk[i].actuator().deflectionVelocity().get());
+    feedback_msg.motor_velocity.push_back(group_fbk[i].actuator().motorVelocity().get());
+    feedback_msg.motor_current.push_back(group_fbk[i].actuator().motorCurrent().get());
+    feedback_msg.motor_winding_current.push_back(group_fbk[i].actuator().motorWindingCurrent().get());
+    feedback_msg.motor_sensor_temperature.push_back(group_fbk[i].actuator().motorSensorTemperature().get());
+    feedback_msg.motor_winding_temperature.push_back(group_fbk[i].actuator().motorWindingTemperature().get());
+    feedback_msg.motor_housing_temperature.push_back(group_fbk[i].actuator().motorHousingTemperature().get());
+    feedback_msg.board_temperature.push_back(group_fbk[i].boardTemperature().get());
+    feedback_msg.processor_temperature.push_back(group_fbk[i].processorTemperature().get());
+    feedback_msg.voltage.push_back(group_fbk[i].voltage().get());
+    std_msgs::ColorRGBA led_msg;
+    led_msg.r = group_fbk[i].led().getColor().getRed();
+    led_msg.g = group_fbk[i].led().getColor().getGreen();
+    led_msg.b = group_fbk[i].led().getColor().getBlue();
+    if (group_fbk[i].led().hasColor()) {
+      led_msg.a = 255;
+    }
+    else {
+      led_msg.a = 0;
+    }
+    feedback_msg.led_color.push_back(led_msg);
+    feedback_msg.sequence_number.push_back(group_fbk[i].actuator().sequenceNumber().get());
+    feedback_msg.receive_time.push_back(group_fbk[i].actuator().receiveTime().get());
+    feedback_msg.transmit_time.push_back(group_fbk[i].actuator().transmitTime().get());
+    feedback_msg.hardware_receive_time.push_back(group_fbk[i].actuator().hardwareReceiveTime().get());
+    feedback_msg.hardware_transmit_time.push_back(group_fbk[i].actuator().hardwareTransmitTime().get());
   }
-
-  feedback_msg.joint_state = joint_state_msg;
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
-  group_feedback_msgs[group_name] = feedback_msg;
+  group_joint_states[group_name] = joint_state_msg;
 } 
 
 //Deconstruction of a group
