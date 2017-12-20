@@ -41,9 +41,9 @@ int main(int argc, char **argv) {
   add_group_srv.request.group_name = group_name;
   add_group_srv.request.names = {"base", "shoulder", "elbow"};
   add_group_srv.request.families = {"HEBI"};
-  //Call the add_group_from_names service to create a group
+  //Call the add_group_from_urdf service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
-  add_group_client.call(add_group_srv);
+  while(!add_group_client.call(add_group_srv)) {}
 
   //Construct a JointState to command the modules
   //This may potentially contain a name, position, velocity, and effort for each module
@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
   command_msg.name.push_back("HEBI/base");
   command_msg.name.push_back("HEBI/shoulder");
   command_msg.name.push_back("HEBI/elbow");
+
   command_msg.effort.resize(3);
 
   feedback.position.reserve(3);

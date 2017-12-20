@@ -193,7 +193,6 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 
 target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
-
 #############
 ## Install ##
 #############
