@@ -60,7 +60,7 @@ class Hebiros_Node {
     std::map<std::string, std::shared_ptr<Group>> groups;
     std::map<std::string, GroupInfo*> group_infos;
     std::map<std::string, std::map<std::string, int>> group_joints;
-    std::map<std::string, FeedbackMsg> group_feedback_msgs;
+    std::map<std::string, sensor_msgs::JointState> group_joint_states;
 
     int node_frequency;
     int action_frequency;

@@ -50,7 +50,8 @@ int main(int argc, char **argv) {
   //Call the size service for the newly created group
   size_client.call(size_srv);
 
-  feedback.imu_vector.reserve(size_srv.response.size);
+  feedback.accelerometer.reserve(size_srv.response.size);
+  feedback.gyro.reserve(size_srv.response.size);
 
   while(ros::ok()) {
 
@@ -59,13 +60,13 @@ int main(int argc, char **argv) {
     for (int i = 0; i < size_srv.response.size; i++) {
       std::cout << "Module " << i << ": " << std::endl;
       std::cout << "Accelerometer: " <<
-        feedback.imu_vector[i].linear_acceleration.x << ", " <<
-        feedback.imu_vector[i].linear_acceleration.y << ", " <<
-        feedback.imu_vector[i].linear_acceleration.z << std::endl;
+        feedback.accelerometer[i].x << ", " <<
+        feedback.accelerometer[i].y << ", " <<
+        feedback.accelerometer[i].z << std::endl;
       std::cout << "Gyro: " <<
-        feedback.imu_vector[i].angular_velocity.x << ", " <<
-        feedback.imu_vector[i].angular_velocity.y << ", " <<
-        feedback.imu_vector[i].angular_velocity.z << std::endl;
+        feedback.gyro[i].x << ", " <<
+        feedback.gyro[i].y << ", " <<
+        feedback.gyro[i].z << std::endl;
     }
     std::cout << std::endl;
 
