@@ -39,7 +39,7 @@ void trajectory_done(const actionlib::SimpleClientGoalState& state,
 //Callback which is called once when the action goal becomes active
 void trajectory_active()
 {
-  ROS_INFO("Goal just went active");
+  std:: cout << "Goal just went active" << std::endl;
 }
 
 //Callback which is called every time feedback is received for the action goal
@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
   add_group_srv.request.group_name = group_name;
   add_group_srv.request.names = {"base", "shoulder", "elbow"};
   add_group_srv.request.families = {"HEBI"};
-  //Call the add_group_from_names service to create a group
+  //Call the add_group_from_urdf service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
-  add_group_client.call(add_group_srv);
+  while(!add_group_client.call(add_group_srv)) {}
 
   feedback.position.reserve(3);
 
@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
   std::vector<std::string> names = {"HEBI/base", "HEBI/shoulder", "HEBI/elbow"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column
-  std::vector<std::vector<double>> positions = {{feedback.position[0], 0, M_PI_2, 0,       0},
-                                                {feedback.position[1], 0, 0,      -M_PI_2, 0},
-                                                {feedback.position[2], 0, 0,      0,       0}};
+  std::vector<std::vector<double>> positions = {{feedback.position[0], 0, M_PI_2, 0,      0},
+                                                {feedback.position[1], 0, M_PI_2, M_PI_2, 0},
+                                                {feedback.position[2], 0, 0,      M_PI_2, 0}};
   std::vector<std::vector<double>> velocities = {{0, nan, nan, nan, 0},
                                                  {0, nan, nan, nan, 0},
                                                  {0, nan, nan, nan, 0}};
