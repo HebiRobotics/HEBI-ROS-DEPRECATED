@@ -61,6 +61,9 @@ add_message_files(
   EntryListMsg.msg
   FeedbackMsg.msg
   WaypointMsg.msg
+  CommandMsg.msg
+  SettingsMsg.msg
+  PidGainsMsg.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -208,8 +208,289 @@ bool Hebiros_Node::srv_add_group_from_urdf(
   return Hebiros_Node::srv_add_group_from_names(names_req, names_res);
 }
 
-//Subscriber callback which receives a joint state and sends that as a command to a group
-void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
+void Hebiros_Node::add_joint_command(GroupCommand* group_command,
+  sensor_msgs::JointState data, std::string group_name) {
+
+  std::shared_ptr<Group> group = groups[group_name];
+
+  for (int i = 0; i < data.name.size(); i++) {
+    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+
+      int joint_index = group_joints[group_name][data.name[i]];
+
+      if (i < data.position.size()) {
+        (*group_command)[joint_index].actuator().position().set(data.position[i]);
+      }
+      if (i < data.velocity.size()) {
+        (*group_command)[joint_index].actuator().velocity().set(data.velocity[i]);
+      }
+      if (i < data.effort.size()) {
+        (*group_command)[joint_index].actuator().effort().set(data.effort[i]);
+      }
+    }
+    else {
+      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+    }
+  }
+}
+
+void Hebiros_Node::add_settings_command(GroupCommand* group_command,
+  SettingsMsg data, std::string group_name) {
+
+  std::shared_ptr<Group> group = groups[group_name];
+
+  for (int i = 0; i < data.name.size(); i++) {
+    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+
+      int joint_index = group_joints[group_name][data.name[i]];
+
+      if (i < data.save_current_settings.size()) {
+        if (data.save_current_settings[i]) {
+          (*group_command)[joint_index].settings().saveCurrentSettings().set();
+        }
+      }
+      if (i < data.set_name_part.size()) {
+        (*group_command)[joint_index].settings().name().set(data.set_name_part[i]);
+      }
+      if (i < data.set_family_part.size()) {
+        (*group_command)[joint_index].settings().family().set(data.set_family_part[i]);
+      }
+      //if (i < data.control_strategy.size()) {
+      //  (*group_command)[joint_index].
+      //    settings().actuator().controlStrategy().set(data.control_strategy[i]);
+      //}
+    }
+    else {
+      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+    }
+  }
+
+  add_position_gains_command(group_command, data.position_gains, group_name);
+  add_velocity_gains_command(group_command, data.velocity_gains, group_name);
+  add_effort_gains_command(group_command, data.effort_gains, group_name);
+}
+
+void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
+  PidGainsMsg data, std::string group_name) {
+
+  std::shared_ptr<Group> group = groups[group_name];
+
+  for (int i = 0; i < data.name.size(); i++) {
+    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+
+      int joint_index = group_joints[group_name][data.name[i]];
+
+      if (i < data.kp.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionKp().set(data.kp[i]);
+      }
+      if (i < data.ki.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionKi().set(data.ki[i]);
+      }
+      if (i < data.kd.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionKd().set(data.kd[i]);
+      }
+      if (i < data.feed_forward.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionFeedForward().set(data.feed_forward[i]);
+      }
+      if (i < data.dead_zone.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionDeadZone().set(data.dead_zone[i]);
+      }
+      if (i < data.i_clamp.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionIClamp().set(data.i_clamp[i]);
+      }
+      if (i < data.punch.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionPunch().set(data.punch[i]);
+      }
+      if (i < data.min_target.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionMinTarget().set(data.min_target[i]);
+      }
+      if (i < data.max_target.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionMaxTarget().set(data.max_target[i]);
+      }
+      if (i < data.target_lowpass.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionTargetLowpass().set(data.target_lowpass[i]);
+      }
+      if (i < data.min_output.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionMinOutput().set(data.min_output[i]);
+      }
+      if (i < data.max_output.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionMaxOutput().set(data.max_output[i]);
+      }
+      if (i < data.output_lowpass.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionOutputLowpass().set(data.output_lowpass[i]);
+      }
+      if (i < data.d_on_error.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().positionGains().positionDOnError().set(data.d_on_error[i]);
+      }
+    }
+    else {
+      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+    }
+  }
+}
+
+void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
+  PidGainsMsg data, std::string group_name) {
+
+  std::shared_ptr<Group> group = groups[group_name];
+
+  for (int i = 0; i < data.name.size(); i++) {
+    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+
+      int joint_index = group_joints[group_name][data.name[i]];
+
+      if (i < data.kp.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityKp().set(data.kp[i]);
+      }
+      if (i < data.ki.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityKi().set(data.ki[i]);
+      }
+      if (i < data.kd.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityKd().set(data.kd[i]);
+      }
+      if (i < data.feed_forward.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityFeedForward().set(data.feed_forward[i]);
+      }
+      if (i < data.dead_zone.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityDeadZone().set(data.dead_zone[i]);
+      }
+      if (i < data.i_clamp.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityIClamp().set(data.i_clamp[i]);
+      }
+      if (i < data.punch.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityPunch().set(data.punch[i]);
+      }
+      if (i < data.min_target.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityMinTarget().set(data.min_target[i]);
+      }
+      if (i < data.max_target.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityMaxTarget().set(data.max_target[i]);
+      }
+      if (i < data.target_lowpass.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityTargetLowpass().set(data.target_lowpass[i]);
+      }
+      if (i < data.min_output.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityMinOutput().set(data.min_output[i]);
+      }
+      if (i < data.max_output.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityMaxOutput().set(data.max_output[i]);
+      }
+      if (i < data.output_lowpass.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityOutputLowpass().set(data.output_lowpass[i]);
+      }
+      if (i < data.d_on_error.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().velocityGains().velocityDOnError().set(data.d_on_error[i]);
+      }
+    }
+    else {
+      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+    }
+  }
+}
+
+void Hebiros_Node::add_effort_gains_command(GroupCommand* group_command,
+  PidGainsMsg data, std::string group_name) {
+
+  std::shared_ptr<Group> group = groups[group_name];
+
+  for (int i = 0; i < data.name.size(); i++) {
+    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+
+      int joint_index = group_joints[group_name][data.name[i]];
+
+      if (i < data.kp.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortKp().set(data.kp[i]);
+      }
+      if (i < data.ki.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortKi().set(data.ki[i]);
+      }
+      if (i < data.kd.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortKd().set(data.kd[i]);
+      }
+      if (i < data.feed_forward.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortFeedForward().set(data.feed_forward[i]);
+      }
+      if (i < data.dead_zone.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortDeadZone().set(data.dead_zone[i]);
+      }
+      if (i < data.i_clamp.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortIClamp().set(data.i_clamp[i]);
+      }
+      if (i < data.punch.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortPunch().set(data.punch[i]);
+      }
+      if (i < data.min_target.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortMinTarget().set(data.min_target[i]);
+      }
+      if (i < data.max_target.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortMaxTarget().set(data.max_target[i]);
+      }
+      if (i < data.target_lowpass.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortTargetLowpass().set(data.target_lowpass[i]);
+      }
+      if (i < data.min_output.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortMinOutput().set(data.min_output[i]);
+      }
+      if (i < data.max_output.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortMaxOutput().set(data.max_output[i]);
+      }
+      if (i < data.output_lowpass.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortOutputLowpass().set(data.output_lowpass[i]);
+      }
+      if (i < data.d_on_error.size()) {
+        (*group_command)[joint_index].
+          settings().actuator().effortGains().effortDOnError().set(data.d_on_error[i]);
+      }
+    }
+    else {
+      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+    }
+  }
+}
+
+//Subscriber callback which receives commands and sends them to a group
+void Hebiros_Node::sub_command(const boost::shared_ptr<CommandMsg const> data,
   std::string group_name) {
 
   if (use_gazebo) {
@@ -226,39 +507,46 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<sensor_msgs::JointState c
   std::shared_ptr<Group> group = groups[group_name];
   GroupCommand group_command(group->size());
 
-  Eigen::VectorXd position(group->size());
-  Eigen::VectorXd velocity(group->size());
-  Eigen::VectorXd effort(group->size());
+  sensor_msgs::JointState joint_data;
+  joint_data.name = data->name;
+  joint_data.position = data->position;
+  joint_data.velocity = data->velocity;
+  joint_data.effort = data->effort;
+  SettingsMsg settings_data;
+  settings_data = data->settings;
 
-  for (int i = 0; i < group->size(); i++) {
-    position(i) = std::numeric_limits<double>::quiet_NaN();
-    velocity(i) = std::numeric_limits<double>::quiet_NaN();
-    effort(i) = std::numeric_limits<double>::quiet_NaN();
+  add_joint_command(&group_command, joint_data, group_name);
+  add_settings_command(&group_command, settings_data, group_name);
+
+  group->sendCommand(group_command);
+}
+
+//Subscriber callback which receives a joint state and sends that as a command to a group
+void Hebiros_Node::sub_joint_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
+  std::string group_name) {
+
+  if (use_gazebo) {
+    std_msgs::Float64 command_msg;
+    for (int i = 0; i < data->name.size(); i++) {
+      std::string joint_name = data->name[i];
+      command_msg.data = data->effort[i];
+      publishers["/hebiros/"+group_name+"/"+joint_name+"/controller/command"].publish(
+        command_msg);
+    }
+    return;
   }
 
-  for (int i = 0; i < data->name.size(); i++) {
-    if (group_joints[group_name].find(data->name[i]) != group_joints[group_name].end()) {
+  std::shared_ptr<Group> group = groups[group_name];
+  GroupCommand group_command(group->size());
 
-      int joint_index = group_joints[group_name][data->name[i]];
+  sensor_msgs::JointState joint_data;
+  joint_data.name = data->name;
+  joint_data.position = data->position;
+  joint_data.velocity = data->velocity;
+  joint_data.effort = data->effort;
 
-      if (i < data->position.size()) {
-        position(joint_index) = data->position[i];
-      }
-      if (i < data->velocity.size()) {
-        velocity(joint_index) = data->velocity[i];
-      }
-      if (i < data->effort.size()) {
-        effort(joint_index) = data->effort[i];
-      }
-    }
-    else {
-      ROS_WARN("Unable to find joint: %s.  Command not sent.", data->name[i].c_str());
-    }
-  }
+  add_joint_command(&group_command, joint_data, group_name);
 
-  group_command.setPosition(position);
-  group_command.setVelocity(velocity);
-  group_command.setEffort(effort);
   group->sendCommand(group_command);
 }
 
@@ -461,9 +749,13 @@ void Hebiros_Node::register_group(std::string group_name) {
   publishers["/hebiros/"+group_name+"/command/joint_state"] =   
     n.advertise<sensor_msgs::JointState>("/hebiros/"+group_name+"/command/joint_state", 100);
 
+  subscribers["/hebiros/"+group_name+"/command"] = 
+    n.subscribe<CommandMsg>("/hebiros/"+group_name+"/command", 100,
+    boost::bind(&Hebiros_Node::sub_command, this, _1, group_name));
+
   subscribers["/hebiros/"+group_name+"/command/joint_state"] = 
     n.subscribe<sensor_msgs::JointState>("/hebiros/"+group_name+"/command/joint_state", 100,
-    boost::bind(&Hebiros_Node::sub_command, this, _1, group_name));
+    boost::bind(&Hebiros_Node::sub_joint_command, this, _1, group_name));
 
   services["/hebiros/"+group_name+"/size"] =
     n.advertiseService<SizeSrv::Request, SizeSrv::Response>("/hebiros/"+group_name+"/size",

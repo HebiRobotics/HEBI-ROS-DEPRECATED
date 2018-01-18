@@ -10,6 +10,9 @@
 #include "hebiros/EntryListMsg.h"
 #include "hebiros/FeedbackMsg.h"
 #include "hebiros/WaypointMsg.h"
+#include "hebiros/CommandMsg.h"
+#include "hebiros/SettingsMsg.h"
+#include "hebiros/PidGainsMsg.h"
 #include "hebiros/EntryListSrv.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/AddGroupFromUrdfSrv.h"
@@ -94,7 +97,10 @@ class Hebiros_Node {
       std::string group_name);
 
     /* Subscriber callback functions */
-    void sub_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
+    void sub_command(const boost::shared_ptr<CommandMsg const> data,
+      std::string group_name);
+
+    void sub_joint_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
       std::string group_name);
 
     void sub_publish_group_gazebo(
@@ -111,6 +117,21 @@ class Hebiros_Node {
     void unregister_group(std::string group_name);
 
     /* General */
+    void add_joint_command(GroupCommand* group_command,
+      sensor_msgs::JointState data, std::string group_name);
+
+    void add_settings_command(GroupCommand* group_command,
+      SettingsMsg data, std::string group_name);
+
+    void add_position_gains_command(GroupCommand* group_command,
+      PidGainsMsg data, std::string group_name);
+
+    void add_velocity_gains_command(GroupCommand* group_command,
+      PidGainsMsg data, std::string group_name);
+
+    void add_effort_gains_command(GroupCommand* group_command,
+      PidGainsMsg data, std::string group_name);
+
     bool split(const std::string &orig, std::string &name, std::string &family);
 
     void add_joint_children(std::set<std::string>& names, std::set<std::string>& families, 
