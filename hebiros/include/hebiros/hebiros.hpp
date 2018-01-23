@@ -19,6 +19,7 @@
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
+#include "hebiros/SendCommandWithAcknowledgementSrv.h"
 #include "hebiros/TrajectoryAction.h"
 
 #include "color.hpp"
@@ -72,6 +73,14 @@ class Hebiros_Node {
 
     bool use_gazebo;
 
+    typedef enum control_strategies {
+      CONTROL_STRATEGY_OFF = 0,
+      CONTROL_STRATEGY_DIRECT_PWM = 1,
+      CONTROL_STRATEGY_2 = 2,
+      CONTROL_STRATEGY_3 = 3,
+      CONTROL_STRATEGY_4 = 4
+    } control_strategies;
+
     Hebiros_Node (int argc, char **argv);
     ~Hebiros_Node() noexcept(false) {}
 
@@ -95,6 +104,10 @@ class Hebiros_Node {
     bool srv_set_command_lifetime(
       SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
       std::string group_name);
+
+    bool srv_send_command_with_acknowledgement(
+      SendCommandWithAcknowledgementSrv::Request &req, 
+      SendCommandWithAcknowledgementSrv::Response &res, std::string group_name);
 
     /* Subscriber callback functions */
     void sub_command(const boost::shared_ptr<CommandMsg const> data,

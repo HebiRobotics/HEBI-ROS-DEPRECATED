@@ -75,6 +75,7 @@ add_service_files(
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
+  SendCommandWithAcknowledgementSrv.srv
 )
 
 ## Generate actions in the 'action' folder

@@ -208,6 +208,7 @@ bool Hebiros_Node::srv_add_group_from_urdf(
   return Hebiros_Node::srv_add_group_from_names(names_req, names_res);
 }
 
+//Add joint state values to a group command
 void Hebiros_Node::add_joint_command(GroupCommand* group_command,
   sensor_msgs::JointState data, std::string group_name) {
 
@@ -234,6 +235,7 @@ void Hebiros_Node::add_joint_command(GroupCommand* group_command,
   }
 }
 
+//Add settings values to a group command
 void Hebiros_Node::add_settings_command(GroupCommand* group_command,
   SettingsMsg data, std::string group_name) {
 
@@ -249,16 +251,12 @@ void Hebiros_Node::add_settings_command(GroupCommand* group_command,
           (*group_command)[joint_index].settings().saveCurrentSettings().set();
         }
       }
-      if (i < data.set_name_part.size()) {
-        (*group_command)[joint_index].settings().name().set(data.set_name_part[i]);
+      if (i < data.control_strategy.size()) {
+        Command::ControlStrategy strategy = static_cast<Command::ControlStrategy>( 
+          data.control_strategy[i]);
+        (*group_command)[joint_index].
+          settings().actuator().controlStrategy().set(strategy);
       }
-      if (i < data.set_family_part.size()) {
-        (*group_command)[joint_index].settings().family().set(data.set_family_part[i]);
-      }
-      //if (i < data.control_strategy.size()) {
-      //  (*group_command)[joint_index].
-      //    settings().actuator().controlStrategy().set(data.control_strategy[i]);
-      //}
     }
     else {
       ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
@@ -270,6 +268,7 @@ void Hebiros_Node::add_settings_command(GroupCommand* group_command,
   add_effort_gains_command(group_command, data.effort_gains, group_name);
 }
 
+//Add position gain values to a group command
 void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
@@ -343,6 +342,7 @@ void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
   }
 }
 
+//Add velocity gain values to a group command
 void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
@@ -416,6 +416,7 @@ void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
   }
 }
 
+//Add effort gain values to a group command
 void Hebiros_Node::add_effort_gains_command(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
@@ -645,6 +646,28 @@ bool Hebiros_Node::srv_set_command_lifetime(
   return true;
 }
 
+//Service callback which sends a command and indicates whether it has been received
+bool Hebiros_Node::srv_send_command_with_acknowledgement(
+  SendCommandWithAcknowledgementSrv::Request &req, SendCommandWithAcknowledgementSrv::Response &res,
+  std::string group_name) {
+
+  std::shared_ptr<Group> group = groups[group_name];
+  GroupCommand group_command(group->size());
+
+  sensor_msgs::JointState joint_data;
+  joint_data.name = req.command.name;
+  joint_data.position = req.command.position;
+  joint_data.velocity = req.command.velocity;
+  joint_data.effort = req.command.effort;
+  SettingsMsg settings_data;
+  settings_data = req.command.settings;
+
+  add_joint_command(&group_command, joint_data, group_name);
+  add_settings_command(&group_command, settings_data, group_name);
+
+  return group->sendCommandWithAcknowledgement(group_command);
+}
+
 //Action callback which controls following a trajectory
 void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name) {
 
@@ -772,6 +795,12 @@ void Hebiros_Node::register_group(std::string group_name) {
     SetCommandLifetimeSrv::Response>(
     "/hebiros/"+group_name+"/set_command_lifetime",
     boost::bind(&Hebiros_Node::srv_set_command_lifetime, this, _1, _2, group_name));
+
+  services["/hebiros/"+group_name+"/send_command_with_acknowledgement"] =
+    n.advertiseService<SendCommandWithAcknowledgementSrv::Request,
+    SendCommandWithAcknowledgementSrv::Response>(
+    "/hebiros/"+group_name+"/send_command_with_acknowledgement",
+    boost::bind(&Hebiros_Node::srv_send_command_with_acknowledgement, this, _1, _2, group_name));
 
   trajectory_actions[group_name] = std::make_shared<
     actionlib::SimpleActionServer<TrajectoryAction>>(
