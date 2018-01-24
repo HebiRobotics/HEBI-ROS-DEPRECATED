@@ -208,14 +208,22 @@ bool Hebiros_Node::srv_add_group_from_urdf(
   return Hebiros_Node::srv_add_group_from_names(names_req, names_res);
 }
 
+//Determine whether a joint is in a specific group
+bool Hebiros_Node::joint_found(std::string group_name, std::string joint_name) {
+  return group_joints[group_name].find(joint_name) != group_joints[group_name].end();
+}
+
+//Print a warning indicating that a joint could not be found
+void Hebiros_Node::joint_not_found(std::string joint_name) {
+  ROS_WARN("Unable to find joint: %s.  Command will not be sent.", joint_name.c_str());
+}
+
 //Add joint state values to a group command
 void Hebiros_Node::add_joint_command(GroupCommand* group_command,
   sensor_msgs::JointState data, std::string group_name) {
 
-  std::shared_ptr<Group> group = groups[group_name];
-
   for (int i = 0; i < data.name.size(); i++) {
-    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+    if (joint_found(group_name, data.name[i])) {
 
       int joint_index = group_joints[group_name][data.name[i]];
 
@@ -230,7 +238,7 @@ void Hebiros_Node::add_joint_command(GroupCommand* group_command,
       }
     }
     else {
-      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+      joint_not_found(data.name[i]);
     }
   }
 }
@@ -239,10 +247,8 @@ void Hebiros_Node::add_joint_command(GroupCommand* group_command,
 void Hebiros_Node::add_settings_command(GroupCommand* group_command,
   SettingsMsg data, std::string group_name) {
 
-  std::shared_ptr<Group> group = groups[group_name];
-
   for (int i = 0; i < data.name.size(); i++) {
-    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+    if (joint_found(group_name, data.name[i])) {
 
       int joint_index = group_joints[group_name][data.name[i]];
 
@@ -259,7 +265,7 @@ void Hebiros_Node::add_settings_command(GroupCommand* group_command,
       }
     }
     else {
-      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+      joint_not_found(data.name[i]);
     }
   }
 
@@ -272,10 +278,8 @@ void Hebiros_Node::add_settings_command(GroupCommand* group_command,
 void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  std::shared_ptr<Group> group = groups[group_name];
-
   for (int i = 0; i < data.name.size(); i++) {
-    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+    if (joint_found(group_name, data.name[i])) {
 
       int joint_index = group_joints[group_name][data.name[i]];
 
@@ -337,7 +341,7 @@ void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
       }
     }
     else {
-      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+      joint_not_found(data.name[i]);
     }
   }
 }
@@ -346,10 +350,8 @@ void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
 void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  std::shared_ptr<Group> group = groups[group_name];
-
   for (int i = 0; i < data.name.size(); i++) {
-    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+    if (joint_found(group_name, data.name[i])) {
 
       int joint_index = group_joints[group_name][data.name[i]];
 
@@ -411,7 +413,7 @@ void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
       }
     }
     else {
-      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+      joint_not_found(data.name[i]);
     }
   }
 }
@@ -423,7 +425,7 @@ void Hebiros_Node::add_effort_gains_command(GroupCommand* group_command,
   std::shared_ptr<Group> group = groups[group_name];
 
   for (int i = 0; i < data.name.size(); i++) {
-    if (group_joints[group_name].find(data.name[i]) != group_joints[group_name].end()) {
+    if (joint_found(group_name, data.name[i])) {
 
       int joint_index = group_joints[group_name][data.name[i]];
 
@@ -485,7 +487,7 @@ void Hebiros_Node::add_effort_gains_command(GroupCommand* group_command,
       }
     }
     else {
-      ROS_WARN("Unable to find joint: %s.  Command will not be sent.", data.name[i].c_str());
+      joint_not_found(data.name[i]);
     }
   }
 }

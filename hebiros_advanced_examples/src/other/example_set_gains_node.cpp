@@ -49,10 +49,10 @@ int main(int argc, char **argv) {
   //For each module, set p, i, d gains for position, velocity, effort
   command_msg.settings.position_gains.kp = {1, 2, 1};
   command_msg.settings.position_gains.ki = {0.1, 0.2, 0.2};
-  command_msg.settings.position_gains.kd = {0.5, 1, 0.1};
+  command_msg.settings.position_gains.kd = {0.005, 0.001, 0.001};
   command_msg.settings.velocity_gains.kp = {0.1, 0.2, 0.1};
   command_msg.settings.velocity_gains.ki = {0.01, 0.02, 0.02};
-  command_msg.settings.velocity_gains.kd = {0.05, 0.1, 0.01};
+  command_msg.settings.velocity_gains.kd = {0.005, 0.001, 0.001};
   command_msg.settings.effort_gains.kp = {0.001, 0.002, 0.001};
   command_msg.settings.effort_gains.ki = {0.001, 0.002, 0.001};
   command_msg.settings.effort_gains.kd = {0.005, 0.001, 0.001};

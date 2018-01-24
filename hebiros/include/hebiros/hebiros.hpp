@@ -73,7 +73,7 @@ class Hebiros_Node {
 
     bool use_gazebo;
 
-    typedef enum control_strategies {
+    enum class control_strategies {
       CONTROL_STRATEGY_OFF = 0,
       CONTROL_STRATEGY_DIRECT_PWM = 1,
       CONTROL_STRATEGY_2 = 2,
@@ -130,6 +130,10 @@ class Hebiros_Node {
     void unregister_group(std::string group_name);
 
     /* General */
+    bool joint_found(std::string group_name, std::string joint_name);
+
+    void joint_not_found(std::string joint_name);
+
     void add_joint_command(GroupCommand* group_command,
       sensor_msgs::JointState data, std::string group_name);
 
