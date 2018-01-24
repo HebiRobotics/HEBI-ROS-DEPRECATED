@@ -176,6 +176,11 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebi/trajectory.cpp
 
   include/hebiros/hebiros.cpp
+  include/hebiros/hebiros_actions.cpp
+  include/hebiros/hebiros_group.cpp
+  include/hebiros/hebiros_services.cpp
+  include/hebiros/hebiros_subscribers.cpp
+  include/hebiros/hebiros_utility.cpp
 )
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
