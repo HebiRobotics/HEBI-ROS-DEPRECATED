@@ -10,12 +10,16 @@
 #include "hebiros/EntryListMsg.h"
 #include "hebiros/FeedbackMsg.h"
 #include "hebiros/WaypointMsg.h"
+#include "hebiros/CommandMsg.h"
+#include "hebiros/SettingsMsg.h"
+#include "hebiros/PidGainsMsg.h"
 #include "hebiros/EntryListSrv.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/AddGroupFromUrdfSrv.h"
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
+#include "hebiros/SendCommandWithAcknowledgementSrv.h"
 #include "hebiros/TrajectoryAction.h"
 
 #include "color.hpp"
@@ -69,6 +73,14 @@ class Hebiros_Node {
 
     bool use_gazebo;
 
+    enum class control_strategies {
+      CONTROL_STRATEGY_OFF = 0,
+      CONTROL_STRATEGY_DIRECT_PWM = 1,
+      CONTROL_STRATEGY_2 = 2,
+      CONTROL_STRATEGY_3 = 3,
+      CONTROL_STRATEGY_4 = 4
+    } control_strategies;
+
     Hebiros_Node (int argc, char **argv);
     ~Hebiros_Node() noexcept(false) {}
 
@@ -93,8 +105,15 @@ class Hebiros_Node {
       SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
       std::string group_name);
 
+    bool srv_send_command_with_acknowledgement(
+      SendCommandWithAcknowledgementSrv::Request &req, 
+      SendCommandWithAcknowledgementSrv::Response &res, std::string group_name);
+
     /* Subscriber callback functions */
-    void sub_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
+    void sub_command(const boost::shared_ptr<CommandMsg const> data,
+      std::string group_name);
+
+    void sub_joint_command(const boost::shared_ptr<sensor_msgs::JointState const> data,
       std::string group_name);
 
     void sub_publish_group_gazebo(
@@ -111,6 +130,25 @@ class Hebiros_Node {
     void unregister_group(std::string group_name);
 
     /* General */
+    bool joint_found(std::string group_name, std::string joint_name);
+
+    void joint_not_found(std::string joint_name);
+
+    void add_joint_command(GroupCommand* group_command,
+      sensor_msgs::JointState data, std::string group_name);
+
+    void add_settings_command(GroupCommand* group_command,
+      SettingsMsg data, std::string group_name);
+
+    void add_position_gains_command(GroupCommand* group_command,
+      PidGainsMsg data, std::string group_name);
+
+    void add_velocity_gains_command(GroupCommand* group_command,
+      PidGainsMsg data, std::string group_name);
+
+    void add_effort_gains_command(GroupCommand* group_command,
+      PidGainsMsg data, std::string group_name);
+
     bool split(const std::string &orig, std::string &name, std::string &family);
 
     void add_joint_children(std::set<std::string>& names, std::set<std::string>& families, 

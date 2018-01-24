@@ -61,6 +61,9 @@ add_message_files(
   EntryListMsg.msg
   FeedbackMsg.msg
   WaypointMsg.msg
+  CommandMsg.msg
+  SettingsMsg.msg
+  PidGainsMsg.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +75,7 @@ add_service_files(
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
+  SendCommandWithAcknowledgementSrv.srv
 )
 
 ## Generate actions in the 'action' folder
