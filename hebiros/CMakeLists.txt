@@ -61,6 +61,9 @@ add_message_files(
   EntryListMsg.msg
   FeedbackMsg.msg
   WaypointMsg.msg
+  CommandMsg.msg
+  SettingsMsg.msg
+  PidGainsMsg.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +75,7 @@ add_service_files(
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
+  SendCommandWithAcknowledgementSrv.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -172,6 +176,11 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebi/trajectory.cpp
 
   include/hebiros/hebiros.cpp
+  include/hebiros/hebiros_actions.cpp
+  include/hebiros/hebiros_group.cpp
+  include/hebiros/hebiros_services.cpp
+  include/hebiros/hebiros_subscribers.cpp
+  include/hebiros/hebiros_utility.cpp
 )
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
