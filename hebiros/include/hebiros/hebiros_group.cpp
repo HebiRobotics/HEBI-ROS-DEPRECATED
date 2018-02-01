@@ -142,6 +142,7 @@ void Hebiros_Node::publish_group(std::string group_name, const GroupFeedback& gr
     feedback_msg.hardware_receive_time.push_back(group_fbk[i].actuator().hardwareReceiveTime().get());
     feedback_msg.hardware_transmit_time.push_back(
       group_fbk[i].actuator().hardwareTransmitTime().get());
+    feedback_msg.m_stop_triggered.push_back(group_fbk[i].io().a().getInt(1) == 0);
   }
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);

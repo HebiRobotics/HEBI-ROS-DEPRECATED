@@ -59,14 +59,9 @@ int main(int argc, char **argv) {
     //You can also see feedback by running "rostopic echo /hebiros/<group>/feedback"
     for (int i = 0; i < size_srv.response.size; i++) {
       std::cout << "Module " << i << ": " << std::endl;
-      std::cout << "Accelerometer: " <<
-        feedback.accelerometer[i].x << ", " <<
-        feedback.accelerometer[i].y << ", " <<
-        feedback.accelerometer[i].z << std::endl;
-      std::cout << "Gyro: " <<
-        feedback.gyro[i].x << ", " <<
-        feedback.gyro[i].y << ", " <<
-        feedback.gyro[i].z << std::endl;
+      
+      if (feedback.m_stop_triggered.size() > i && feedback.m_stop_triggered[i])
+        std::cout << "MSTOP TRIGGERED" << std::endl;
     }
     std::cout << std::endl;
 

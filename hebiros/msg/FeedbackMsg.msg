@@ -24,4 +24,5 @@ uint64[] receive_time
 uint64[] transmit_time
 uint64[] hardware_receive_time
 uint64[] hardware_transmit_time
+bool[] m_stop_triggered
 
