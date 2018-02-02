@@ -54,44 +54,48 @@ bool Hebiros_Node::srv_add_group_from_names(
       publish_rate, 50);
     n.setParam("/hebiros/"+req.group_name+"/joint_state_controller/publish_rate", publish_rate);
   }
-
   int joint_index = 0;
   ROS_INFO("Created group [%s]:", req.group_name.c_str());
-  for (int i = 0; i < req.families.size(); i++) {
-    for (int j = 0; j < req.names.size(); j++) {
-      ROS_INFO("/%s/%s/%s", req.group_name.c_str(),
-        req.families[i].c_str(), req.names[j].c_str());
-        group_joints[req.group_name][req.families[i]+"/"+req.names[j]] = joint_index;
+  int families_size = req.families.size();
+  int names_size = req.names.size();
+  int families_index = 0;
+  int names_index = 0;
+  int joints_size = std::max(families_size, names_size);
+  for (int i = 0; i < joints_size; i++) {
+    families_index = std::min(families_size-1, i);
+    names_index = std::min(names_size-1, i);
+    ROS_INFO("/%s/%s/%s", req.group_name.c_str(),
+      req.families[families_index].c_str(), req.names[names_index].c_str());
+    group_joints[req.group_name][req.families[families_index]+"/"+req.names[names_index]] = joint_index;
 
-        if (use_gazebo) {
-          std::string controller_namespace = "/hebiros/"+req.group_name+"/"+
-            req.families[i]+"/"+req.names[j]+"/controller";
+    if (use_gazebo) {
+      std::string controller_namespace = "/hebiros/"+req.group_name+"/"+
+        req.families[families_index]+"/"+req.names[names_index]+"/controller";
 
-          std::string type;
-          float p, i, d;
-          int publish_rate;
+      std::string type;
+      float p, i, d;
+      int publish_rate;
 
-          n.setParam(controller_namespace+"/joint", req.families[i]+"/"+req.names[j]);
+      n.setParam(controller_namespace+"/joint", req.families[families_index]+"/"+req.names[names_index]);
 
-          n.param<std::string>(controller_namespace+"/type", type,
-            "effort_controllers/JointEffortController");
-          n.setParam(controller_namespace+"/type", type);
+      n.param<std::string>(controller_namespace+"/type", type,
+        "effort_controllers/JointEffortController");
+      n.setParam(controller_namespace+"/type", type);
 
-          n.param<float>(controller_namespace+"/pid/p", p, 100.0);
-          n.setParam(controller_namespace+"/pid/p", p);
+      n.param<float>(controller_namespace+"/pid/p", p, 100.0);
+      n.setParam(controller_namespace+"/pid/p", p);
 
-          n.param<float>(controller_namespace+"/pid/i", i, 0.01);
-          n.setParam(controller_namespace+"/pid/i", i);
+      n.param<float>(controller_namespace+"/pid/i", i, 0.01);
+      n.setParam(controller_namespace+"/pid/i", i);
 
-          n.param<float>(controller_namespace+"/pid/d", d, 10.0);
-          n.setParam(controller_namespace+"/pid/d", d);
+      n.param<float>(controller_namespace+"/pid/d", d, 10.0);
+      n.setParam(controller_namespace+"/pid/d", d);
 
-          n.param<int>(controller_namespace+"/publish_rate", publish_rate, 50);
-          n.setParam(controller_namespace+"/publish_rate", publish_rate);
-        }
-
-        joint_index++;
+      n.param<int>(controller_namespace+"/publish_rate", publish_rate, 50);
+      n.setParam(controller_namespace+"/publish_rate", publish_rate);
     }
+
+    joint_index++;
   }
 
   register_group(req.group_name);
