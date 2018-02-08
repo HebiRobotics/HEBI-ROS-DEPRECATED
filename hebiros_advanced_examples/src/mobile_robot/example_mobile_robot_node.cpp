@@ -2,7 +2,8 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <std_srvs/Empty.h>
-#include "sensor_msgs/JointState.h"
+#include <sensor_msgs/JointState.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include "hebiros/AddGroupFromNamesSrv.h"
 
 using namespace hebiros;
@@ -12,6 +13,10 @@ double x = 0.0;
 double y = 0.0;
 double th = 0.0;
 geometry_msgs::Quaternion odom_quat;
+
+double x_wheel_odom = 0.0;
+double y_wheel_odom = 0.0;
+double th_wheel_odom = 0.0;
 
 double vx = 0;
 double vy = 0;
@@ -38,7 +43,7 @@ bool reset_callback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &re
 }
 
 //Set odometry position and orientation from rtabmap
-void odometry_callback(nav_msgs::Odometry data) {
+void odometry_callback(geometry_msgs::PoseWithCovarianceStamped data) {
   x = data.pose.pose.position.x;
   y = data.pose.pose.position.y;
   odom_quat = data.pose.pose.orientation;
@@ -67,11 +72,13 @@ int main(int argc, char** argv){
 
   //Receive visual odometry from rtabmap
   ros::Subscriber odometry_subscriber = node.subscribe(
-    "/rtabmap/odom", 100, odometry_callback);
+    "/robot_pose_ekf/odom_combined", 100, odometry_callback);
+
+  ros::Publisher wheel_odom_publisher = node.advertise<nav_msgs::Odometry>("wheel_odom", 100);
 
   //Publish odometry for move_base by copying the received odometry from rtabmap
   //It would also be possible to fuse rtabmap odometry with other odometry sources before publishing
-  ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 50);
+  ros::Publisher odom_publisher = node.advertise<nav_msgs::Odometry>("odom", 100);
 
   //Subscribe to command velocities for the robot to be translated into left and right velocities
   ros::Subscriber cmd_vel_subscriber = node.subscribe("/cmd_vel", 10, &cmd_vel_callback);
@@ -99,10 +106,45 @@ int main(int argc, char** argv){
 
   ros::Rate rate(200.0);
 
+  ros::Time current_time = ros::Time::now();
+  ros::Time prev_time = ros::Time::now();
+
   while(ros::ok()){
     ros::spinOnce();
 
     ros::Time current_time = ros::Time::now();
+
+    double dt = (current_time - prev_time).toSec();
+    double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
+    double delta_y = (vx * sin(th) + vy * cos(th)) * dt;
+    double delta_th = vth * dt;
+
+    x_wheel_odom += delta_x;
+    y_wheel_odom += delta_y;
+    th_wheel_odom += delta_th;
+
+    nav_msgs::Odometry wheel_odom;
+    wheel_odom.header.stamp = current_time;
+    wheel_odom.header.frame_id = "wheel_odom";
+
+    wheel_odom.pose.pose.position.x = x_wheel_odom;
+    wheel_odom.pose.pose.position.y = y_wheel_odom;
+    wheel_odom.pose.pose.position.z = 0.0;
+    wheel_odom.pose.covariance[0] = 0.7;
+    wheel_odom.pose.covariance[7] = 0.7;
+    wheel_odom.pose.covariance[14] = 0.7;
+    wheel_odom.pose.covariance[21] = 0.7;
+    wheel_odom.pose.covariance[28] = 0.7;
+    wheel_odom.pose.covariance[35] = 0.7;
+    wheel_odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(th);
+
+    wheel_odom.child_frame_id = "base_link";
+    wheel_odom.twist.twist.linear.x = vx;
+    wheel_odom.twist.twist.linear.y = vy;
+    wheel_odom.twist.twist.angular.z = vth;
+
+    wheel_odom_publisher.publish(wheel_odom);
+
 
     //Send the transform for "map" to "odom" to tf
     //The map and odometry frame do not differ, so just send a 0 transform
@@ -137,13 +179,15 @@ int main(int argc, char** argv){
     odom.twist.twist.linear.x = vx;
     odom.twist.twist.linear.y = vy;
     odom.twist.twist.angular.z = vth;
-    odom_pub.publish(odom);
+    odom_publisher.publish(odom);
 
     //Apply standard differential drive equations to the wheel modules and publish as a command
     //The right wheel velocity is negative because it is mounted in the opposite direction
     command_msg.velocity[0] = 1.0 * ((vx - (wheel_distance * vth)) / wheel_radius);
     command_msg.velocity[1] = -1.0 * ((vx + (wheel_distance * vth)) / wheel_radius);
     command_publisher.publish(command_msg);
+
+    prev_time = current_time;
 
     rate.sleep();
   }
