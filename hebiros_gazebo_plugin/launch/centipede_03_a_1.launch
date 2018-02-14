@@ -1,0 +1,73 @@
+<launch>
+  <!-- Load the spinning horizontal arm URDF model into the parameter server -->
+  <param name="robot_description" textfile="$(find simplemotorpluginexample_description)/urdf/centipede_03_b.urdf"/>
+
+  <!-- Start Gazebo with an empty world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="true"/>
+  </include>
+  <!-- Spawn a urdf in Gazebo, taking the description from the parameter server -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+        args="-param robot_description -urdf -model centipede_3 -x 0 -y 0 -z 0.75" />
+        <!-- Note: I'm explicitly setting the spawn location - this can be a useful trick if you want to spawn multiple robots... -->
+
+  <!-- Start FSM nodes -->
+  <!-- segment 0 -->
+  <!-- leg FSMs -->
+  <node name="seg0_rightleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="right seg0_rightknee_to_rightleg seg0_righthip_to_rightleg seg0_rightleg_to_rightknee seg0_rightleg_to_righthip
+              seg0_to_rightleg rightleg_to_seg0 100.0" />
+  <node name="seg0_leftleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="left seg0_leftknee_to_leftleg seg0_lefthip_to_leftleg seg0_leftleg_to_leftknee seg0_leftleg_to_lefthip
+              seg0_to_leftleg leftleg_to_seg0 100.0" />
+  <!-- leg pair FSM -->
+  <node name="seg0" pkg="simplemotorpluginexample_description" type="segment_fsm_node.py" output="screen" launch-prefix="xterm -e"
+        args="rightleg_to_seg0 leftleg_to_seg0 seg0_to_rightleg seg0_to_leftleg cent_to_seg0 seg0_to_cent 100.0" />
+
+  <!-- segment 1 -->
+  <!-- leg FSMs -->
+  <node name="seg1_rightleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="right seg1_rightknee_to_rightleg seg1_righthip_to_rightleg seg1_rightleg_to_rightknee seg1_rightleg_to_righthip
+              seg1_to_rightleg rightleg_to_seg1 100.0" />
+  <node name="seg1_leftleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="left seg1_leftknee_to_leftleg seg1_lefthip_to_leftleg seg1_leftleg_to_leftknee seg1_leftleg_to_lefthip
+              seg1_to_leftleg leftleg_to_seg1 100.0" />
+  <!-- leg pair FSM -->
+  <node name="seg1" pkg="simplemotorpluginexample_description" type="segment_fsm_node.py" output="screen" launch-prefix="xterm -e"
+        args="rightleg_to_seg1 leftleg_to_seg1 seg1_to_rightleg seg1_to_leftleg cent_to_seg1 seg1_to_cent 100.0" />
+
+  <!-- segment 2 -->
+  <!-- leg FSMs -->
+  <node name="seg2_rightleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="right seg2_rightknee_to_rightleg seg2_righthip_to_rightleg seg2_rightleg_to_rightknee seg2_rightleg_to_righthip
+              seg2_to_rightleg rightleg_to_seg2 100.0" />
+  <node name="seg2_leftleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="left seg2_leftknee_to_leftleg seg2_lefthip_to_leftleg seg2_leftleg_to_leftknee seg2_leftleg_to_lefthip
+              seg2_to_leftleg leftleg_to_seg2 100.0" />
+  <!-- leg pair FSM -->
+  <node name="seg2" pkg="simplemotorpluginexample_description" type="segment_fsm_node.py" output="screen" launch-prefix="xterm -e"
+        args="rightleg_to_seg2 leftleg_to_seg2 seg2_to_rightleg seg2_to_leftleg cent_to_seg2 seg2_to_cent 100.0" />
+
+  <!-- segment 3 -->
+  <!-- leg FSMs -->
+  <node name="seg3_rightleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="right seg3_rightknee_to_rightleg seg3_righthip_to_rightleg seg3_rightleg_to_rightknee seg3_rightleg_to_righthip
+              seg3_to_rightleg rightleg_to_seg3 100.0" />
+  <node name="seg3_leftleg" pkg="simplemotorpluginexample_description" type="two_dof_leg_fsm_node.py" output="log"
+        args="left seg3_leftknee_to_leftleg seg3_lefthip_to_leftleg seg3_leftleg_to_leftknee seg3_leftleg_to_lefthip
+              seg3_to_leftleg leftleg_to_seg3 100.0" />
+  <!-- leg pair FSM -->
+  <node name="seg3" pkg="simplemotorpluginexample_description" type="segment_fsm_node.py" output="screen" launch-prefix="xterm -e"
+        args="rightleg_to_seg3 leftleg_to_seg3 seg3_to_rightleg seg3_to_leftleg cent_to_seg3 seg3_to_cent 100.0" />
+
+  <!-- top FSM -->
+  <!-- centipede FSM -->
+  <node name="centipede" pkg="simplemotorpluginexample_description" type="centipede_odd_even_fsm_node.py" output="screen" launch-prefix="xterm -e"
+        args="cent_to_seg0 seg0_to_cent cent_to_seg1 seg1_to_cent cent_to_seg2 seg2_to_cent cent_to_seg3 seg3_to_cent 4 100" />
+  <!-- smach_viewer nodes for visualization | only works with modified smach_viewer.py - Joseph -->
+  <node name="smach_viewer_1" pkg="smach_viewer" type="smach_viewer.py" launch-prefix="xterm -e" />
+  <node name="smach_viewer_2" pkg="smach_viewer" type="smach_viewer.py" launch-prefix="xterm -e" />
+  <node name="smach_viewer_3" pkg="smach_viewer" type="smach_viewer.py" launch-prefix="xterm -e" />
+  <node name="smach_viewer_4" pkg="smach_viewer" type="smach_viewer.py" launch-prefix="xterm -e" />
+  <node name="smach_viewer_5" pkg="smach_viewer" type="smach_viewer.py" launch-prefix="xterm -e" />
+</launch>

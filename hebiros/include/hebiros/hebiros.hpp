@@ -2,6 +2,7 @@
 #include "std_msgs/Float64.h"
 #include "sensor_msgs/JointState.h"
 #include "sensor_msgs/Imu.h"
+#include "std_srvs/Empty.h"
 #include "tf/transform_broadcaster.h"
 #include "urdf/model.h"
 #include "actionlib/server/simple_action_server.h"
@@ -65,6 +66,7 @@ class Hebiros_Node {
     std::map<std::string, GroupInfo*> group_infos;
     std::map<std::string, std::map<std::string, int>> group_joints;
     std::map<std::string, sensor_msgs::JointState> group_joint_states;
+    std::map<std::string, sensor_msgs::JointState> gazebo_joint_states;
 
     int node_frequency;
     int action_frequency;
@@ -117,7 +119,8 @@ class Hebiros_Node {
       std::string group_name);
 
     void sub_publish_group_gazebo(
-      const boost::shared_ptr<sensor_msgs::JointState const> data, std::string group_name);
+      const boost::shared_ptr<sensor_msgs::JointState const> data,
+      std::string group_name, std::string joint_name);
 
     /* Action execution functions */
     void action_trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name);
@@ -130,6 +133,8 @@ class Hebiros_Node {
     void unregister_group(std::string group_name);
 
     /* General */
+    bool names_in_order(CommandMsg command_msg);
+
     bool joint_found(std::string group_name, std::string joint_name);
 
     void joint_not_found(std::string joint_name);

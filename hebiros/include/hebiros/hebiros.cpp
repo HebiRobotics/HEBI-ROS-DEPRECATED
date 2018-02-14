@@ -32,7 +32,12 @@ Hebiros_Node::Hebiros_Node (int argc, char **argv) {
   n.param<int>("/hebiros/node_frequency", node_frequency, 200);
   n.setParam("/hebiros/node_frequency", node_frequency);
 
-  n.param<int>("/hebiros/action_frequency", action_frequency, 200);
+  if (use_gazebo) {
+    n.param<int>("/hebiros/action_frequency", action_frequency, 50);
+  }
+  else {
+    n.param<int>("/hebiros/action_frequency", action_frequency, 200);
+  }
   n.setParam("/hebiros/action_frequency", action_frequency);
 
   n.param<int>("/hebiros/feedback_frequency", feedback_frequency, 100);

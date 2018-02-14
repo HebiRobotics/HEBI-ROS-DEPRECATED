@@ -346,8 +346,7 @@
     <selfCollide>true</selfCollide>
   </gazebo>
   <gazebo>
-    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
-      <robotNamespace>/hebiros/x_demo</robotNamespace>
+    <plugin filename="libhebiros_gazebo_plugin.so" name="hebiros_gazebo_plugin">
     </plugin>
   </gazebo>
 </robot>

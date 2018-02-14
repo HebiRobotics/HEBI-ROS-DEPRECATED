@@ -35,6 +35,18 @@ void Hebiros_Node::add_joint_children(std::set<std::string>& names, std::set<std
   }
 }
 
+//Determine whether a CommandMsg has valid lists of names
+bool Hebiros_Node::names_in_order(CommandMsg command_msg) {
+  return (command_msg.name == command_msg.settings.name ||
+    command_msg.settings.name.size() == 0) &&
+    (command_msg.name == command_msg.settings.position_gains.name || 
+    command_msg.settings.position_gains.name.size() == 0) &&
+    (command_msg.name == command_msg.settings.velocity_gains.name ||
+    command_msg.settings.velocity_gains.name.size() == 0) &&
+    (command_msg.name == command_msg.settings.effort_gains.name ||
+    command_msg.settings.effort_gains.name.size() == 0);
+}
+
 //Determine whether a joint is in a specific group
 bool Hebiros_Node::joint_found(std::string group_name, std::string joint_name) {
   return group_joints[group_name].find(joint_name) != group_joints[group_name].end();
