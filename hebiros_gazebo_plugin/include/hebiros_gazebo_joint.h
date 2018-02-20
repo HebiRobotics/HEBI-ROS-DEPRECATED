@@ -13,6 +13,7 @@ class HebirosGazeboJoint {
   public:
 
     std::string name;
+    std::string model_name;
     int command_index;
     CommandMsg command_target;
     SettingsMsg settings;

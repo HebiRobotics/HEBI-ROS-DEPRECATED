@@ -37,8 +37,9 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 
   for (auto joint_pair : hebiros_joints) {
     std::string joint_name = joint_pair.first;
+    std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_joints[joint_name];
 
-    physics::JointPtr joint = this->model->GetJoint(joint_name);
+    physics::JointPtr joint = this->model->GetJoint(joint_name+hebiros_joint->model_name);
     if (joint) {
       UpdateJoint(joint_name, joint);
     }
@@ -118,6 +119,17 @@ void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
     std::make_shared<HebirosGazeboJoint>(joint_name);
   hebiros_joints[joint_name] = hebiros_joint;
+
+  physics::JointPtr joint;
+  if (joint = this->model->GetJoint(joint_name+"/X5-1")) {
+    hebiros_joint->model_name = "/X5-1";
+  }
+  else if (joint = this->model->GetJoint(joint_name+"/X5-4")) {
+    hebiros_joint->model_name = "/X5-4";
+  }
+  else if (joint = this->model->GetJoint(joint_name+"/X5-9")) {
+    hebiros_joint->model_name = "/X5-9";
+  }
 
   hebiros_joint->publisher = this->n->advertise<sensor_msgs::JointState>(
     "/hebiros_gazebo_plugin/feedback/"+joint_name, 100);

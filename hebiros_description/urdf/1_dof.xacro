@@ -50,7 +50,7 @@
   </joint>
 
   <!-- joints -->
-  <xacro:x5 joint="HEBI/base" child="base_end"/>
+  <xacro:x5 joint="HEBI/base" child="base_end" model="X5-4"/>
   <xacro:x_tube_link name="base_end" child="end_effector" length="0.33" twist="0"/>
 
   <!-- end link -->

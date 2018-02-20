@@ -34,6 +34,10 @@ class HebirosGazeboController {
     double DEFAULT_EFFORT_KI = 0.0;
     double DEFAULT_EFFORT_KD = 0.001;
 
+    double GEAR_RATIO_X5_1 = 272.22;
+    double GEAR_RATIO_X5_4 = 762.22;
+    double GEAR_RATIO_X5_9 = 1742.22;
+
     HebirosGazeboController();
     ~HebirosGazeboController();
     double ComputeForce(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,

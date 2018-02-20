@@ -62,7 +62,7 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="HEBI/base" type="revolute">
+  <joint name="HEBI/base/X5-1" type="revolute">
     <parent link="HEBI/base/INPUT_INTERFACE"/>
     <child link="shoulder_bracket/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
@@ -135,7 +135,7 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="HEBI/shoulder" type="revolute">
+  <joint name="HEBI/shoulder/X5-4" type="revolute">
     <parent link="HEBI/shoulder/INPUT_INTERFACE"/>
     <child link="shoulder_elbow/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
@@ -248,7 +248,7 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="HEBI/elbow" type="revolute">
+  <joint name="HEBI/elbow/X5-9" type="revolute">
     <parent link="HEBI/elbow/INPUT_INTERFACE"/>
     <child link="elbow_end/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>

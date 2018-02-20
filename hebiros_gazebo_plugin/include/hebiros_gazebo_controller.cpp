@@ -99,7 +99,7 @@ double HebirosGazeboController::ComputeForce(
   double velocity_error_p, velocity_error_i, velocity_error_d;
   double effort_error_p, effort_error_i, effort_error_d;
   double position_force, velocity_force, effort_force;
-  double pwm, force;
+  double gear_ratio, pwm, force;
 
   //Set target positions
   if (i < target.position.size()) {
@@ -184,7 +184,20 @@ double HebirosGazeboController::ComputeForce(
       pwm = 0;
   }
 
-  force = ((pwm*48.0 - ((velocity*762.22)/1530)) / 9.99) * 0.00626 * 762.22;
+  if (hebiros_joint->model_name == "/X5-1") {
+    gear_ratio = GEAR_RATIO_X5_1;
+  }
+  else if (hebiros_joint->model_name == "/X5-4") {
+    gear_ratio = GEAR_RATIO_X5_4;
+  }
+  else if (hebiros_joint->model_name == "/X5-9") {
+    gear_ratio = GEAR_RATIO_X5_9;
+  }
+  else {
+    gear_ratio = GEAR_RATIO_X5_1;
+  }
+
+  force = ((pwm*48.0 - ((velocity*gear_ratio)/1530)) / 9.99) * 0.00626 * gear_ratio;
 
   return force;
 }
