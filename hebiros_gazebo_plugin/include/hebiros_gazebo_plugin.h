@@ -16,6 +16,7 @@
 #include "hebiros/CommandMsg.h"
 
 #include "hebiros_gazebo_joint.h"
+#include "hebiros_gazebo_controller.h"
 
 using namespace hebiros;
 using namespace gazebo;
@@ -29,16 +30,6 @@ class HebirosGazeboPlugin: public ModelPlugin {
     void OnUpdate(const common::UpdateInfo & _info);
 
   private:
-    double DEFAULT_POSITION_KP = 1.0;
-    double DEFAULT_POSITION_KI = 0.0;
-    double DEFAULT_POSITION_KD = 0.0;
-    double DEFAULT_VELOCITY_KP = 0.05;
-    double DEFAULT_VELOCITY_KI = 0.0;
-    double DEFAULT_VELOCITY_KD = 0.0;
-    double DEFAULT_EFFORT_KP = 0.25;
-    double DEFAULT_EFFORT_KI = 0.0;
-    double DEFAULT_EFFORT_KD = 0.001;
-
     double command_lifetime = 0.1;
 
     physics::ModelPtr model;
@@ -49,6 +40,7 @@ class HebirosGazeboPlugin: public ModelPlugin {
     bool check_acknowledgement;
     bool acknowledgement;
     std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
+    HebirosGazeboController controller;
 
     void SubCommand(const boost::shared_ptr<CommandMsg const> data);
     bool SrvAcknowledge(std_srvs::Empty::Request &req,

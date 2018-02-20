@@ -148,7 +148,8 @@ include_directories( ${catkin_INCLUDE_DIRS}
                      ${GAZEBO_INCLUDE_DIRS}
 )
 
-add_library(hebiros_gazebo_plugin plugin/hebiros_gazebo_plugin.cpp include/hebiros_gazebo_joint.cpp)
+add_library(hebiros_gazebo_plugin plugin/hebiros_gazebo_plugin.cpp
+  include/hebiros_gazebo_joint.cpp include/hebiros_gazebo_controller.cpp)
 
 add_dependencies(hebiros_gazebo_plugin ${catkin_EXPORTED_TARGETS})
 

@@ -18,12 +18,12 @@ class HebirosGazeboJoint {
     SettingsMsg settings;
     ros::Time start_time;
     ros::Time prev_time;
-    double position_prev_error;
-    double position_elapsed_error;
-    double velocity_prev_error;
-    double velocity_elapsed_error;
-    double effort_prev_error;
-    double effort_elapsed_error;
+    double position_prev_error {};
+    double position_elapsed_error {};
+    double velocity_prev_error {};
+    double velocity_elapsed_error {};
+    double effort_prev_error {};
+    double effort_elapsed_error {};
     ros::Publisher publisher;
 
     HebirosGazeboJoint(std::string name);
