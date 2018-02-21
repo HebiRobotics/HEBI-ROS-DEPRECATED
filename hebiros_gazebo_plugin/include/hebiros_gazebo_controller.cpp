@@ -12,6 +12,14 @@ void HebirosGazeboController::SetSettings(
   CommandMsg target = hebiros_joint->command_target;
   int i = hebiros_joint->command_index;
 
+  //Set gear ratio
+  if (gear_ratios.find(hebiros_joint->model_name) != gear_ratios.end()) {
+    hebiros_joint->gear_ratio = gear_ratios[hebiros_joint->model_name];
+  }
+  else {
+    hebiros_joint->gear_ratio = DEFAULT_GEAR_RATIO;
+  }
+
   //Set control strategy
   if (i < target.settings.control_strategy.size()) {
     hebiros_joint->settings.control_strategy = {target.settings.control_strategy[i]};
@@ -163,7 +171,7 @@ double HebirosGazeboController::ComputeForce(
     (hebiros_joint->settings.effort_gains.kd[0] * effort_error_d);
 
   //Combine forces using selected strategy
-  int control_strategy = static_cast<int>(hebiros_joint->settings.control_strategy[0]);
+  int control_strategy = hebiros_joint->settings.control_strategy[0];
   switch (control_strategy) {
     case 0:
       pwm = 0;
@@ -184,18 +192,7 @@ double HebirosGazeboController::ComputeForce(
       pwm = 0;
   }
 
-  if (hebiros_joint->model_name == "/X5-1") {
-    gear_ratio = GEAR_RATIO_X5_1;
-  }
-  else if (hebiros_joint->model_name == "/X5-4") {
-    gear_ratio = GEAR_RATIO_X5_4;
-  }
-  else if (hebiros_joint->model_name == "/X5-9") {
-    gear_ratio = GEAR_RATIO_X5_9;
-  }
-  else {
-    gear_ratio = GEAR_RATIO_X5_1;
-  }
+  gear_ratio = hebiros_joint->gear_ratio;
 
   force = ((pwm*48.0 - ((velocity*gear_ratio)/1530)) / 9.99) * 0.00626 * gear_ratio;
 

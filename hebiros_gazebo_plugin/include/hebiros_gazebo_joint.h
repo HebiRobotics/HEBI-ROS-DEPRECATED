@@ -19,6 +19,7 @@ class HebirosGazeboJoint {
     SettingsMsg settings;
     ros::Time start_time;
     ros::Time prev_time;
+    double gear_ratio {};
     double position_prev_error {};
     double position_elapsed_error {};
     double velocity_prev_error {};

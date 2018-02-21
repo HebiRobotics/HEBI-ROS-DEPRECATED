@@ -4,6 +4,7 @@
 
 #include "ros/ros.h"
 #include "hebiros_gazebo_joint.h"
+#include <map>
 
 using namespace hebiros;
 
@@ -37,6 +38,13 @@ class HebirosGazeboController {
     double GEAR_RATIO_X5_1 = 272.22;
     double GEAR_RATIO_X5_4 = 762.22;
     double GEAR_RATIO_X5_9 = 1742.22;
+
+    double DEFAULT_GEAR_RATIO = GEAR_RATIO_X5_1;
+
+    std::map<std::string, double> gear_ratios = {
+      {"X5-1", GEAR_RATIO_X5_1},
+      {"X5-4", GEAR_RATIO_X5_4},
+      {"X5-9", GEAR_RATIO_X5_9}};
 
     HebirosGazeboController();
     ~HebirosGazeboController();
