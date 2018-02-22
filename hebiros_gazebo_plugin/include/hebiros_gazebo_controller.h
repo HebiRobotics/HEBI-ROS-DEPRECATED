@@ -25,7 +25,7 @@ class HebirosGazeboController {
     double MAX_PWM = 1.0;
     double MIN_PWM = -1.0;
 
-    double DEFAULT_POSITION_KP = 1.0;
+    double DEFAULT_POSITION_KP = 0.5;
     double DEFAULT_POSITION_KI = 0.0;
     double DEFAULT_POSITION_KD = 0.0;
     double DEFAULT_VELOCITY_KP = 0.05;
@@ -50,7 +50,15 @@ class HebirosGazeboController {
     ~HebirosGazeboController();
     double ComputeForce(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
       double position, double velocity, double effort);
+    double ComputePositionPID(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+      double target_position, double position, ros::Duration iteration_time);
+    double ComputeVelocityPID(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+      double target_velocity, double velocity, ros::Duration iteration_time);
+    double ComputeEffortPID(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+      double target_effort, double effort, ros::Duration iteration_time);
     void SetSettings(std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
+    void ChangeSettings(std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
+    void SetDefaultGains(std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
     double Clip(double x, double low, double high);
 
 };

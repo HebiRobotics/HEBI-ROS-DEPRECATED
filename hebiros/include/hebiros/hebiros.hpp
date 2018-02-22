@@ -41,6 +41,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <boost/bind.hpp>
 #include <execinfo.h>
 #include <signal.h>
@@ -67,6 +68,7 @@ class Hebiros_Node {
     std::map<std::string, std::map<std::string, int>> group_joints;
     std::map<std::string, sensor_msgs::JointState> group_joint_states;
     std::map<std::string, sensor_msgs::JointState> gazebo_joint_states;
+    std::mutex gazebo_joint_states_mutex;
 
     int node_frequency;
     int action_frequency;

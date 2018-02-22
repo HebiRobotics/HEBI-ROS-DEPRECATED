@@ -70,6 +70,8 @@ void Hebiros_Node::sub_joint_command(const boost::shared_ptr<sensor_msgs::JointS
 void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs::JointState const>
   data, std::string group_name, std::string joint_name) {
 
+  std::lock_guard<std::mutex> guard(gazebo_joint_states_mutex);
+
   int size = group_joints[group_name].size();
   sensor_msgs::JointState joint_state_msg;
 

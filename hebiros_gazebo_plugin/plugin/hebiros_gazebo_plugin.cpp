@@ -94,7 +94,7 @@ void HebirosGazeboPlugin::SubCommand(const boost::shared_ptr<CommandMsg const> d
     std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_joints[joint_name];
     hebiros_joint->Reset(i, *data);
     hebiros_joint->settings.name = {data->name[i]};
-    this->controller.SetSettings(hebiros_joint);
+    this->controller.ChangeSettings(hebiros_joint);
   }
 
 }
@@ -133,6 +133,9 @@ void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
 
   hebiros_joint->publisher = this->n->advertise<sensor_msgs::JointState>(
     "/hebiros_gazebo_plugin/feedback/"+joint_name, 100);
+
+  this->controller.SetSettings(hebiros_joint);
+  this->controller.ChangeSettings(hebiros_joint);
 }
 
 
