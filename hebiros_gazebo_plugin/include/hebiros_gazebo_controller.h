@@ -25,6 +25,8 @@ class HebirosGazeboController {
     double MAX_PWM = 1.0;
     double MIN_PWM = -1.0;
 
+    double LOW_PASS_ALPHA = 0.1;
+
     double DEFAULT_POSITION_KP = 0.5;
     double DEFAULT_POSITION_KI = 0.0;
     double DEFAULT_POSITION_KD = 0.0;

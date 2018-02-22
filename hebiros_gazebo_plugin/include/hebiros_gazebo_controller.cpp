@@ -12,6 +12,8 @@ void HebirosGazeboController::SetSettings(
   CommandMsg target = hebiros_joint->command_target;
   int i = hebiros_joint->command_index;
 
+  hebiros_joint->low_pass_alpha = LOW_PASS_ALPHA;
+
   //Set gear ratio
   if (gear_ratios.find(hebiros_joint->model_name) != gear_ratios.end()) {
     hebiros_joint->gear_ratio = gear_ratios[hebiros_joint->model_name];
@@ -210,7 +212,7 @@ double HebirosGazeboController::ComputeForce(
   double position_pid, velocity_pid, effort_pid;
   double position_pwm, velocity_pwm, effort_pwm;
   double intermediate_effort;
-  double gear_ratio, pwm, force;
+  double gear_ratio, pwm, force, alpha;
 
   //Set target positions
   if (i < target.position.size()) {
@@ -293,6 +295,10 @@ double HebirosGazeboController::ComputeForce(
   else {
     force = ((pwm*48.0 - ((velocity*gear_ratio)/1530)) / 9.99) * 0.00626 * gear_ratio;
   }
+
+  alpha = hebiros_joint->low_pass_alpha;
+  force = (force * alpha) + hebiros_joint->prev_force * (1 - alpha);
+  hebiros_joint->prev_force = force;
 
   return force;
 }
