@@ -66,6 +66,9 @@ void Hebiros_Node::register_group(std::string group_name) {
   else {
     publishers["/hebiros_gazebo_plugin/command"] =
       n.advertise<CommandMsg>("hebiros_gazebo_plugin/command", 100);
+
+    clients["/hebiros_gazebo_plugin/set_command_lifetime"] =
+      n.serviceClient<SetCommandLifetimeSrv>("/hebiros_gazebo_plugin/set_command_lifetime");
   }
 }
 

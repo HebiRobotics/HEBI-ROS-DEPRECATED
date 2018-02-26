@@ -16,5 +16,6 @@ void HebirosGazeboJoint::Reset(int i, CommandMsg command_msg) {
   ros::Time current_time = ros::Time::now();
   this->start_time = current_time;
   this->prev_time = current_time;
+  this->command_received = true;
 }
 

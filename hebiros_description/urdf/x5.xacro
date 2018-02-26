@@ -23,8 +23,8 @@
         <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
       </inertial>
     </link>
-    <xacro:if value="${model_name == 'X5-1'}">
-      <joint name="${joint}/X5-1" type="revolute">
+    <xacro:if value="${model_name == 'X5_1'}">
+      <joint name="${joint}/X5_1" type="revolute">
         <parent link="${joint}/INPUT_INTERFACE"/>
         <child link="${child}/INPUT_INTERFACE"/>
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
@@ -33,8 +33,8 @@
         <dynamics damping="0.2" friction="0.2"/>
       </joint>
     </xacro:if>
-    <xacro:if value="${model_name == 'X5-4'}">
-      <joint name="${joint}/X5-4" type="revolute">
+    <xacro:if value="${model_name == 'X5_4'}">
+      <joint name="${joint}/X5_4" type="revolute">
         <parent link="${joint}/INPUT_INTERFACE"/>
         <child link="${child}/INPUT_INTERFACE"/>
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
@@ -43,8 +43,8 @@
         <dynamics damping="0.2" friction="0.2"/>
       </joint>
     </xacro:if>
-    <xacro:if value="${model_name == 'X5-9'}">
-      <joint name="${joint}/X5-9" type="revolute">
+    <xacro:if value="${model_name == 'X5_9'}">
+      <joint name="${joint}/X5_9" type="revolute">
         <parent link="${joint}/INPUT_INTERFACE"/>
         <child link="${child}/INPUT_INTERFACE"/>
         <origin xyz="0 0 0.031" rpy="0 0 0"/>

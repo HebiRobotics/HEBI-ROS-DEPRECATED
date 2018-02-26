@@ -16,6 +16,7 @@ class HebirosGazeboJoint {
     std::string model_name;
     int command_index;
     CommandMsg command_target;
+    bool command_received = false;
     SettingsMsg settings;
     ros::Time start_time;
     ros::Time prev_time;

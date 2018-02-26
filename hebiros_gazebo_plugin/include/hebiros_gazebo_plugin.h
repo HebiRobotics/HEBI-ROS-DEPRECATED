@@ -14,6 +14,7 @@
 #include "sensor_msgs/JointState.h"
 #include "std_srvs/Empty.h"
 #include "hebiros/CommandMsg.h"
+#include "hebiros/SetCommandLifetimeSrv.h"
 
 #include "hebiros_gazebo_joint.h"
 #include "hebiros_gazebo_controller.h"
@@ -30,13 +31,14 @@ class HebirosGazeboPlugin: public ModelPlugin {
     void OnUpdate(const common::UpdateInfo & _info);
 
   private:
-    double command_lifetime = 0.1;
+    int command_lifetime = 100;
 
     physics::ModelPtr model;
     event::ConnectionPtr update_connection;
     std::unique_ptr<ros::NodeHandle> n;
     ros::Subscriber command_sub;
     ros::ServiceServer acknowledge_srv;
+    ros::ServiceServer command_lifetime_srv;
     bool check_acknowledgement;
     bool acknowledgement;
     std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
@@ -45,6 +47,8 @@ class HebirosGazeboPlugin: public ModelPlugin {
     void SubCommand(const boost::shared_ptr<CommandMsg const> data);
     bool SrvAcknowledge(std_srvs::Empty::Request &req,
       std_srvs::Empty::Response &res);
+    bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
+      SetCommandLifetimeSrv::Response &res);
     void AddJoint(std::string joint_name);
     void UpdateJoint(std::string joint_name, physics::JointPtr joint);
 

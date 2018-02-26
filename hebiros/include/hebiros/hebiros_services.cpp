@@ -139,12 +139,16 @@ bool Hebiros_Node::srv_set_command_lifetime(
   SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
   std::string group_name) {
   if (use_gazebo) {
-    return true;
+    SetCommandLifetimeSrv srv;
+    srv.request.command_lifetime = req.command_lifetime;
+
+    clients["/hebiros_gazebo_plugin/set_command_lifetime"].call(srv);
   }
+  else {
+    std::shared_ptr<Group> group = groups[group_name];
 
-  std::shared_ptr<Group> group = groups[group_name];
-
-  group->setCommandLifetimeMs(req.command_lifetime);
+    group->setCommandLifetimeMs(req.command_lifetime);
+  }
 
   ROS_INFO("/hebiros/%s command_lifetime=%d", group_name.c_str(), req.command_lifetime);
   return true;

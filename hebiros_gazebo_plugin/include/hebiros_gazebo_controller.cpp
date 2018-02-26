@@ -40,7 +40,7 @@ void HebirosGazeboController::SetDefaultGains(
   std::string model_name = hebiros_joint->model_name;
   int control_strategy = hebiros_joint->settings.control_strategy[0];
 
-  if (model_name == "X5-1" && control_strategy == 2) {
+  if (model_name == "X5_1" && control_strategy == 2) {
     hebiros_joint->settings.position_gains.kp = {5};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -51,7 +51,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-1" && control_strategy == 3) {
+  else if (model_name == "X5_1" && control_strategy == 3) {
     hebiros_joint->settings.position_gains.kp = {0.5};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -62,7 +62,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-1" && control_strategy == 4) {
+  else if (model_name == "X5_1" && control_strategy == 4) {
     hebiros_joint->settings.position_gains.kp = {5};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -73,7 +73,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-4" && control_strategy == 2) {
+  else if (model_name == "X5_4" && control_strategy == 2) {
     hebiros_joint->settings.position_gains.kp = {10};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -84,7 +84,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-4" && control_strategy == 3) {
+  else if (model_name == "X5_4" && control_strategy == 3) {
     hebiros_joint->settings.position_gains.kp = {1};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -95,7 +95,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-4" && control_strategy == 4) {
+  else if (model_name == "X5_4" && control_strategy == 4) {
     hebiros_joint->settings.position_gains.kp = {10};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -106,7 +106,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-9" && control_strategy == 2) {
+  else if (model_name == "X5_9" && control_strategy == 2) {
     hebiros_joint->settings.position_gains.kp = {15};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -117,7 +117,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-9" && control_strategy == 3) {
+  else if (model_name == "X5_9" && control_strategy == 3) {
     hebiros_joint->settings.position_gains.kp = {1.5};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};
@@ -128,7 +128,7 @@ void HebirosGazeboController::SetDefaultGains(
     hebiros_joint->settings.effort_gains.ki = {0};
     hebiros_joint->settings.effort_gains.kd = {0.001};
   }
-  else if (model_name == "X5-9" && control_strategy == 4) {
+  else if (model_name == "X5_9" && control_strategy == 4) {
     hebiros_joint->settings.position_gains.kp = {15};
     hebiros_joint->settings.position_gains.ki = {0};
     hebiros_joint->settings.position_gains.kd = {0};

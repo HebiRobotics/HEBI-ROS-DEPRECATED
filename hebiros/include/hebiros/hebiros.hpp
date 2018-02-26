@@ -57,6 +57,7 @@ class Hebiros_Node {
     std::map<std::string, ros::Publisher> publishers;
     std::map<std::string, ros::Subscriber> subscribers;
     std::map<std::string, ros::ServiceServer> services;
+    std::map<std::string, ros::ServiceClient> clients;
 
     std::map<std::string, std::shared_ptr<actionlib::SimpleActionServer<TrajectoryAction>>>   
       trajectory_actions;

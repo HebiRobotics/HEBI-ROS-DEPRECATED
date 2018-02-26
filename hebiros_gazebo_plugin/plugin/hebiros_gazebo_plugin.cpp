@@ -25,6 +25,11 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     "/hebiros_gazebo_plugin/acknowledge", boost::bind(
     &HebirosGazeboPlugin::SrvAcknowledge, this, _1, _2));
 
+  this->command_lifetime_srv =
+    this->n->advertiseService<SetCommandLifetimeSrv::Request,
+    SetCommandLifetimeSrv::Response>("/hebiros_gazebo_plugin/set_command_lifetime",
+    boost::bind(&HebirosGazeboPlugin::SrvSetCommandLifetime, this, _1, _2));
+
   this->model = _model;
 
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
@@ -57,7 +62,9 @@ void HebirosGazeboPlugin::UpdateJoint(
   ros::Time current_time = ros::Time::now();
   ros::Duration elapsed_time = current_time - hebiros_joint->start_time;
 
-  if (elapsed_time.toSec() > this->command_lifetime) {
+  if ((this->command_lifetime != 0) && (
+    elapsed_time.toSec() > this->command_lifetime/1000.0)) {
+    
     return;
   }
 
@@ -70,11 +77,15 @@ void HebirosGazeboPlugin::UpdateJoint(
   feedback_msg.position = {position};
   feedback_msg.velocity = {velocity};
   feedback_msg.effort = {effort};
-  hebiros_joint->publisher.publish(feedback_msg);
 
-  double force = this->controller.ComputeForce(hebiros_joint, position, velocity, effort);
+  if (!hebiros_joint->publisher.getTopic().empty()) {
+    hebiros_joint->publisher.publish(feedback_msg);
+  }
 
-  joint->SetForce(0, force);
+  if (hebiros_joint->command_received) {
+    double force = this->controller.ComputeForce(hebiros_joint, position, velocity, effort);
+    joint->SetForce(0, force);
+  }
 }
 
 void HebirosGazeboPlugin::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
@@ -114,6 +125,14 @@ bool HebirosGazeboPlugin::SrvAcknowledge(std_srvs::Empty::Request &req,
   }
 }
 
+bool HebirosGazeboPlugin::SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
+  SetCommandLifetimeSrv::Response &res) {
+
+  this->command_lifetime = req.command_lifetime;
+
+  return true;
+}
+
 void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
 
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
@@ -121,14 +140,14 @@ void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
   hebiros_joints[joint_name] = hebiros_joint;
 
   physics::JointPtr joint;
-  if (joint = this->model->GetJoint(joint_name+"/X5-1")) {
-    hebiros_joint->model_name = "X5-1";
+  if (joint = this->model->GetJoint(joint_name+"/X5_1")) {
+    hebiros_joint->model_name = "X5_1";
   }
-  else if (joint = this->model->GetJoint(joint_name+"/X5-4")) {
-    hebiros_joint->model_name = "X5-4";
+  else if (joint = this->model->GetJoint(joint_name+"/X5_4")) {
+    hebiros_joint->model_name = "X5_4";
   }
-  else if (joint = this->model->GetJoint(joint_name+"/X5-9")) {
-    hebiros_joint->model_name = "X5-9";
+  else if (joint = this->model->GetJoint(joint_name+"/X5_9")) {
+    hebiros_joint->model_name = "X5_9";
   }
 
   hebiros_joint->publisher = this->n->advertise<sensor_msgs::JointState>(
