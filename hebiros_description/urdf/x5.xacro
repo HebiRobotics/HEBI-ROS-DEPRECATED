@@ -29,8 +29,8 @@
         <child link="${child}/INPUT_INTERFACE"/>
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
         <axis xyz="0 0 1"/>
-        <limit effort="90.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-        <dynamics damping="0.2" friction="0.2"/>
+        <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+        <dynamics damping="0.5" friction="0.5"/>
       </joint>
     </xacro:if>
     <xacro:if value="${model_name == 'X5_4'}">
@@ -39,8 +39,8 @@
         <child link="${child}/INPUT_INTERFACE"/>
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
         <axis xyz="0 0 1"/>
-        <limit effort="90.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-        <dynamics damping="0.2" friction="0.2"/>
+        <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+        <dynamics damping="0.5" friction="0.5"/>
       </joint>
     </xacro:if>
     <xacro:if value="${model_name == 'X5_9'}">
@@ -49,8 +49,8 @@
         <child link="${child}/INPUT_INTERFACE"/>
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
         <axis xyz="0 0 1"/>
-        <limit effort="90.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-        <dynamics damping="0.2" friction="0.2"/>
+        <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+        <dynamics damping="0.5" friction="0.5"/>
       </joint>
     </xacro:if>
     <transmission name="${joint}/transmission">

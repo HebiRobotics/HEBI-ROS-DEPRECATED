@@ -70,7 +70,8 @@ void HebirosGazeboPlugin::UpdateJoint(
 
   double position = joint->GetAngle(0).Radian();
   double velocity = joint->GetVelocity(0);
-  double effort = joint->GetForce(0);
+  physics::JointWrench wrench = joint->GetForceTorque(0);
+  double effort = wrench.body1Force.z;
 
   sensor_msgs::JointState feedback_msg;
   feedback_msg.name = {joint_name};

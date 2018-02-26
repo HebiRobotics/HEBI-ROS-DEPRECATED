@@ -88,7 +88,7 @@
     <visual>
       <origin rpy="0 1.57075 0" xyz="-0.1904 0 .016075"/>
       <geometry>
-        <cylinder length="0.33" radius=".015875"/>
+        <cylinder length="0.3046" radius=".015875"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>

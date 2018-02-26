@@ -296,9 +296,9 @@ double HebirosGazeboController::ComputeForce(
     force = ((pwm*48.0 - ((velocity*gear_ratio)/1530)) / 9.99) * 0.00626 * gear_ratio;
   }
 
-  alpha = hebiros_joint->low_pass_alpha;
-  force = (force * alpha) + hebiros_joint->prev_force * (1 - alpha);
-  hebiros_joint->prev_force = force;
+  //alpha = hebiros_joint->low_pass_alpha;
+  //force = (force * alpha) + hebiros_joint->prev_force * (1 - alpha);
+  //hebiros_joint->prev_force = force;
 
   return force;
 }

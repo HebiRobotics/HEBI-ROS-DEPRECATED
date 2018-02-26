@@ -67,8 +67,8 @@
     <child link="shoulder_bracket/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
-    <limit effort="90.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-    <dynamics damping="0.2" friction="0.2"/>
+    <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+    <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <transmission name="HEBI/base/transmission">
     <type>transmission_interface/SimpleTransmission</type>
@@ -140,8 +140,8 @@
     <child link="shoulder_elbow/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
-    <limit effort="90.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-    <dynamics damping="0.2" friction="0.2"/>
+    <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+    <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <transmission name="HEBI/shoulder/transmission">
     <type>transmission_interface/SimpleTransmission</type>
@@ -169,7 +169,7 @@
     <visual>
       <origin rpy="0 1.57075 0" xyz="-0.1904 0 .016075"/>
       <geometry>
-        <cylinder length="0.33" radius=".015875"/>
+        <cylinder length="0.3046" radius=".015875"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>
@@ -253,8 +253,8 @@
     <child link="elbow_end/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
-    <limit effort="90.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-    <dynamics damping="0.2" friction="0.2"/>
+    <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+    <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <transmission name="HEBI/elbow/transmission">
     <type>transmission_interface/SimpleTransmission</type>
@@ -282,7 +282,7 @@
     <visual>
       <origin rpy="0 1.57075 0" xyz="-0.1879 0 .016075"/>
       <geometry>
-        <cylinder length="0.325" radius=".015875"/>
+        <cylinder length="0.2996" radius=".015875"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>
