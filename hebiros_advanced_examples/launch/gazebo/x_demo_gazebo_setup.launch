@@ -1,10 +1,7 @@
 <launch>
-  <param name="robot_description" command="cat $(find hebiros_description)/urdf/x_demo.urdf"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
 
-  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" args="-use_gazebo true" respawn="false" output="screen"/>
-
-  <node name="example_gazebo_node" pkg="hebiros_advanced_examples" type="example_gazebo_node"/>
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find hebiros_description)/urdf/x_demo.urdf -urdf -z 1 -model x_demo"/>
 
 </launch>

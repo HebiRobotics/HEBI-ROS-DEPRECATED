@@ -6,13 +6,14 @@ void Hebiros_Node::sub_command(const boost::shared_ptr<CommandMsg const> data,
   std::string group_name) {
 
   if (use_gazebo) {
-    std_msgs::Float64 command_msg;
-    for (int i = 0; i < data->name.size(); i++) {
-      std::string joint_name = data->name[i];
-      command_msg.data = data->effort[i];
-      publishers["/hebiros/"+group_name+"/"+joint_name+"/controller/command"].publish(
-        command_msg);
+
+    if (names_in_order(*data)) {
+      publishers["/hebiros_gazebo_plugin/command"].publish(*data);
     }
+    else {
+      ROS_WARN("Simulated commands are assigned with different orders.  Command will not be sent.");
+    }
+
     return;
   }
 
@@ -38,13 +39,15 @@ void Hebiros_Node::sub_joint_command(const boost::shared_ptr<sensor_msgs::JointS
   std::string group_name) {
 
   if (use_gazebo) {
-    std_msgs::Float64 command_msg;
-    for (int i = 0; i < data->name.size(); i++) {
-      std::string joint_name = data->name[i];
-      command_msg.data = data->effort[i];
-      publishers["/hebiros/"+group_name+"/"+joint_name+"/controller/command"].publish(
-        command_msg);
-    }
+
+    CommandMsg command_data;
+    command_data.name = data->name;
+    command_data.position = data->position;
+    command_data.velocity = data->velocity;
+    command_data.effort = data->effort;
+
+    publishers["/hebiros_gazebo_plugin/command"].publish(command_data);
+
     return;
   }
 
@@ -65,43 +68,52 @@ void Hebiros_Node::sub_joint_command(const boost::shared_ptr<sensor_msgs::JointS
 
 //Subscriber callback which publishes feedback topics for a group in gazebo
 void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs::JointState const>
-  data, std::string group_name) {
-  int size = data->name.size();
+  data, std::string group_name, std::string joint_name) {
 
-  FeedbackMsg feedback_msg;
-  feedback_msg.name.resize(size);
-  feedback_msg.position.resize(size);
-  feedback_msg.velocity.resize(size);
-  feedback_msg.effort.resize(size);
+  std::lock_guard<std::mutex> guard(gazebo_joint_states_mutex);
 
+  int size = group_joints[group_name].size();
   sensor_msgs::JointState joint_state_msg;
-  joint_state_msg.name.resize(size);
-  joint_state_msg.position.resize(size);
-  joint_state_msg.velocity.resize(size);
-  joint_state_msg.effort.resize(size);
+
+  if (gazebo_joint_states.find(group_name) == gazebo_joint_states.end()) {
+
+    joint_state_msg.name.resize(size);
+    joint_state_msg.position.resize(size);
+    joint_state_msg.velocity.resize(size);
+    joint_state_msg.effort.resize(size);
+    gazebo_joint_states[group_name] = joint_state_msg;
+  }
+
+  joint_state_msg = gazebo_joint_states[group_name];
+
+  double position = data->position[0];
+  double velocity = data->velocity[0];
+  double effort = data->effort[0];
+  int joint_index = group_joints[group_name][joint_name];
+
+  joint_state_msg.name[joint_index] = joint_name;
+  joint_state_msg.position[joint_index] = position;
+  joint_state_msg.velocity[joint_index] = velocity;
+  joint_state_msg.effort[joint_index] = effort;
+
+  gazebo_joint_states[group_name] = joint_state_msg;
 
   for (int i = 0; i < size; i++) {
-
-    std::string joint_name = data->name[i];
-    double position = data->position[i];
-    double velocity = data->velocity[i];
-    double effort = data->effort[i];
-    int joint_index = group_joints[group_name][joint_name];
-
-    joint_state_msg.name[joint_index] = joint_name;
-    joint_state_msg.position[joint_index] = position;
-    joint_state_msg.velocity[joint_index] = velocity;
-    joint_state_msg.effort[joint_index] = effort;
-
-    feedback_msg.name[joint_index] = joint_name;
-    feedback_msg.position[joint_index] = position;
-    feedback_msg.velocity[joint_index] = velocity;
-    feedback_msg.effort[joint_index] = effort;
+    if (joint_state_msg.name[i].empty()) {
+      return;
+    }
   }
+
+  FeedbackMsg feedback_msg;
+  feedback_msg.name = joint_state_msg.name;
+  feedback_msg.position = joint_state_msg.position;
+  feedback_msg.velocity = joint_state_msg.velocity;
+  feedback_msg.effort = joint_state_msg.effort;
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
   group_joint_states[group_name] = joint_state_msg;
+  gazebo_joint_states.erase(group_name);
 }
 
 

@@ -13,7 +13,7 @@
       <visual>
         <origin xyz="${-length/2-.0254} 0 .016075" rpy="0 1.57075 0" />
         <geometry>
-          <cylinder length="${length}" radius=".015875" />
+          <cylinder length="${length-.0254}" radius=".015875" />
         </geometry>
         <xacro:silver_material/>
       </visual>

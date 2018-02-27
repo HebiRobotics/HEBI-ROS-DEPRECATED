@@ -62,13 +62,13 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="HEBI/base" type="revolute">
+  <joint name="HEBI/base/X5_4" type="revolute">
     <parent link="HEBI/base/INPUT_INTERFACE"/>
     <child link="shoulder_bracket/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
     <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-    <dynamics damping="0.2" friction="0.2"/>
+    <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <transmission name="HEBI/base/transmission">
     <type>transmission_interface/SimpleTransmission</type>
@@ -135,13 +135,13 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="HEBI/shoulder" type="revolute">
+  <joint name="HEBI/shoulder/X5_4" type="revolute">
     <parent link="HEBI/shoulder/INPUT_INTERFACE"/>
     <child link="shoulder_elbow/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
     <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-    <dynamics damping="0.2" friction="0.2"/>
+    <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <transmission name="HEBI/shoulder/transmission">
     <type>transmission_interface/SimpleTransmission</type>
@@ -169,7 +169,7 @@
     <visual>
       <origin rpy="0 1.57075 0" xyz="-0.1904 0 .016075"/>
       <geometry>
-        <cylinder length="0.33" radius=".015875"/>
+        <cylinder length="0.3046" radius=".015875"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>
@@ -248,13 +248,13 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="HEBI/elbow" type="revolute">
+  <joint name="HEBI/elbow/X5_4" type="revolute">
     <parent link="HEBI/elbow/INPUT_INTERFACE"/>
     <child link="elbow_end/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
     <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-    <dynamics damping="0.2" friction="0.2"/>
+    <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <transmission name="HEBI/elbow/transmission">
     <type>transmission_interface/SimpleTransmission</type>
@@ -282,7 +282,7 @@
     <visual>
       <origin rpy="0 1.57075 0" xyz="-0.1879 0 .016075"/>
       <geometry>
-        <cylinder length="0.325" radius=".015875"/>
+        <cylinder length="0.2996" radius=".015875"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>
@@ -346,8 +346,7 @@
     <selfCollide>true</selfCollide>
   </gazebo>
   <gazebo>
-    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
-      <robotNamespace>/hebiros/x_demo</robotNamespace>
+    <plugin filename="libhebiros_gazebo_plugin.so" name="hebiros_gazebo_plugin">
     </plugin>
   </gazebo>
 </robot>
