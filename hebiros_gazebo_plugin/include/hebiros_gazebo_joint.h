@@ -14,10 +14,11 @@ class HebirosGazeboJoint {
 
     std::string name;
     std::string model_name;
-    int command_index;
-    CommandMsg command_target;
-    bool command_received = false;
     SettingsMsg settings;
+    CommandMsg command_target;
+    int command_index;
+    bool command_received = false;
+
     ros::Time start_time;
     ros::Time prev_time;
     double prev_force {};
@@ -29,6 +30,7 @@ class HebirosGazeboJoint {
     double velocity_elapsed_error {};
     double effort_prev_error {};
     double effort_elapsed_error {};
+
     ros::Publisher publisher;
 
     HebirosGazeboJoint(std::string name);

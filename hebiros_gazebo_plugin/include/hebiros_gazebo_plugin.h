@@ -35,22 +35,24 @@ class HebirosGazeboPlugin: public ModelPlugin {
 
     physics::ModelPtr model;
     event::ConnectionPtr update_connection;
+    std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
+    HebirosGazeboController controller;
+    bool check_acknowledgement;
+    bool acknowledgement;
+
     std::unique_ptr<ros::NodeHandle> n;
     ros::Subscriber command_sub;
     ros::ServiceServer acknowledge_srv;
     ros::ServiceServer command_lifetime_srv;
-    bool check_acknowledgement;
-    bool acknowledgement;
-    std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
-    HebirosGazeboController controller;
+
+    void AddJoint(std::string joint_name);
+    void UpdateJoint(std::string joint_name, physics::JointPtr joint);
 
     void SubCommand(const boost::shared_ptr<CommandMsg const> data);
     bool SrvAcknowledge(std_srvs::Empty::Request &req,
       std_srvs::Empty::Response &res);
     bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
       SetCommandLifetimeSrv::Response &res);
-    void AddJoint(std::string joint_name);
-    void UpdateJoint(std::string joint_name, physics::JointPtr joint);
 
 };
 

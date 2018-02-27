@@ -6,6 +6,7 @@ HebirosGazeboController::HebirosGazeboController() {}
 
 HebirosGazeboController::~HebirosGazeboController() {}
 
+//Set defaults settings for a joint once
 void HebirosGazeboController::SetSettings(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint) {
 
@@ -34,6 +35,7 @@ void HebirosGazeboController::SetSettings(
   SetDefaultGains(hebiros_joint);
 }
 
+//Initialize gains with default values based on model and control strategy
 void HebirosGazeboController::SetDefaultGains(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint) {
   
@@ -152,6 +154,7 @@ void HebirosGazeboController::SetDefaultGains(
   }
 }
 
+//Change settings for a joint if specifically commanded
 void HebirosGazeboController::ChangeSettings(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint) {
 
@@ -197,6 +200,7 @@ void HebirosGazeboController::ChangeSettings(
   }
 }
 
+//Compute output force to the joint based on PID and control strategy
 double HebirosGazeboController::ComputeForce(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
   double position, double velocity, double effort) {
@@ -303,6 +307,7 @@ double HebirosGazeboController::ComputeForce(
   return force;
 }
 
+//Compute the PID error for positions
 double HebirosGazeboController::ComputePositionPID(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
   double target_position, double position, ros::Duration iteration_time) {
@@ -325,6 +330,7 @@ double HebirosGazeboController::ComputePositionPID(
     (hebiros_joint->settings.position_gains.kd[0] * position_error_d);
 }
 
+//Compute the PID error for velocities
 double HebirosGazeboController::ComputeVelocityPID(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
   double target_velocity, double velocity, ros::Duration iteration_time) {
@@ -347,6 +353,7 @@ double HebirosGazeboController::ComputeVelocityPID(
     (hebiros_joint->settings.velocity_gains.kd[0] * velocity_error_d);
 }
 
+//Compute the PID error for efforts
 double HebirosGazeboController::ComputeEffortPID(
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
   double target_effort, double effort, ros::Duration iteration_time) {
@@ -369,6 +376,7 @@ double HebirosGazeboController::ComputeEffortPID(
     (hebiros_joint->settings.effort_gains.kd[0] * effort_error_d);
 }
 
+//Limit x to a value from low to high
 double HebirosGazeboController::Clip(double x, double low, double high) {
   return std::min(std::max(x, low), high);
 }

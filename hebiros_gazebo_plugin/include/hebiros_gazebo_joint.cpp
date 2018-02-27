@@ -8,6 +8,7 @@ HebirosGazeboJoint::HebirosGazeboJoint(std::string name) {
 
 HebirosGazeboJoint::~HebirosGazeboJoint() {}
 
+//Reset the joint for when a new command is received
 void HebirosGazeboJoint::Reset(int i, CommandMsg command_msg) {
 
   this->command_index = i;

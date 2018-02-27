@@ -6,7 +6,10 @@ HebirosGazeboPlugin::HebirosGazeboPlugin() {}
 
 HebirosGazeboPlugin::~HebirosGazeboPlugin() {}
 
+//Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
+
+  this->model = _model;
 
   int argc = 0;
   char **argv = NULL;
@@ -30,14 +33,13 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     SetCommandLifetimeSrv::Response>("/hebiros_gazebo_plugin/set_command_lifetime",
     boost::bind(&HebirosGazeboPlugin::SrvSetCommandLifetime, this, _1, _2));
 
-  this->model = _model;
-
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
 
   ROS_INFO("Loaded hebiros gazebo plugin");
 }
 
+//Update the joints at every simulation iteration
 void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 
   for (auto joint_pair : hebiros_joints) {
@@ -45,6 +47,7 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
     std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_joints[joint_name];
 
     physics::JointPtr joint = this->model->GetJoint(joint_name+"/"+hebiros_joint->model_name);
+
     if (joint) {
       UpdateJoint(joint_name, joint);
     }
@@ -54,6 +57,7 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
   }
 }
 
+//Publish feedback and compute PID control to command a joint
 void HebirosGazeboPlugin::UpdateJoint(
   std::string joint_name, physics::JointPtr joint) {
 
@@ -89,6 +93,7 @@ void HebirosGazeboPlugin::UpdateJoint(
   }
 }
 
+//Subscriber callback which receives a group set of commands
 void HebirosGazeboPlugin::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
 
   if (this->check_acknowledgement) {
@@ -111,6 +116,7 @@ void HebirosGazeboPlugin::SubCommand(const boost::shared_ptr<CommandMsg const> d
 
 }
 
+//Service callback which acknowledges that a command has been received
 bool HebirosGazeboPlugin::SrvAcknowledge(std_srvs::Empty::Request &req,
   std_srvs::Empty::Response &res) {
 
@@ -126,6 +132,7 @@ bool HebirosGazeboPlugin::SrvAcknowledge(std_srvs::Empty::Request &req,
   }
 }
 
+//Service callback which sets the command lifetime for all joints
 bool HebirosGazeboPlugin::SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
   SetCommandLifetimeSrv::Response &res) {
 
@@ -134,6 +141,7 @@ bool HebirosGazeboPlugin::SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &
   return true;
 }
 
+//Add a joint to the list of joints if it has not yet been commanded by name
 void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
 
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
@@ -158,5 +166,5 @@ void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
   this->controller.ChangeSettings(hebiros_joint);
 }
 
-
+//Tell Gazebo about this plugin
 GZ_REGISTER_MODEL_PLUGIN(HebirosGazeboPlugin);
