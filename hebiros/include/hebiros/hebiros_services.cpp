@@ -43,15 +43,21 @@ bool Hebiros_Node::srv_add_group_from_names(
     }
   }
 
-  int joint_index = 0;
+  if (req.families.size() != 1 && req.families.size() != req.names.size()) {
+    ROS_WARN("Invalid number of familes for group [%s]", req.group_name.c_str());
+    return false;
+  }
+
   ROS_INFO("Created group [%s]:", req.group_name.c_str());
   for (int i = 0; i < req.families.size(); i++) {
     for (int j = 0; j < req.names.size(); j++) {
-      std::string joint_name = req.families[i]+"/"+req.names[j];
-      
-      ROS_INFO("/%s/%s/%s", req.group_name.c_str(),
-        req.families[i].c_str(), req.names[j].c_str());
-        group_joints[req.group_name][joint_name] = joint_index;
+
+      if ((req.families.size() == 1) ||
+        (req.families.size() == req.names.size() && i == j)) {
+
+        std::string joint_name = req.families[i]+"/"+req.names[j];
+        ROS_INFO("/%s/%s", req.group_name.c_str(), joint_name.c_str());
+        group_joints[req.group_name][joint_name] = j;
 
         if (use_gazebo) {
 
@@ -60,8 +66,7 @@ bool Hebiros_Node::srv_add_group_from_names(
             100, boost::bind(&Hebiros_Node::sub_publish_group_gazebo,
             this, _1, req.group_name, joint_name));
         }
-
-        joint_index++;
+      }
     }
   }
 
