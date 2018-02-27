@@ -1,12 +1,7 @@
 <launch>
-  <node name="spawner" pkg="controller_manager" type="spawner" respawn="false"
-    output="screen" ns="/hebiros/x_demo" args="HEBI/base/controller HEBI/shoulder/controller HEBI/elbow/controller joint_state_controller"/>
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
-    respawn="false" output="screen">
-    <remap from="/joint_states" to="/hebiros/x_demo/joint_states"/>
-  </node>
+  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" args="-use_gazebo true" respawn="false" output="screen"/>
 
-  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find hebiros_description)/urdf/x_demo.urdf -urdf -z 1 -model x_demo"/>
+  <node name="example_03_command_node" pkg="hebiros_basic_examples" type="example_03_command_node"/>
 
 </launch>

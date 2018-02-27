@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
   add_group_srv.request.group_name = group_name;
   add_group_srv.request.names = {"base", "shoulder", "elbow"};
   add_group_srv.request.families = {"HEBI"};
-  //Call the add_group_from_urdf service to create a group until it succeeds
+  //Call the add_group_from_names service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
   while(!add_group_client.call(add_group_srv)) {}
 
@@ -67,10 +67,6 @@ int main(int argc, char **argv) {
   }
   else {
     std::cout << "The gains were not changed" << std::endl;
-  }
-
-  while(ros::ok()) {
-    loop_rate.sleep();
   }
 
   return 0;

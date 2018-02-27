@@ -31,7 +31,7 @@ bool Hebiros_Node::srv_entry_list(
 bool Hebiros_Node::srv_add_group_from_names(
   AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
 
-  if (groups[req.group_name]) {
+  if (group_joints.find(req.group_name) != group_joints.end()) {
     ROS_WARN("Group [%s] already exists", req.group_name.c_str());
     return true;
   }
@@ -42,52 +42,23 @@ bool Hebiros_Node::srv_add_group_from_names(
       return false;
     }
   }
-  else {
-    std::string type;
-    int publish_rate;
-
-    n.param<std::string>("/hebiros/"+req.group_name+"/joint_state_controller/type", type,
-      "joint_state_controller/JointStateController");
-    n.setParam("/hebiros/"+req.group_name+"/joint_state_controller/type", type);
-
-    n.param<int>("/hebiros/"+req.group_name+"/joint_state_controller/publish_rate", 
-      publish_rate, 50);
-    n.setParam("/hebiros/"+req.group_name+"/joint_state_controller/publish_rate", publish_rate);
-  }
 
   int joint_index = 0;
   ROS_INFO("Created group [%s]:", req.group_name.c_str());
   for (int i = 0; i < req.families.size(); i++) {
     for (int j = 0; j < req.names.size(); j++) {
+      std::string joint_name = req.families[i]+"/"+req.names[j];
+      
       ROS_INFO("/%s/%s/%s", req.group_name.c_str(),
         req.families[i].c_str(), req.names[j].c_str());
-        group_joints[req.group_name][req.families[i]+"/"+req.names[j]] = joint_index;
+        group_joints[req.group_name][joint_name] = joint_index;
 
         if (use_gazebo) {
-          std::string controller_namespace = "/hebiros/"+req.group_name+"/"+
-            req.families[i]+"/"+req.names[j]+"/controller";
 
-          std::string type;
-          float p, i, d;
-          int publish_rate;
-
-          n.setParam(controller_namespace+"/joint", req.families[i]+"/"+req.names[j]);
-
-          n.param<std::string>(controller_namespace+"/type", type,
-            "effort_controllers/JointEffortController");
-          n.setParam(controller_namespace+"/type", type);
-
-          n.param<float>(controller_namespace+"/pid/p", p, 100.0);
-          n.setParam(controller_namespace+"/pid/p", p);
-
-          n.param<float>(controller_namespace+"/pid/i", i, 0.01);
-          n.setParam(controller_namespace+"/pid/i", i);
-
-          n.param<float>(controller_namespace+"/pid/d", d, 10.0);
-          n.setParam(controller_namespace+"/pid/d", d);
-
-          n.param<int>(controller_namespace+"/publish_rate", publish_rate, 50);
-          n.setParam(controller_namespace+"/publish_rate", publish_rate);
+          subscribers["/hebiros_gazebo_plugin/feedback/"+joint_name] =
+            n.subscribe<sensor_msgs::JointState>("/hebiros_gazebo_plugin/feedback/"+joint_name,
+            100, boost::bind(&Hebiros_Node::sub_publish_group_gazebo,
+            this, _1, req.group_name, joint_name));
         }
 
         joint_index++;
@@ -168,12 +139,16 @@ bool Hebiros_Node::srv_set_command_lifetime(
   SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
   std::string group_name) {
   if (use_gazebo) {
-    return true;
+    SetCommandLifetimeSrv srv;
+    srv.request.command_lifetime = req.command_lifetime;
+
+    clients["/hebiros_gazebo_plugin/set_command_lifetime"].call(srv);
   }
+  else {
+    std::shared_ptr<Group> group = groups[group_name];
 
-  std::shared_ptr<Group> group = groups[group_name];
-
-  group->setCommandLifetimeMs(req.command_lifetime);
+    group->setCommandLifetimeMs(req.command_lifetime);
+  }
 
   ROS_INFO("/hebiros/%s command_lifetime=%d", group_name.c_str(), req.command_lifetime);
   return true;
@@ -183,6 +158,26 @@ bool Hebiros_Node::srv_set_command_lifetime(
 bool Hebiros_Node::srv_send_command_with_acknowledgement(
   SendCommandWithAcknowledgementSrv::Request &req, SendCommandWithAcknowledgementSrv::Response &res,
   std::string group_name) {
+
+  if (use_gazebo) {
+
+    if (names_in_order(req.command)) {
+      
+      std_srvs::Empty empty_srv;
+
+      ros::ServiceClient acknowledge_client = n.serviceClient<std_srvs::Empty>(
+      "/hebiros_gazebo_plugin/acknowledge");
+
+      while(!acknowledge_client.call(empty_srv)) {
+        publishers["/hebiros_gazebo_plugin/command"].publish(req.command);
+      }
+      return true;
+    }
+    else {
+      ROS_WARN("Simulated commands are assigned with different orders.  Command will not be sent.");
+      return false;
+    }
+  }
 
   std::shared_ptr<Group> group = groups[group_name];
   GroupCommand group_command(group->size());

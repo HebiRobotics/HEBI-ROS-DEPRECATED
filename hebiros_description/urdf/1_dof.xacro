@@ -50,12 +50,8 @@
   </joint>
 
   <!-- joints -->
-  <xacro:x5 joint="HEBI/base" child="shoulder_bracket" model="X5_4"/>
-  <xacro:x_wrist_bracket name="shoulder_bracket" child="HEBI/shoulder"/>
-  <xacro:x5 joint="HEBI/shoulder" child="shoulder_elbow" model="X5_4"/>
-  <xacro:x_tube_link name="shoulder_elbow" child="HEBI/elbow" length="0.33" twist="0.7"/>
-  <xacro:x5 joint="HEBI/elbow" child="elbow_end" model="X5_4"/>
-  <xacro:x_tube_link name="elbow_end" child="end_effector" length="0.325" twist="0.6"/>
+  <xacro:x5 joint="HEBI/base" child="base_end" model="X5-4"/>
+  <xacro:x_tube_link name="base_end" child="end_effector" length="0.33" twist="0"/>
 
   <!-- end link -->
   <link name="end_effector/INPUT_INTERFACE">

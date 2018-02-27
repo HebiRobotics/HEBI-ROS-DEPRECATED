@@ -64,15 +64,11 @@ void Hebiros_Node::register_group(std::string group_name) {
     group->setCommandLifetimeMs(command_lifetime);
   }
   else {
-    subscribers["/hebiros/"+group_name+"/joint_states"] =
-      n.subscribe<sensor_msgs::JointState>("/hebiros/"+group_name+"/joint_states", 100,
-      boost::bind(&Hebiros_Node::sub_publish_group_gazebo, this, _1, group_name));
+    publishers["/hebiros_gazebo_plugin/command"] =
+      n.advertise<CommandMsg>("hebiros_gazebo_plugin/command", 100);
 
-    for (auto group_joints_pair : group_joints[group_name]) {
-      publishers["/hebiros/"+group_name+"/"+group_joints_pair.first+"/controller/command"] =
-        n.advertise<std_msgs::Float64>(
-        "/hebiros/"+group_name+"/"+group_joints_pair.first+"/controller/command", 100);
-    }
+    clients["/hebiros_gazebo_plugin/set_command_lifetime"] =
+      n.serviceClient<SetCommandLifetimeSrv>("/hebiros_gazebo_plugin/set_command_lifetime");
   }
 }
 

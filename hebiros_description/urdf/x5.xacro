@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- NOTE: joint must match the name of the module -->
-  <xacro:macro name="x5" params="joint child">
+  <xacro:macro name="x5" params="joint child model">
+  <xacro:property name="model_name" value="${model}"/>
     <link name="${joint}/INPUT_INTERFACE">
       <visual>
         <origin xyz="0 0 0.0155" rpy="3.14157 0 0" />
@@ -22,14 +23,36 @@
         <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
       </inertial>
     </link>
-    <joint name="${joint}" type="revolute">
-      <parent link="${joint}/INPUT_INTERFACE"/>
-      <child link="${child}/INPUT_INTERFACE"/>
-      <origin xyz="0 0 0.031" rpy="0 0 0"/>
-      <axis xyz="0 0 1"/>
-      <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-      <dynamics damping="0.2" friction="0.2"/>
-    </joint>
+    <xacro:if value="${model_name == 'X5_1'}">
+      <joint name="${joint}/X5_1" type="revolute">
+        <parent link="${joint}/INPUT_INTERFACE"/>
+        <child link="${child}/INPUT_INTERFACE"/>
+        <origin xyz="0 0 0.031" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+        <dynamics damping="0.5" friction="0.5"/>
+      </joint>
+    </xacro:if>
+    <xacro:if value="${model_name == 'X5_4'}">
+      <joint name="${joint}/X5_4" type="revolute">
+        <parent link="${joint}/INPUT_INTERFACE"/>
+        <child link="${child}/INPUT_INTERFACE"/>
+        <origin xyz="0 0 0.031" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+        <dynamics damping="0.5" friction="0.5"/>
+      </joint>
+    </xacro:if>
+    <xacro:if value="${model_name == 'X5_9'}">
+      <joint name="${joint}/X5_9" type="revolute">
+        <parent link="${joint}/INPUT_INTERFACE"/>
+        <child link="${child}/INPUT_INTERFACE"/>
+        <origin xyz="0 0 0.031" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+        <dynamics damping="0.5" friction="0.5"/>
+      </joint>
+    </xacro:if>
     <transmission name="${joint}/transmission">
     <type>transmission_interface/SimpleTransmission</type>
       <joint name="${joint}">
