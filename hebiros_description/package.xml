@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>hebiros_description</name>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <description>Models for Hebi components and hebiros</description>
 
   <maintainer email="x@hebirobotics.com">Xavier Artache</maintainer>
