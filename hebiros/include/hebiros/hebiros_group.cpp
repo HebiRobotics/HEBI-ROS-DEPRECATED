@@ -69,6 +69,9 @@ void Hebiros_Node::register_group(std::string group_name) {
 
     clients["/hebiros_gazebo_plugin/set_command_lifetime"] =
       n.serviceClient<SetCommandLifetimeSrv>("/hebiros_gazebo_plugin/set_command_lifetime");
+
+    clients["/hebiros_gazebo_plugin/set_feedback_frequency"] =
+      n.serviceClient<SetFeedbackFrequencySrv>("/hebiros_gazebo_plugin/set_feedback_frequency");
   }
 }
 

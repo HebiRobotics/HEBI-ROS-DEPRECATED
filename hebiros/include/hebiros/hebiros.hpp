@@ -68,8 +68,8 @@ class Hebiros_Node {
     std::map<std::string, GroupInfo*> group_infos;
     std::map<std::string, std::map<std::string, int>> group_joints;
     std::map<std::string, sensor_msgs::JointState> group_joint_states;
-    std::map<std::string, sensor_msgs::JointState> gazebo_joint_states;
-    std::mutex gazebo_joint_states_mutex;
+    std::map<std::string, FeedbackMsg> gazebo_feedback;
+    std::mutex gazebo_feedback_mutex;
 
     int node_frequency;
     int action_frequency;
@@ -122,7 +122,7 @@ class Hebiros_Node {
       std::string group_name);
 
     void sub_publish_group_gazebo(
-      const boost::shared_ptr<sensor_msgs::JointState const> data,
+      const boost::shared_ptr<FeedbackMsg const> data,
       std::string group_name, std::string joint_name);
 
     /* Action execution functions */

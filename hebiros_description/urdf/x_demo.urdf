@@ -82,6 +82,22 @@
   </transmission>
   <gazebo reference="HEBI/base/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>
+    <gravity>true</gravity>
+    <sensor name="HEBI/base/imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>/hebiros_gazebo_plugin/imu/HEBI/base</topicName>
+        <bodyName>HEBI/base/imu_link</bodyName>
+        <updateRateHZ>10.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0.025 0 0.003</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>HEBI/base/imu_link</frameName>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
   </gazebo>
   <link name="shoulder_bracket/INPUT_INTERFACE">
     <visual>
@@ -155,6 +171,22 @@
   </transmission>
   <gazebo reference="HEBI/shoulder/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>
+    <gravity>true</gravity>
+    <sensor name="HEBI/shoulder/imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>/hebiros_gazebo_plugin/imu/HEBI/shoulder</topicName>
+        <bodyName>HEBI/shoulder/imu_link</bodyName>
+        <updateRateHZ>10.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0.025 0 0.003</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>HEBI/shoulder/imu_link</frameName>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
   </gazebo>
   <link name="shoulder_elbow/INPUT_INTERFACE">
     <visual>
@@ -268,6 +300,22 @@
   </transmission>
   <gazebo reference="HEBI/elbow/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>
+    <gravity>true</gravity>
+    <sensor name="HEBI/elbow/imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>/hebiros_gazebo_plugin/imu/HEBI/elbow</topicName>
+        <bodyName>HEBI/elbow/imu_link</bodyName>
+        <updateRateHZ>10.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0.025 0 0.003</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>HEBI/elbow/imu_link</frameName>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
   </gazebo>
   <link name="elbow_end/INPUT_INTERFACE">
     <visual>
