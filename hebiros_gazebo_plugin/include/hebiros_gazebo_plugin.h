@@ -15,9 +15,11 @@
 #include "std_srvs/Empty.h"
 #include "hebiros/FeedbackMsg.h"
 #include "hebiros/CommandMsg.h"
+#include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 
+#include "hebiros_gazebo_group.h"
 #include "hebiros_gazebo_joint.h"
 #include "hebiros_gazebo_controller.h"
 
@@ -45,6 +47,7 @@ class HebirosGazeboPlugin: public ModelPlugin {
 
     std::shared_ptr<ros::NodeHandle> n;
     ros::Subscriber command_sub;
+    ros::ServiceServer add_group_srv;
     ros::ServiceServer acknowledge_srv;
     ros::ServiceServer command_lifetime_srv;
     ros::ServiceServer feedback_frequency_srv;
@@ -53,6 +56,8 @@ class HebirosGazeboPlugin: public ModelPlugin {
     void UpdateJoint(std::string joint_name, physics::JointPtr joint);
 
     void SubCommand(const boost::shared_ptr<CommandMsg const> data);
+    bool SrvAddGroup(AddGroupFromNamesSrv::Request &req,
+      AddGroupFromNamesSrv::Response &res);
     bool SrvAcknowledge(std_srvs::Empty::Request &req,
       std_srvs::Empty::Response &res);
     bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,

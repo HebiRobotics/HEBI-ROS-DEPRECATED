@@ -23,6 +23,11 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   this->check_acknowledgement = false;
   this->acknowledgement = false;
 
+  this->add_group_srv =
+    this->n->advertiseService<AddGroupFromNamesSrv::Request, AddGroupFromNamesSrv::Response>(
+    "/hebiros_gazebo_plugin/add_group", boost::bind(
+    &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
+
   this->acknowledge_srv =
     this->n->advertiseService<std_srvs::Empty::Request, std_srvs::Empty::Response>(
     "/hebiros_gazebo_plugin/acknowledge", boost::bind(
@@ -148,6 +153,15 @@ bool HebirosGazeboPlugin::SrvAcknowledge(std_srvs::Empty::Request &req,
   else {
     return false;
   }
+}
+
+//Service callback which adds a group with corresponding joints
+bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
+  AddGroupFromNamesSrv::Response &res) {
+
+  std::cout << "group " << req.group_name << std::endl;
+
+  return true;
 }
 
 //Service callback which sets the command lifetime for all joints
