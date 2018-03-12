@@ -62,7 +62,7 @@ bool Hebiros_Node::srv_add_group_from_names(
         if (use_gazebo) {
 
           subscribers["/hebiros_gazebo_plugin/feedback/"+joint_name] =
-            n.subscribe<sensor_msgs::JointState>("/hebiros_gazebo_plugin/feedback/"+joint_name,
+            n.subscribe<FeedbackMsg>("/hebiros_gazebo_plugin/feedback/"+joint_name,
             100, boost::bind(&Hebiros_Node::sub_publish_group_gazebo,
             this, _1, req.group_name, joint_name));
         }
@@ -71,6 +71,13 @@ bool Hebiros_Node::srv_add_group_from_names(
   }
 
   register_group(req.group_name);
+
+  if (use_gazebo) {
+    AddGroupFromNamesSrv srv;
+    srv.request = req;
+    clients["/hebiros_gazebo_plugin/add_group"].call(srv);
+  }
+
   return true;
 }
 
@@ -127,13 +134,18 @@ bool Hebiros_Node::srv_size(
 bool Hebiros_Node::srv_set_feedback_frequency(
   SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res,
   std::string group_name) {
+
   if (use_gazebo) {
-    return true;
+    SetFeedbackFrequencySrv srv;
+    srv.request.feedback_frequency = req.feedback_frequency;
+
+    clients["/hebiros_gazebo_plugin/set_feedback_frequency"].call(srv);
   }
+  else {
+    std::shared_ptr<Group> group = groups[group_name];
 
-  std::shared_ptr<Group> group = groups[group_name];
-
-  group->setFeedbackFrequencyHz(req.feedback_frequency);
+    group->setFeedbackFrequencyHz(req.feedback_frequency);
+  }
 
   ROS_INFO("/hebiros/%s feedback_frequency=%d", group_name.c_str(), req.feedback_frequency);
   return true;
@@ -143,6 +155,7 @@ bool Hebiros_Node::srv_set_feedback_frequency(
 bool Hebiros_Node::srv_set_command_lifetime(
   SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
   std::string group_name) {
+
   if (use_gazebo) {
     SetCommandLifetimeSrv srv;
     srv.request.command_lifetime = req.command_lifetime;

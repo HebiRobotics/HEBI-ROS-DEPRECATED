@@ -18,9 +18,9 @@
         </geometry>
       </collision>
       <inertial>
-        <origin xyz="0 0 0.0155" rpy="3.14157 0 0" />
+        <origin xyz="-0.0142, -0.0031, 0.0165" rpy="0 0 0" />
         <mass value="0.335"/>
-        <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0"/>
+        <inertia ixx="0.00015" iyy="0.000255" izz="0.000350" ixy="0.0000341" ixz="0.0000118" iyz="0.00000229"/>
       </inertial>
     </link>
     <xacro:if value="${model_name == 'X5_1'}">
@@ -65,6 +65,22 @@
     </transmission>
     <gazebo reference="${joint}/INPUT_INTERFACE">
       <selfCollide>true</selfCollide>
+      <gravity>true</gravity>
+      <sensor name="${joint}/imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <visualize>true</visualize>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+          <topicName>/hebiros_gazebo_plugin/imu/${joint}</topicName>
+          <bodyName>${joint}/imu_link</bodyName>
+          <updateRateHZ>10.0</updateRateHZ>
+          <gaussianNoise>0.0</gaussianNoise>
+          <xyzOffset>0.025 0 0.003</xyzOffset>
+          <rpyOffset>0 0 0</rpyOffset>
+          <frameName>${joint}/imu_link</frameName>
+        </plugin>
+        <pose>0 0 0 0 0 0</pose>
+      </sensor>
     </gazebo>
   </xacro:macro>
 </robot>

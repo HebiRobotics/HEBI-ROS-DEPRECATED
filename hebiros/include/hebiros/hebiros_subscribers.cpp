@@ -67,53 +67,68 @@ void Hebiros_Node::sub_joint_command(const boost::shared_ptr<sensor_msgs::JointS
 
 
 //Subscriber callback which publishes feedback topics for a group in gazebo
-void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<sensor_msgs::JointState const>
+void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<FeedbackMsg const>
   data, std::string group_name, std::string joint_name) {
 
-  std::lock_guard<std::mutex> guard(gazebo_joint_states_mutex);
+  std::lock_guard<std::mutex> guard(gazebo_feedback_mutex);
 
   int size = group_joints[group_name].size();
-  sensor_msgs::JointState joint_state_msg;
+  FeedbackMsg feedback_msg;
 
-  if (gazebo_joint_states.find(group_name) == gazebo_joint_states.end()) {
+  if (gazebo_feedback.find(group_name) == gazebo_feedback.end()) {
 
-    joint_state_msg.name.resize(size);
-    joint_state_msg.position.resize(size);
-    joint_state_msg.velocity.resize(size);
-    joint_state_msg.effort.resize(size);
-    gazebo_joint_states[group_name] = joint_state_msg;
+    feedback_msg.name.resize(size);
+    feedback_msg.position.resize(size);
+    feedback_msg.velocity.resize(size);
+    feedback_msg.effort.resize(size);
+    feedback_msg.position_command.resize(size);
+    feedback_msg.velocity_command.resize(size);
+    feedback_msg.effort_command.resize(size);
+    feedback_msg.accelerometer.resize(size);
+    feedback_msg.gyro.resize(size);
+
+    gazebo_feedback[group_name] = feedback_msg;
   }
 
-  joint_state_msg = gazebo_joint_states[group_name];
+  feedback_msg = gazebo_feedback[group_name];
 
-  double position = data->position[0];
-  double velocity = data->velocity[0];
-  double effort = data->effort[0];
   int joint_index = group_joints[group_name][joint_name];
 
-  joint_state_msg.name[joint_index] = joint_name;
-  joint_state_msg.position[joint_index] = position;
-  joint_state_msg.velocity[joint_index] = velocity;
-  joint_state_msg.effort[joint_index] = effort;
+  feedback_msg.name[joint_index] = joint_name;
+  feedback_msg.position[joint_index] = data->position[0];
+  feedback_msg.velocity[joint_index] = data->velocity[0];
+  feedback_msg.effort[joint_index] = data->effort[0];
+  if (data->position_command.size() > 0) {
+    feedback_msg.position_command[joint_index] = data->position_command[0];
+  }
+  if (data->velocity_command.size() > 0) {
+    feedback_msg.velocity_command[joint_index] = data->velocity_command[0];
+  }
+  if (data->effort_command.size() > 0) {
+    feedback_msg.effort_command[joint_index] = data->effort_command[0];
+  }
+  feedback_msg.accelerometer[joint_index] = data->accelerometer[0];
+  feedback_msg.gyro[joint_index] = data->gyro[0];
 
-  gazebo_joint_states[group_name] = joint_state_msg;
+  gazebo_feedback[group_name] = feedback_msg;
 
   for (int i = 0; i < size; i++) {
-    if (joint_state_msg.name[i].empty()) {
+    if (feedback_msg.name[i].empty()) {
       return;
     }
   }
 
-  FeedbackMsg feedback_msg;
-  feedback_msg.name = joint_state_msg.name;
-  feedback_msg.position = joint_state_msg.position;
-  feedback_msg.velocity = joint_state_msg.velocity;
-  feedback_msg.effort = joint_state_msg.effort;
+  sensor_msgs::JointState joint_state_msg;
+  joint_state_msg.name = feedback_msg.name;
+  joint_state_msg.position = feedback_msg.position;
+  joint_state_msg.velocity = feedback_msg.velocity;
+  joint_state_msg.effort = feedback_msg.effort;
 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
   group_joint_states[group_name] = joint_state_msg;
-  gazebo_joint_states.erase(group_name);
+
+  gazebo_feedback.erase(group_name);
 }
 
 
