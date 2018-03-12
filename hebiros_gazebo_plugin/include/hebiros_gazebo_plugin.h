@@ -2,8 +2,6 @@
 #ifndef _HEBIROS_GAZEBO_PLUGIN_HH_
 #define _HEBIROS_GAZEBO_PLUGIN_HH_
 
-#include <map>
-
 #include <gazebo/common/common.hh>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -40,6 +38,7 @@ class HebirosGazeboPlugin: public ModelPlugin {
 
     physics::ModelPtr model;
     event::ConnectionPtr update_connection;
+    std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
     std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
     HebirosGazeboController controller;
     bool check_acknowledgement;

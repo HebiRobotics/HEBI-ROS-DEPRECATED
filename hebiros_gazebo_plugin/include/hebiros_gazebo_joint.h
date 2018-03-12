@@ -19,12 +19,14 @@ class HebirosGazeboJoint {
     SettingsMsg settings;
     CommandMsg command_target;
     FeedbackMsg feedback;
+
     int command_index;
     bool command_received = false;
 
     ros::Time start_time;
     ros::Time prev_time;
     ros::Time prev_feedback_time;
+
     double prev_force {};
     double low_pass_alpha {};
     double gear_ratio {};

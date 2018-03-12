@@ -127,16 +127,18 @@ void HebirosGazeboPlugin::SubCommand(const boost::shared_ptr<CommandMsg const> d
   for (int i = 0; i < data->name.size(); i++) {
     std::string joint_name = data->name[i];
 
-    if (hebiros_joints.find(joint_name) == hebiros_joints.end()) {
-      AddJoint(joint_name);
+    for (auto group_pair : hebiros_groups) {
+      std::string group_name = group_pair.first;
+      std::shared_ptr<HebirosGazeboGroup> hebiros_group = group_pair.second;
+
+      if (hebiros_group->joints.find(joint_name) != hebiros_group->joints.end()) {
+        std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_joints[joint_name];
+        hebiros_joint->Reset(i, *data);
+        hebiros_joint->settings.name = {data->name[i]};
+        this->controller.ChangeSettings(hebiros_joint);
+      }
     }
-
-    std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_joints[joint_name];
-    hebiros_joint->Reset(i, *data);
-    hebiros_joint->settings.name = {data->name[i]};
-    this->controller.ChangeSettings(hebiros_joint);
   }
-
 }
 
 //Service callback which acknowledges that a command has been received
@@ -159,7 +161,24 @@ bool HebirosGazeboPlugin::SrvAcknowledge(std_srvs::Empty::Request &req,
 bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   AddGroupFromNamesSrv::Response &res) {
 
-  std::cout << "group " << req.group_name << std::endl;
+  std::shared_ptr<HebirosGazeboGroup> hebiros_group =
+    std::make_shared<HebirosGazeboGroup>(req.group_name);
+  hebiros_groups[req.group_name] = hebiros_group;
+
+  for (int i = 0; i < req.families.size(); i++) {
+    for (int j = 0; j < req.names.size(); j++) {
+
+      if ((req.families.size() == 1) ||
+        (req.families.size() == req.names.size() && i == j)) {
+
+        std::string joint_name = req.families[i]+"/"+req.names[j];
+        std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
+          std::make_shared<HebirosGazeboJoint>(joint_name, this->n);
+        hebiros_group->joints[joint_name] = hebiros_joint;
+        AddJoint(joint_name);
+      }
+    }
+  }
 
   return true;
 }
@@ -187,6 +206,7 @@ void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
 
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
     std::make_shared<HebirosGazeboJoint>(joint_name, this->n);
+
   hebiros_joints[joint_name] = hebiros_joint;
 
   physics::JointPtr joint;

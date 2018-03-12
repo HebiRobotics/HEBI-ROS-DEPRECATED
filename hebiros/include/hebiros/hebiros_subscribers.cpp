@@ -127,6 +127,7 @@ void Hebiros_Node::sub_publish_group_gazebo(const boost::shared_ptr<FeedbackMsg 
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
   group_joint_states[group_name] = joint_state_msg;
+
   gazebo_feedback.erase(group_name);
 }
 

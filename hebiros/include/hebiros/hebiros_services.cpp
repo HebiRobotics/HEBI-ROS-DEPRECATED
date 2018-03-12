@@ -71,6 +71,13 @@ bool Hebiros_Node::srv_add_group_from_names(
   }
 
   register_group(req.group_name);
+
+  if (use_gazebo) {
+    AddGroupFromNamesSrv srv;
+    srv.request = req;
+    clients["/hebiros_gazebo_plugin/add_group"].call(srv);
+  }
+
   return true;
 }
 
