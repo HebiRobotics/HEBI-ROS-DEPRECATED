@@ -67,8 +67,14 @@ void Hebiros_Node::register_group(std::string group_name) {
     publishers["/hebiros_gazebo_plugin/command"] =
       n.advertise<CommandMsg>("hebiros_gazebo_plugin/command", 100);
 
+    clients["/hebiros_gazebo_plugin/add_group"] =
+      n.serviceClient<AddGroupFromNamesSrv>("/hebiros_gazebo_plugin/add_group");
+
     clients["/hebiros_gazebo_plugin/set_command_lifetime"] =
       n.serviceClient<SetCommandLifetimeSrv>("/hebiros_gazebo_plugin/set_command_lifetime");
+
+    clients["/hebiros_gazebo_plugin/set_feedback_frequency"] =
+      n.serviceClient<SetFeedbackFrequencySrv>("/hebiros_gazebo_plugin/set_feedback_frequency");
   }
 }
 

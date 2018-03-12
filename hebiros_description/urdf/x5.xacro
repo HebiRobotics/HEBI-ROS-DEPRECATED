@@ -65,6 +65,22 @@
     </transmission>
     <gazebo reference="${joint}/INPUT_INTERFACE">
       <selfCollide>true</selfCollide>
+      <gravity>true</gravity>
+      <sensor name="${joint}/imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <visualize>true</visualize>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+          <topicName>/hebiros_gazebo_plugin/imu/${joint}</topicName>
+          <bodyName>${joint}/imu_link</bodyName>
+          <updateRateHZ>10.0</updateRateHZ>
+          <gaussianNoise>0.0</gaussianNoise>
+          <xyzOffset>0.025 0 0.003</xyzOffset>
+          <rpyOffset>0 0 0</rpyOffset>
+          <frameName>${joint}/imu_link</frameName>
+        </plugin>
+        <pose>0 0 0 0 0 0</pose>
+      </sensor>
     </gazebo>
   </xacro:macro>
 </robot>
