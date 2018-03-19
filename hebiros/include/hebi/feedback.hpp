@@ -127,13 +127,13 @@ class Feedback final
         ///
         /// \param fieldNumber Which subvalue to check; valid values for
         /// fieldNumber depend on the field type.
-        bool has(int fieldNumber) const;
+        bool has(size_t fieldNumber) const;
         /// \brief If the particular numbered subvalue of this field has a
         /// value, returns that value; otherwise returns a default.
         ///
         /// \param fieldNumber Which subvalue to get; valid values for
         /// fieldNumber depend on the field type.
-        float get(int fieldNumber) const;
+        float get(size_t fieldNumber) const;
 
       private:
         HebiFeedbackPtr const internal_;
@@ -220,26 +220,26 @@ class Feedback final
         ///
         /// \param pinNumber Which pin to check; valid values for pinNumber
         /// depend on the bank.
-        bool hasInt(int pinNumber) const;
+        bool hasInt(size_t pinNumber) const;
         /// \brief True if (and only if) the particular numbered pin in this
         /// bank has an floating point (e.g., analog or PWM) value.
         ///
         /// \param pinNumber Which pin to check; valid values for pinNumber
         /// depend on the bank.
-        bool hasFloat(int pinNumber) const;
+        bool hasFloat(size_t pinNumber) const;
         /// \brief If this numbered pin in this bank has an integer (e.g.,
         /// digital) value, returns that value; otherwise returns a default.
         ///
         /// \param pinNumber Which pin to get; valid values for pinNumber
         /// depend on the bank.
-        int64_t getInt(int pinNumber) const;
+        int64_t getInt(size_t pinNumber) const;
         /// \brief If this numbered pin in this bank has an floating point
         /// (e.g., analog or PWM) value, returns that value; otherwise returns a
         /// default.
         ///
         /// \param pinNumber Which pin to get; valid values for pinNumber
         /// depend on the bank.
-        float getFloat(int pinNumber) const;
+        float getFloat(size_t pinNumber) const;
 
       private:
         HebiFeedbackPtr const internal_;
@@ -353,7 +353,7 @@ class Feedback final
             transmit_time_(internal, HebiFeedbackUInt64TransmitTime),
             hardware_receive_time_(internal, HebiFeedbackUInt64HardwareReceiveTime),
             hardware_transmit_time_(internal, HebiFeedbackUInt64HardwareTransmitTime),
-            sender_id_(internal, HebiFeedbackUInt64SequenceNumber)
+            sender_id_(internal, HebiFeedbackUInt64SenderId)
         {
         }
         #endif // DOXYGEN_OMIT_INTERNAL
@@ -485,7 +485,7 @@ class Feedback final
     /**
      * \brief Cleans up feedback object as necessary.
      */
-    virtual ~Feedback() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~Feedback() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     // With all submessage and field getters: Note that the returned reference
     // should not be used after the lifetime of this parent.

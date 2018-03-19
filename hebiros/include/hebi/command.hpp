@@ -4,6 +4,7 @@
 #include "color.hpp"
 #include <string>
 #include "util.hpp"
+#include "gains.hpp"
 
 namespace hebi {
 
@@ -29,7 +30,7 @@ namespace hebi {
 class Command final
 {
   public:
-    enum ControlStrategy {
+    enum class ControlStrategy {
       /// The motor is not given power (equivalent to a 0 PWM value)
       Off,
       /// A direct PWM value (-1 to 1) can be sent to the motor (subject to onboard safety limiting).
@@ -159,25 +160,25 @@ class Command final
         ///
         /// \param fieldNumber Which subvalue to check; valid values for
         /// fieldNumber depend on the field type.
-        bool has(int fieldNumber) const;
+        bool has(size_t fieldNumber) const;
         /// \brief If the particular numbered subvalue of this field has a
         /// value, returns that value; otherwise returns a default.
         ///
         /// \param fieldNumber Which subvalue to get; valid values for
         /// fieldNumber depend on the field type.
-        float get(int fieldNumber) const;
+        float get(size_t fieldNumber) const;
         /// \brief Sets the particular numbered subvalue of this field to a
         /// given value.
         ///
         /// \param fieldNumber Which subvalue to set; valid values for
         /// fieldNumber depend on the field type.
-        void set(int fieldNumber, float value);
+        void set(size_t fieldNumber, float value);
         /// \brief Removes any currently set value for the numbered subvalue of
         /// this field.
         ///
         /// \param fieldNumber Which subvalue to clear; valid values for
         /// fieldNumber depend on the field type.
-        void clear(int fieldNumber);
+        void clear(size_t fieldNumber);
 
       private:
         HebiCommandPtr const internal_;
@@ -282,7 +283,7 @@ class Command final
     };
 
     /// \brief A message field representable by an enum of a given type.
-    template <class T>
+    template <typename T>
     class EnumField final
     {
       public:
@@ -307,9 +308,9 @@ class Command final
         bool has() const { return (hebiCommandGetEnum(internal_, field_, nullptr) == HebiStatusSuccess); }
         /// \brief If the field has a value, returns that value; otherwise,
         /// returns a default.
-        T get() const { T ret{}; hebiCommandGetEnum(internal_, field_, reinterpret_cast<int*>(&ret)); return ret; }
+        T get() const { int32_t ret{}; hebiCommandGetEnum(internal_, field_, &ret); return static_cast<T>(ret); }
         /// \brief Sets the field to a given value.
-        void set(T value) { hebiCommandSetEnum(internal_, field_, reinterpret_cast<int*>(&value)); }
+        void set(T _value) { int32_t value = static_cast<int32_t>(_value); hebiCommandSetEnum(internal_, field_, &value); }
         /// \brief Removes any currently set value for this field.
         void clear() { hebiCommandSetEnum(internal_, field_, nullptr); }
 
@@ -332,43 +333,43 @@ class Command final
         ///
         /// \param pinNumber Which pin to check; valid values for pinNumber
         /// depend on the bank.
-        bool hasInt(int pinNumber) const;
+        bool hasInt(size_t pinNumber) const;
         /// \brief True if (and only if) the particular numbered pin in this
         /// bank has an floating point (e.g., analog or PWM) value.
         ///
         /// \param pinNumber Which pin to check; valid values for pinNumber
         /// depend on the bank.
-        bool hasFloat(int pinNumber) const;
+        bool hasFloat(size_t pinNumber) const;
         /// \brief If this numbered pin in this bank has an integer (e.g.,
         /// digital) value, returns that value; otherwise returns a default.
         ///
         /// \param pinNumber Which pin to get; valid values for pinNumber
         /// depend on the bank.
-        int64_t getInt(int pinNumber) const;
+        int64_t getInt(size_t pinNumber) const;
         /// \brief If this numbered pin in this bank has an floating point
         /// (e.g., analog or PWM) value, returns that value; otherwise returns a
         /// default.
         ///
         /// \param pinNumber Which pin to get; valid values for pinNumber
         /// depend on the bank.
-        float getFloat(int pinNumber) const;
+        float getFloat(size_t pinNumber) const;
         /// \brief Sets the particular pin to a integer value (representing a
         /// digital output).
         ///
         /// \param pinNumber Which pin to set; valid values for pinNumber
         /// depend on the bank.
-        void setInt(int pinNumber, int64_t value);
+        void setInt(size_t pinNumber, int64_t value);
         /// \brief Sets the particular pin to a floating point value
         /// (representing a PWM output).
         ///
         /// \param pinNumber Which pin to set; valid values for pinNumber
         /// depend on the bank.
-        void setFloat(int pinNumber, float value);
+        void setFloat(size_t pinNumber, float value);
         /// \brief Removes any currently set value for this pin.
         ///
         /// \param pinNumber Which pin to clear; valid values for pinNumber
         /// depend on the bank.
-        void clear(int pinNumber);
+        void clear(size_t pinNumber);
 
       private:
         HebiCommandPtr const internal_;
@@ -383,23 +384,28 @@ class Command final
         #ifndef DOXYGEN_OMIT_INTERNAL
         LedField(HebiCommandPtr internal, HebiCommandLedField field);
         #endif // DOXYGEN_OMIT_INTERNAL
-        /// \brief Returns true if the LED color is set, and false otherwise.
-        bool hasColor() const;
-        /// \brief Returns true if the message indicates that the module should
-        /// resume control of the LED.
+        /// \brief Returns true if the LED command has been set, and false
+        /// otherwise.
         ///
-        /// Note: a return value of @c false can indicate either an override
-        /// command (if and only if @c hasColor() returns @c true), or no
-        /// information about the LED (i.e., the module should maintain it's
-        /// current state regarding the LED).
-        bool hasModuleControl() const;
-        /// \brief Returns the led color.
-        Color getColor() const;
+        /// A command is "set" if there is an override color specified _or_ if
+        /// the module is being commanded to resume control of the LED.
+        /// If this returns @c false , it indicates that the current state of
+        /// the LED will be maintained.
+        bool has() const;
+        /// \brief Returns the current LED command.
+        ///
+        /// If the alpha channel is '0', this command indicates that the module
+        /// should resume control of the LED (and the R, G, and B values are
+        /// ignored).
+        /// If the alpha channel is '1', the R, G, and B values in this command
+        /// will override the module's control of the LED.
+        Color get() const;
         /// \brief Commands a color that overrides the module's control of the
-        /// LED.
-        void setOverrideColor(const Color& new_color);
-        /// \brief Sets the module to regain control of the LED.
-        void setModuleControl();
+        /// LED (if the alpha channel is 255), or specifies the the module
+        /// should resume control of the LED color (if the alpha channel is 0).
+        /// Values of the alpha channel from 1 to 254 are reserved for future
+        /// use.
+        void set(const Color& color);
         /// \brief Removes any currently set value for this field, so that the
         /// module maintains its previous state of LED control/color (i.e., does
         /// not have an override color command or an explicit 'module control'
@@ -473,6 +479,8 @@ class Command final
         HEBI_DISABLE_COPY_MOVE(Io)
     };
 
+    using CommandGains = Gains<HebiCommandPtr, FloatField, BoolField, HebiCommandFloatField, HebiCommandBoolField>;
+
     /// Module settings that are typically changed at a slower rate.
     class Settings final
     {
@@ -481,340 +489,16 @@ class Command final
         /// Actuator-specific settings, such as controller gains.
         class Actuator final
         {
-          // Note: this is 'protected' instead of 'private' for easier use with Doxygen
-          protected:
-            /// Controller gains for the position PID loop.
-            class PositionGains final
-            {
-              public:
-                #ifndef DOXYGEN_OMIT_INTERNAL
-                PositionGains(HebiCommandPtr internal)
-                  : internal_(internal),
-                    position_kp_(internal, HebiCommandFloatPositionKp),
-                    position_ki_(internal, HebiCommandFloatPositionKi),
-                    position_kd_(internal, HebiCommandFloatPositionKd),
-                    position_feed_forward_(internal, HebiCommandFloatPositionFeedForward),
-                    position_dead_zone_(internal, HebiCommandFloatPositionDeadZone),
-                    position_i_clamp_(internal, HebiCommandFloatPositionIClamp),
-                    position_punch_(internal, HebiCommandFloatPositionPunch),
-                    position_min_target_(internal, HebiCommandFloatPositionMinTarget),
-                    position_max_target_(internal, HebiCommandFloatPositionMaxTarget),
-                    position_target_lowpass_(internal, HebiCommandFloatPositionTargetLowpass),
-                    position_min_output_(internal, HebiCommandFloatPositionMinOutput),
-                    position_max_output_(internal, HebiCommandFloatPositionMaxOutput),
-                    position_output_lowpass_(internal, HebiCommandFloatPositionOutputLowpass),
-                    position_d_on_error_(internal, HebiCommandBoolPositionDOnError)
-                {
-                }
-                #endif // DOXYGEN_OMIT_INTERNAL
-            
-                // With all submessage and field getters: Note that the returned reference
-                // should not be used after the lifetime of this parent.
-            
-                // Subfields ----------------
-            
-                /// Proportional PID gain for position
-                FloatField& positionKp() { return position_kp_; }
-                /// Proportional PID gain for position
-                const FloatField& positionKp() const { return position_kp_; }
-                /// Integral PID gain for position
-                FloatField& positionKi() { return position_ki_; }
-                /// Integral PID gain for position
-                const FloatField& positionKi() const { return position_ki_; }
-                /// Derivative PID gain for position
-                FloatField& positionKd() { return position_kd_; }
-                /// Derivative PID gain for position
-                const FloatField& positionKd() const { return position_kd_; }
-                /// Feed forward term for position (this term is multiplied by the target and added to the output).
-                FloatField& positionFeedForward() { return position_feed_forward_; }
-                /// Feed forward term for position (this term is multiplied by the target and added to the output).
-                const FloatField& positionFeedForward() const { return position_feed_forward_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                FloatField& positionDeadZone() { return position_dead_zone_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                const FloatField& positionDeadZone() const { return position_dead_zone_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                FloatField& positionIClamp() { return position_i_clamp_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                const FloatField& positionIClamp() const { return position_i_clamp_; }
-                /// Constant offset to the position PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                FloatField& positionPunch() { return position_punch_; }
-                /// Constant offset to the position PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                const FloatField& positionPunch() const { return position_punch_; }
-                /// Minimum allowed value for input to the PID controller
-                FloatField& positionMinTarget() { return position_min_target_; }
-                /// Minimum allowed value for input to the PID controller
-                const FloatField& positionMinTarget() const { return position_min_target_; }
-                /// Maximum allowed value for input to the PID controller
-                FloatField& positionMaxTarget() { return position_max_target_; }
-                /// Maximum allowed value for input to the PID controller
-                const FloatField& positionMaxTarget() const { return position_max_target_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                FloatField& positionTargetLowpass() { return position_target_lowpass_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& positionTargetLowpass() const { return position_target_lowpass_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                FloatField& positionMinOutput() { return position_min_output_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                const FloatField& positionMinOutput() const { return position_min_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                FloatField& positionMaxOutput() { return position_max_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                const FloatField& positionMaxOutput() const { return position_max_output_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                FloatField& positionOutputLowpass() { return position_output_lowpass_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& positionOutputLowpass() const { return position_output_lowpass_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                BoolField& positionDOnError() { return position_d_on_error_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                const BoolField& positionDOnError() const { return position_d_on_error_; }
-            
-              private:
-                HebiCommandPtr const internal_;
-            
-                FloatField position_kp_;
-                FloatField position_ki_;
-                FloatField position_kd_;
-                FloatField position_feed_forward_;
-                FloatField position_dead_zone_;
-                FloatField position_i_clamp_;
-                FloatField position_punch_;
-                FloatField position_min_target_;
-                FloatField position_max_target_;
-                FloatField position_target_lowpass_;
-                FloatField position_min_output_;
-                FloatField position_max_output_;
-                FloatField position_output_lowpass_;
-                BoolField position_d_on_error_;
-            
-                HEBI_DISABLE_COPY_MOVE(PositionGains)
-            };
-        
-            /// Controller gains for the velocity PID loop.
-            class VelocityGains final
-            {
-              public:
-                #ifndef DOXYGEN_OMIT_INTERNAL
-                VelocityGains(HebiCommandPtr internal)
-                  : internal_(internal),
-                    velocity_kp_(internal, HebiCommandFloatVelocityKp),
-                    velocity_ki_(internal, HebiCommandFloatVelocityKi),
-                    velocity_kd_(internal, HebiCommandFloatVelocityKd),
-                    velocity_feed_forward_(internal, HebiCommandFloatVelocityFeedForward),
-                    velocity_dead_zone_(internal, HebiCommandFloatVelocityDeadZone),
-                    velocity_i_clamp_(internal, HebiCommandFloatVelocityIClamp),
-                    velocity_punch_(internal, HebiCommandFloatVelocityPunch),
-                    velocity_min_target_(internal, HebiCommandFloatVelocityMinTarget),
-                    velocity_max_target_(internal, HebiCommandFloatVelocityMaxTarget),
-                    velocity_target_lowpass_(internal, HebiCommandFloatVelocityTargetLowpass),
-                    velocity_min_output_(internal, HebiCommandFloatVelocityMinOutput),
-                    velocity_max_output_(internal, HebiCommandFloatVelocityMaxOutput),
-                    velocity_output_lowpass_(internal, HebiCommandFloatVelocityOutputLowpass),
-                    velocity_d_on_error_(internal, HebiCommandBoolVelocityDOnError)
-                {
-                }
-                #endif // DOXYGEN_OMIT_INTERNAL
-            
-                // With all submessage and field getters: Note that the returned reference
-                // should not be used after the lifetime of this parent.
-            
-                // Subfields ----------------
-            
-                /// Proportional PID gain for velocity
-                FloatField& velocityKp() { return velocity_kp_; }
-                /// Proportional PID gain for velocity
-                const FloatField& velocityKp() const { return velocity_kp_; }
-                /// Integral PID gain for velocity
-                FloatField& velocityKi() { return velocity_ki_; }
-                /// Integral PID gain for velocity
-                const FloatField& velocityKi() const { return velocity_ki_; }
-                /// Derivative PID gain for velocity
-                FloatField& velocityKd() { return velocity_kd_; }
-                /// Derivative PID gain for velocity
-                const FloatField& velocityKd() const { return velocity_kd_; }
-                /// Feed forward term for velocity (this term is multiplied by the target and added to the output).
-                FloatField& velocityFeedForward() { return velocity_feed_forward_; }
-                /// Feed forward term for velocity (this term is multiplied by the target and added to the output).
-                const FloatField& velocityFeedForward() const { return velocity_feed_forward_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                FloatField& velocityDeadZone() { return velocity_dead_zone_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                const FloatField& velocityDeadZone() const { return velocity_dead_zone_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                FloatField& velocityIClamp() { return velocity_i_clamp_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                const FloatField& velocityIClamp() const { return velocity_i_clamp_; }
-                /// Constant offset to the velocity PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                FloatField& velocityPunch() { return velocity_punch_; }
-                /// Constant offset to the velocity PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                const FloatField& velocityPunch() const { return velocity_punch_; }
-                /// Minimum allowed value for input to the PID controller
-                FloatField& velocityMinTarget() { return velocity_min_target_; }
-                /// Minimum allowed value for input to the PID controller
-                const FloatField& velocityMinTarget() const { return velocity_min_target_; }
-                /// Maximum allowed value for input to the PID controller
-                FloatField& velocityMaxTarget() { return velocity_max_target_; }
-                /// Maximum allowed value for input to the PID controller
-                const FloatField& velocityMaxTarget() const { return velocity_max_target_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                FloatField& velocityTargetLowpass() { return velocity_target_lowpass_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& velocityTargetLowpass() const { return velocity_target_lowpass_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                FloatField& velocityMinOutput() { return velocity_min_output_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                const FloatField& velocityMinOutput() const { return velocity_min_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                FloatField& velocityMaxOutput() { return velocity_max_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                const FloatField& velocityMaxOutput() const { return velocity_max_output_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                FloatField& velocityOutputLowpass() { return velocity_output_lowpass_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& velocityOutputLowpass() const { return velocity_output_lowpass_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                BoolField& velocityDOnError() { return velocity_d_on_error_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                const BoolField& velocityDOnError() const { return velocity_d_on_error_; }
-            
-              private:
-                HebiCommandPtr const internal_;
-            
-                FloatField velocity_kp_;
-                FloatField velocity_ki_;
-                FloatField velocity_kd_;
-                FloatField velocity_feed_forward_;
-                FloatField velocity_dead_zone_;
-                FloatField velocity_i_clamp_;
-                FloatField velocity_punch_;
-                FloatField velocity_min_target_;
-                FloatField velocity_max_target_;
-                FloatField velocity_target_lowpass_;
-                FloatField velocity_min_output_;
-                FloatField velocity_max_output_;
-                FloatField velocity_output_lowpass_;
-                BoolField velocity_d_on_error_;
-            
-                HEBI_DISABLE_COPY_MOVE(VelocityGains)
-            };
-        
-            /// Controller gains for the effort PID loop.
-            class EffortGains final
-            {
-              public:
-                #ifndef DOXYGEN_OMIT_INTERNAL
-                EffortGains(HebiCommandPtr internal)
-                  : internal_(internal),
-                    effort_kp_(internal, HebiCommandFloatEffortKp),
-                    effort_ki_(internal, HebiCommandFloatEffortKi),
-                    effort_kd_(internal, HebiCommandFloatEffortKd),
-                    effort_feed_forward_(internal, HebiCommandFloatEffortFeedForward),
-                    effort_dead_zone_(internal, HebiCommandFloatEffortDeadZone),
-                    effort_i_clamp_(internal, HebiCommandFloatEffortIClamp),
-                    effort_punch_(internal, HebiCommandFloatEffortPunch),
-                    effort_min_target_(internal, HebiCommandFloatEffortMinTarget),
-                    effort_max_target_(internal, HebiCommandFloatEffortMaxTarget),
-                    effort_target_lowpass_(internal, HebiCommandFloatEffortTargetLowpass),
-                    effort_min_output_(internal, HebiCommandFloatEffortMinOutput),
-                    effort_max_output_(internal, HebiCommandFloatEffortMaxOutput),
-                    effort_output_lowpass_(internal, HebiCommandFloatEffortOutputLowpass),
-                    effort_d_on_error_(internal, HebiCommandBoolEffortDOnError)
-                {
-                }
-                #endif // DOXYGEN_OMIT_INTERNAL
-            
-                // With all submessage and field getters: Note that the returned reference
-                // should not be used after the lifetime of this parent.
-            
-                // Subfields ----------------
-            
-                /// Proportional PID gain for effort
-                FloatField& effortKp() { return effort_kp_; }
-                /// Proportional PID gain for effort
-                const FloatField& effortKp() const { return effort_kp_; }
-                /// Integral PID gain for effort
-                FloatField& effortKi() { return effort_ki_; }
-                /// Integral PID gain for effort
-                const FloatField& effortKi() const { return effort_ki_; }
-                /// Derivative PID gain for effort
-                FloatField& effortKd() { return effort_kd_; }
-                /// Derivative PID gain for effort
-                const FloatField& effortKd() const { return effort_kd_; }
-                /// Feed forward term for effort (this term is multiplied by the target and added to the output).
-                FloatField& effortFeedForward() { return effort_feed_forward_; }
-                /// Feed forward term for effort (this term is multiplied by the target and added to the output).
-                const FloatField& effortFeedForward() const { return effort_feed_forward_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                FloatField& effortDeadZone() { return effort_dead_zone_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                const FloatField& effortDeadZone() const { return effort_dead_zone_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                FloatField& effortIClamp() { return effort_i_clamp_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                const FloatField& effortIClamp() const { return effort_i_clamp_; }
-                /// Constant offset to the effort PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                FloatField& effortPunch() { return effort_punch_; }
-                /// Constant offset to the effort PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                const FloatField& effortPunch() const { return effort_punch_; }
-                /// Minimum allowed value for input to the PID controller
-                FloatField& effortMinTarget() { return effort_min_target_; }
-                /// Minimum allowed value for input to the PID controller
-                const FloatField& effortMinTarget() const { return effort_min_target_; }
-                /// Maximum allowed value for input to the PID controller
-                FloatField& effortMaxTarget() { return effort_max_target_; }
-                /// Maximum allowed value for input to the PID controller
-                const FloatField& effortMaxTarget() const { return effort_max_target_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                FloatField& effortTargetLowpass() { return effort_target_lowpass_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& effortTargetLowpass() const { return effort_target_lowpass_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                FloatField& effortMinOutput() { return effort_min_output_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                const FloatField& effortMinOutput() const { return effort_min_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                FloatField& effortMaxOutput() { return effort_max_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                const FloatField& effortMaxOutput() const { return effort_max_output_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                FloatField& effortOutputLowpass() { return effort_output_lowpass_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& effortOutputLowpass() const { return effort_output_lowpass_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                BoolField& effortDOnError() { return effort_d_on_error_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                const BoolField& effortDOnError() const { return effort_d_on_error_; }
-            
-              private:
-                HebiCommandPtr const internal_;
-            
-                FloatField effort_kp_;
-                FloatField effort_ki_;
-                FloatField effort_kd_;
-                FloatField effort_feed_forward_;
-                FloatField effort_dead_zone_;
-                FloatField effort_i_clamp_;
-                FloatField effort_punch_;
-                FloatField effort_min_target_;
-                FloatField effort_max_target_;
-                FloatField effort_target_lowpass_;
-                FloatField effort_min_output_;
-                FloatField effort_max_output_;
-                FloatField effort_output_lowpass_;
-                BoolField effort_d_on_error_;
-            
-                HEBI_DISABLE_COPY_MOVE(EffortGains)
-            };
-        
           public:
             #ifndef DOXYGEN_OMIT_INTERNAL
             Actuator(HebiCommandPtr internal)
               : internal_(internal),
-                position_gains_(internal),
-                velocity_gains_(internal),
-                effort_gains_(internal),
+                position_gains_(internal, HebiCommandFloatPositionKp, HebiCommandBoolPositionDOnError),
+                velocity_gains_(internal, HebiCommandFloatVelocityKp, HebiCommandBoolVelocityDOnError),
+                effort_gains_(internal, HebiCommandFloatEffortKp, HebiCommandBoolEffortDOnError),
                 spring_constant_(internal, HebiCommandFloatSpringConstant),
+                reference_position_(internal, HebiCommandFloatReferencePosition),
+                reference_effort_(internal, HebiCommandFloatReferenceEffort),
                 control_strategy_(internal, HebiCommandEnumControlStrategy)
             {
             }
@@ -826,17 +510,17 @@ class Command final
             // Submessages ----------------
         
             /// Controller gains for the position PID loop.
-            PositionGains& positionGains() { return position_gains_; }
+            CommandGains& positionGains() { return position_gains_; }
             /// Controller gains for the position PID loop.
-            const PositionGains& positionGains() const { return position_gains_; }
+            const CommandGains& positionGains() const { return position_gains_; }
             /// Controller gains for the velocity PID loop.
-            VelocityGains& velocityGains() { return velocity_gains_; }
+            CommandGains& velocityGains() { return velocity_gains_; }
             /// Controller gains for the velocity PID loop.
-            const VelocityGains& velocityGains() const { return velocity_gains_; }
+            const CommandGains& velocityGains() const { return velocity_gains_; }
             /// Controller gains for the effort PID loop.
-            EffortGains& effortGains() { return effort_gains_; }
+            CommandGains& effortGains() { return effort_gains_; }
             /// Controller gains for the effort PID loop.
-            const EffortGains& effortGains() const { return effort_gains_; }
+            const CommandGains& effortGains() const { return effort_gains_; }
         
             // Subfields ----------------
         
@@ -844,6 +528,14 @@ class Command final
             FloatField& springConstant() { return spring_constant_; }
             /// The spring constant of the module.
             const FloatField& springConstant() const { return spring_constant_; }
+            /// The internal encoder reference offset (setting this matches the current position to the given reference command)
+            FloatField& referencePosition() { return reference_position_; }
+            /// The internal encoder reference offset (setting this matches the current position to the given reference command)
+            const FloatField& referencePosition() const { return reference_position_; }
+            /// The internal effort reference offset (setting this matches the current effort to the given reference command)
+            FloatField& referenceEffort() { return reference_effort_; }
+            /// The internal effort reference offset (setting this matches the current effort to the given reference command)
+            const FloatField& referenceEffort() const { return reference_effort_; }
             /// How the position, velocity, and effort PID loops are connected in order to control motor PWM.
             EnumField<ControlStrategy>& controlStrategy() { return control_strategy_; }
             /// How the position, velocity, and effort PID loops are connected in order to control motor PWM.
@@ -852,11 +544,13 @@ class Command final
           private:
             HebiCommandPtr const internal_;
         
-            PositionGains position_gains_;
-            VelocityGains velocity_gains_;
-            EffortGains effort_gains_;
+            CommandGains position_gains_;
+            CommandGains velocity_gains_;
+            CommandGains effort_gains_;
         
             FloatField spring_constant_;
+            FloatField reference_position_;
+            FloatField reference_effort_;
             EnumField<ControlStrategy> control_strategy_;
         
             HEBI_DISABLE_COPY_MOVE(Actuator)
@@ -975,7 +669,7 @@ class Command final
     /**
      * \brief Cleans up command object as necessary.
      */
-    virtual ~Command() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~Command() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     // With all submessage and field getters: Note that the returned reference
     // should not be used after the lifetime of this parent.

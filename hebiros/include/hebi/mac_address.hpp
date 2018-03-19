@@ -56,7 +56,8 @@ class MacAddress final
      */
     bool setToHexString(std::string mac_str);
 
-    uint8_t operator[](std::size_t idx);
+    uint8_t& operator[](std::size_t idx);
+    const uint8_t& operator[](std::size_t idx) const;
 
   private:
     /*

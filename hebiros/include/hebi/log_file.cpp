@@ -17,12 +17,12 @@ std::shared_ptr<LogFile> LogFile::open(std::string file) {
   );
 }
 
-int LogFile::size() {
+int LogFile::size() const {
   return number_of_modules_;
 }
 
-bool LogFile::getNextFeedback(GroupFeedback* feedback) {
-  return hebiLogFileGetNextFeedback(internal_, feedback->internal_) == HebiStatusSuccess;
+bool LogFile::getNextFeedback(GroupFeedback& feedback) {
+  return hebiLogFileGetNextFeedback(internal_, feedback.internal_) == HebiStatusSuccess;
 }
 
 LogFile::~LogFile() {
