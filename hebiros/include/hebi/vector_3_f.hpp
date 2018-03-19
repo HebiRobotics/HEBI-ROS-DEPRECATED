@@ -30,9 +30,4 @@ struct Vector3f {
     float z_;
 };
 
-#ifndef DOXYGEN_OMIT_INTERNAL
-/// \brief Typedef of Vector3f structure for improved syntax.
-typedef Vector3f Vector3f;
-#endif // DOXYGEN_OMIT_INTERNAL
-
 } // namespace hebi

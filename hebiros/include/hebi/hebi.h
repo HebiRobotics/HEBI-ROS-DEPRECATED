@@ -1,16 +1,15 @@
 #pragma once
 
 #include <math.h>
-#include <stdint.h>
 #include <stddef.h>
-
+#include <stdint.h>
 
 #ifdef __cplusplus /* Use C linkage when compiling this C library header from C++ */
 extern "C" {
 #endif
 
 #ifndef M_PI
-# define M_PI 3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +72,8 @@ typedef enum HebiCommandFloatField {
   HebiCommandFloatEffortMaxOutput, ///Output from the PID controller is limited to a maximum of this value.
   HebiCommandFloatEffortOutputLowpass, ///A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
   HebiCommandFloatSpringConstant, ///The spring constant of the module.
+  HebiCommandFloatReferencePosition, ///Set the internal encoder reference offset so that the current position matches the given reference command
+  HebiCommandFloatReferenceEffort, ///Set the internal effort reference offset so that the current effort matches the given reference command
 } HebiCommandFloatField;
 
 typedef enum HebiCommandHighResAngleField {
@@ -245,36 +246,39 @@ typedef enum HebiInfoLedField {
 } HebiInfoLedField;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Kinematics Enums
+// RobotModel Enums
 ////////////////////////////////////////////////////////////////////////////////
-
-/**
- * How a particular body is mounted on the previous body, when this value is
- * quantized. Not all mounting types are supported for each body type.
- */
-typedef enum HebiMountingType
-{
-  HebiMountingTypeLeft,
-  HebiMountingTypeRight,
-  HebiMountingTypeLeftInside,
-  HebiMountingTypeRightInside,
-  HebiMountingTypeLeftOutside,
-  HebiMountingTypeRightOutside,
-} HebiMountingType;
 
 /**
  * Which frame to report results in (e.g., for getForwardKinematics and other
  * functions.
  */
-typedef enum HebiFrameType
-{
+typedef enum HebiFrameType {
   HebiFrameTypeCenterOfMass,
-  HebiFrameTypeOutput
+  HebiFrameTypeOutput,
+  HebiFrameTypeEndEffector
 } HebiFrameType;
+
+/**
+ * What the type of motion (axis, rotation, translation, etc) is allowed by a
+ * joint.
+ */
+typedef enum HebiJointType {
+  HebiJointTypeRotationX,
+  HebiJointTypeRotationY,
+  HebiJointTypeRotationZ
+} HebiJointType;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Typedefs
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * \brief The C-style's API representation of a string.
+ *
+ * Represents a null terminated UTF-8 string
+ */
+typedef struct _HebiString* HebiStringPtr;
 
 /**
  * \brief The C-style's API representation of a command.
@@ -338,16 +342,16 @@ typedef struct _HebiInfo* HebiInfoPtr;
 typedef struct _HebiIK* HebiIKPtr;
 
 /**
- * A kinematics object which stores a tree of connected modules, and allows for
- * computation of forward kinematics and jacobians.
+ * A robot model object which stores a tree of connected modules, and allows for
+ * computation of forward kinematics, jacobians, and more.
  */
-typedef struct _HebiKinematics* HebiKinematicsPtr;
+typedef struct _HebiRobotModel* HebiRobotModelPtr;
 
 /**
- * Contains a kinematic body, which represents a transform from an input to one
- * or more outputs.
+ * Contains a robot model element, which has an input and zero or more outputs.
+ * This may refer to a rigid body or a massless joint.
  */
-typedef struct _HebiBody* HebiBodyPtr;
+typedef struct _HebiRobotModelElement* HebiRobotModelElementPtr;
 
 /**
  * \brief The C-style's API representation of a log file.
@@ -361,14 +365,14 @@ typedef struct _HebiLogFile* HebiLogFilePtr;
  * to the user. Only one Lookup object is needed per application.
  *
  */
-typedef struct _HebiLookup *HebiLookupPtr;
+typedef struct _HebiLookup* HebiLookupPtr;
 
 /**
  * A list of entries that represent a snapshot of the state of the lookup object
  * at some point in time.  These entries include network HEBI devices such
  * as actuators.
  */
-typedef struct _HebiLookupEntryList *HebiLookupEntryListPtr;
+typedef struct _HebiLookupEntryList* HebiLookupEntryListPtr;
 
 /**
  * \brief The C-style's API representation of a trajectory.
@@ -388,39 +392,13 @@ typedef void (*GroupFeedbackHandlerFunction)(HebiGroupFeedbackPtr fbk, void* use
 // Structures
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct _HebiMacAddress {
-  uint8_t bytes_[6];
-} HebiMacAddress;
+typedef struct _HebiMacAddress { uint8_t bytes_[6]; } HebiMacAddress;
 
 typedef struct _HebiVector3f {
   float x;
   float y;
   float z;
 } HebiVector3f;
-
-////////////////////////////////////////////////////////////////////////////////
-// Kinematics Structures
-////////////////////////////////////////////////////////////////////////////////
-
-/**
- * \brief A structure which stores the parameters for a 1-DOF rotary actuator
- */
-typedef struct HebiKinematicParametersActuator
-{
-  float com[3];
-  float input_to_joint[16];
-  float joint_rotation_axis[3];
-  float joint_to_output[16];
-} HebiKinematicParametersActuator;
-
-/**
- * \brief A structure which stores the parameters for a 1 output static body.
- */
-typedef struct HebiKinematicParametersStaticBody
-{
-  float com[3];
-  float output[16];
-} HebiKinematicParametersStaticBody;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Lookup API
@@ -458,7 +436,7 @@ HebiLookupEntryListPtr hebiCreateLookupEntryList(HebiLookupPtr lookup);
  *
  * \param lookup_list A valid HebiLookupEntryList object.
  */
-int hebiLookupEntryListGetSize(HebiLookupEntryListPtr lookup_list);
+size_t hebiLookupEntryListGetSize(HebiLookupEntryListPtr lookup_list);
 
 /**
  * Gets the name of the given entry in the lookup entry list. Must be a valid
@@ -475,13 +453,13 @@ int hebiLookupEntryListGetSize(HebiLookupEntryListPtr lookup_list);
  * \param index The entry index that is being queried.
  * \param buffer An allocated buffer of length 'length'
  * \param length the length of the provided buffer. After calling this function, the value dereferenced will be
- * updated with the length of the string plus the null character.
+ * updated with the length of the string plus the null character. This argument must not be NULL.
  *
  * \returns HebiStatusSuccess on success, HebiStatusBufferTooSmall if the provided buffer is too small, or
  * HebiStatusInvalidArgument if the length parameter is null
  */
-HebiStatusCode hebiLookupEntryListGetName(HebiLookupEntryListPtr lookup_list, int index,
-  char* buffer, size_t* length);
+HebiStatusCode hebiLookupEntryListGetName(HebiLookupEntryListPtr lookup_list, size_t index, char* buffer,
+                                          size_t* length);
 
 /**
  * Gets the family of the given entry in the lookup entry list. Must be a valid
@@ -498,13 +476,13 @@ HebiStatusCode hebiLookupEntryListGetName(HebiLookupEntryListPtr lookup_list, in
  * \param index The entry index that is being queried.
  * \param buffer An allocated buffer of length 'length'.
  * \param length the length of the provided buffer. After calling this function, the value dereferenced will be
- * updated with the length of the string plus the null character.
+ * updated with the length of the string plus the null character. This argument must not be NULL.
  *
  * \returns HebiStatusSuccess on success, HebiStatusBufferTooSmall if the provided buffer is too small, or
  * HebiStatusInvalidArgument if the length parameter is null
  */
-HebiStatusCode hebiLookupEntryListGetFamily(HebiLookupEntryListPtr lookup_list, int index,
-  char* buffer, size_t* length);
+HebiStatusCode hebiLookupEntryListGetFamily(HebiLookupEntryListPtr lookup_list, size_t index, char* buffer,
+                                            size_t* length);
 
 /**
  *
@@ -517,7 +495,8 @@ HebiStatusCode hebiLookupEntryListGetFamily(HebiLookupEntryListPtr lookup_list, 
  * mac_address parameter is null, or HebiStatusArgumentOutOfRange if there is
  * no entry with the given index.
  */
-HebiStatusCode hebiLookupEntryListGetMacAddress(HebiLookupEntryListPtr lookup_list, int index, HebiMacAddress* mac_address);
+HebiStatusCode hebiLookupEntryListGetMacAddress(HebiLookupEntryListPtr lookup_list, size_t index,
+                                                HebiMacAddress* mac_address);
 
 /**
  * \brief Release resources for a given lookup entry list; list should not be
@@ -545,7 +524,7 @@ void hebiLookupEntryListRelease(HebiLookupEntryListPtr lookup_list);
  *
  * \returns An imitation group that returns commanded values as feedback.
  */
-HebiGroupPtr hebiGroupCreateImitation(unsigned int size);
+HebiGroupPtr hebiGroupCreateImitation(size_t size);
 
 /**
  * \brief Create a group of modules with the given MAC addresses.
@@ -558,7 +537,8 @@ HebiGroupPtr hebiGroupCreateImitation(unsigned int size);
  *
  * \param lookup A valid HebiLookup object.
  * \param addresses An array of pointers to physical mac addresses of the given
- * modules. Length of the array must equal num_addresses.
+ * modules. Length of the array must equal num_addresses. This param must not be
+ * NULL, and each element of this list must not be NULL.
  * \param num_addresses Length of the addresses array of pointers (number of
  * pointers in the array, not cumulative size of objects they point to).
  * \param timeout_ms Timeout in milliseconds.  A value of -1 blocks until
@@ -567,8 +547,8 @@ HebiGroupPtr hebiGroupCreateImitation(unsigned int size);
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress* const* addresses,
-  int num_addresses, long timeout_ms);
+HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress* const* addresses, size_t num_addresses,
+                                     int32_t timeout_ms);
 
 /**
  * \brief Create a group with modules matching the given names and families.
@@ -582,27 +562,29 @@ HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress*
  * released when use is complete via the hebiGroupRelease function.
  *
  * \param lookup A valid HebiLookup object.
- * \param names The given names of the modules, as viewable in the HEBI GUI. Must
- * be a list of pointers to null-terminated strings. The number of pointers must
- * match the num_names parameter.
- * \param num_names The number of pointers to null-terminated strings given
- * by the names parameter.
  * \param families The given families of the modules, as viewable in the HEBI
  * GUI. Must be a list of pointers to null-terminated strings. The number of
  * pointers must match the num_families parameter. Note that a single string
- * (with corresponding value of num_families == 1) will be used with each name in
- * the names list.
+ * (with corresponding value of num_families == 1) will be used with each name
+ * in the names list. This param must not be NULL, and each element of this list
+ * must not be NULL.
  * \param num_families The number of pointers to null-terminated strings given
  * by the families parameter. Note that this must either be 1, or be equal to
  * num_names.
+ * \param names The given names of the modules, as viewable in the HEBI GUI. Must
+ * be a list of pointers to null-terminated strings. The number of pointers must
+ * match the num_names parameter. This param must not be NULL, and each element
+ * of this list must not be NULL.
+ * \param num_names The number of pointers to null-terminated strings given
+ * by the names parameter.
  * \param timeout_ms Timeout in milliseconds.  A value of -1 blocks until
  * a module is found, and a value of 0 returns immediately if no module with
  * that address is currently known by the Lookup class.
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateFromNames(HebiLookupPtr lookup, const char* const* families, int num_families,
-  const char* const* names, int num_names, long timeout_ms);
+HebiGroupPtr hebiGroupCreateFromNames(HebiLookupPtr lookup, const char* const* families, size_t num_families,
+                                      const char* const* names, size_t num_names, int32_t timeout_ms);
 
 /**
  * \brief Create a group with all modules known to the lookup with the given family.
@@ -615,14 +597,14 @@ HebiGroupPtr hebiGroupCreateFromNames(HebiLookupPtr lookup, const char* const* f
  *
  * \param lookup A valid HebiLookup object.
  * \param family The given family of the modules, as viewable in the HEBI GUI.
- * Must be a null-terminated string.
+ * Must be a null-terminated string, and must not be NULL.
  * \param timeout_ms Timeout in milliseconds.  A value of -1 blocks until
  * a module is found, and a value of 0 returns immediately if no module with
  * that address is currently known by the Lookup class.
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateFromFamily(HebiLookupPtr lookup, const char* family, long timeout_ms);
+HebiGroupPtr hebiGroupCreateFromFamily(HebiLookupPtr lookup, const char* family, int32_t timeout_ms);
 
 /**
  * \brief Create a group with all modules connected to module with the given MAC
@@ -636,15 +618,16 @@ HebiGroupPtr hebiGroupCreateFromFamily(HebiLookupPtr lookup, const char* family,
  * released when use is complete via the hebiGroupRelease function.
  *
  * \param lookup A valid HebiLookup object.
- * \param address Physical mac address of the given module (serves as unique id).
+ * \param address Pointer to a HebiMacAddress structure representing the
+ * physical mac address of the given module (serves as unique id). Must not be
+ * NULL.
  * \param timeout_ms Timeout in milliseconds.  A value of -1 blocks until
  * a module is found, and a value of 0 returns immediately if no module with
  * that address is currently known by the Lookup class.
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateConnectedFromMac(HebiLookupPtr lookup, const HebiMacAddress* address,
-  long timeout_ms);
+HebiGroupPtr hebiGroupCreateConnectedFromMac(HebiLookupPtr lookup, const HebiMacAddress* address, int32_t timeout_ms);
 
 /**
  * \brief Create a group with all modules connected to module with the given name
@@ -659,9 +642,9 @@ HebiGroupPtr hebiGroupCreateConnectedFromMac(HebiLookupPtr lookup, const HebiMac
  *
  * \param lookup A valid HebiLookup object.
  * \param name The given name of the key module, as viewable in the HEBI GUI.
- * Must be a null-terminated string.
+ * Must be a null-terminated string, and must not be NULL.
  * \param family The given family of the key module, as viewable in the HEBI GUI.
- * Must be a null-terminated string.
+ * Must be a null-terminated string, and must not be NULL.
  * \param timeout_ms Timeout in milliseconds.  A value of -1 blocks until
  * a module is found, and a value of 0 returns immediately if no module with
  * that address is currently known by the Lookup class.
@@ -669,7 +652,7 @@ HebiGroupPtr hebiGroupCreateConnectedFromMac(HebiLookupPtr lookup, const HebiMac
  * allocated group object otherwise.
  */
 HebiGroupPtr hebiGroupCreateConnectedFromName(HebiLookupPtr lookup, const char* family, const char* name,
-  long timeout_ms);
+                                              int32_t timeout_ms);
 
 /**
  * \brief Returns the number of modules in a group.
@@ -678,7 +661,7 @@ HebiGroupPtr hebiGroupCreateConnectedFromName(HebiLookupPtr lookup, const char* 
  *
  * \returns the number of modules in the group.
  */
-int hebiGroupGetSize(HebiGroupPtr group);
+size_t hebiGroupGetSize(HebiGroupPtr group);
 
 /**
  * \brief Sends a command to the given group, requesting an acknowledgement of
@@ -700,7 +683,7 @@ int hebiGroupGetSize(HebiGroupPtr group);
  * the group received this command), or a failure code for an error otherwise.
  */
 HebiStatusCode hebiGroupSendCommandWithAcknowledgement(HebiGroupPtr group, HebiGroupCommandPtr command,
-  int timeout_ms);
+                                                       int32_t timeout_ms);
 
 /**
  * \brief Sends a command to the given group without requesting an
@@ -785,8 +768,8 @@ float hebiGroupGetFeedbackFrequencyHz(HebiGroupPtr group);
  * \param user_data A pointer to user data which will be returned as the second
  * callback argument. This pointer can be NULL if desired.
  */
-void hebiGroupRegisterFeedbackHandler(HebiGroupPtr group, GroupFeedbackHandlerFunction handler,
-  void* user_data);
+HebiStatusCode hebiGroupRegisterFeedbackHandler(HebiGroupPtr group, GroupFeedbackHandlerFunction handler,
+                                                void* user_data);
 
 /**
  * \brief Removes all feedback handling functions from the queue to be called on
@@ -832,7 +815,7 @@ HebiStatusCode hebiGroupSendFeedbackRequest(HebiGroupPtr group);
  * \returns HebiStatusSuccess if feedback was returned, or a failure code if not
  * (i.e., connection error or timeout waiting for response).
  */
-HebiStatusCode hebiGroupGetNextFeedback(HebiGroupPtr group, HebiGroupFeedbackPtr feedback, int timeout_ms);
+HebiStatusCode hebiGroupGetNextFeedback(HebiGroupPtr group, HebiGroupFeedbackPtr feedback, int32_t timeout_ms);
 
 /**
  * \brief Requests info from the group, and writes it to the provided info
@@ -851,26 +834,29 @@ HebiStatusCode hebiGroupGetNextFeedback(HebiGroupPtr group, HebiGroupFeedbackPtr
  * \returns HebiStatusSuccess if info was received, or a failure code if not
  * (i.e., connection error or timeout waiting for response).
  */
-HebiStatusCode hebiGroupRequestInfo(HebiGroupPtr group, HebiGroupInfoPtr info, int timeout_ms);
+HebiStatusCode hebiGroupRequestInfo(HebiGroupPtr group, HebiGroupInfoPtr info, int32_t timeout_ms);
 
 /**
- * \brief Starts logging data to a file in the local directory.
+ * \brief Starts logging data to a file.
  *
- * WARNING: this function interface is not yet stable.
+ * Note: If a non null parameter is used for the returned string, and it is populated with a non null reference to a
+ * string, it must be explicitly freed using @c hebiStringRelease(HebiStringPtr str)
  *
- * \param group The group to log from.
- * \param dir The relative or absolute path to the directory to log in. To use
- * the current directory, pass in a null pointer
+ * \param dir The relative or absolute path to the directory in which to log.
+ * To use the current directory, pass in a null pointer
  * \param file The optional file name. If this is null, a name will be created using
  * the time at the moment which this function was invoked.
+ * \param ret The optional pointer to a string reference. If this is null, this is ignored. Otherwise,
+ * a reference to a string is populated with the path and name of the log file created. If this function does not
+ * return HebiStatusSuccess and this parameter is not null, the value at this pointer is set to null.
  *
  * \returns HebiStatusSuccess if successfully started a log, a failure code otherwise.
  */
-
-HebiStatusCode hebiGroupStartLog(HebiGroupPtr group, const char* dir, const char* file);
+HebiStatusCode hebiGroupStartLog(HebiGroupPtr group, const char* dir, const char* file, HebiStringPtr* ret);
 
 /**
- * \brief Stops logging data to a file in the local directory.
+ * \brief Stops logging data to a file.
+ *
  * Note: This function allocates a log file structure on the heap, so make sure to release the pointer
  * returned by this function by calling @c hebiLogFileRelease(HebiLogFilePtr ptr)
  *
@@ -897,22 +883,41 @@ void hebiGroupRelease(HebiGroupPtr group);
  * \returns A pointer to a new GroupCommand object. This must be released
  * with hebiGroupCommandRelease(HebiGroupCommandPtr).
  */
-HebiGroupCommandPtr hebiGroupCommandCreate(int size);
+HebiGroupCommandPtr hebiGroupCommandCreate(size_t size);
 
 /**
  * \brief Return the number of modules in this group Command.
  *
  * \returns The number of module commands in this group command.
  */
-int hebiGroupCommandGetSize(HebiGroupCommandPtr cmd);
+size_t hebiGroupCommandGetSize(HebiGroupCommandPtr cmd);
 
 /**
  * \brief Import gains from a file into a GroupCommand object.
+ *
+ * \param file A null-terminated string that gives the path/filename of the
+ * gains XML file. Must not be NULL.
+ *
+ * \returns HebiStatusSuccess on success, or a failure code if the file could
+ * note be opened or read.
+ * In particular:
+ *  - if the file was successfully read, but the number of modules in the file
+ *    is not equal to '1' or the size of the group, returns
+ *    HebiStatusInvalidArgument.
+ *  - if file is NULL, returns HebiStatusInvalidArgument.
+ *  - for other parsing errors, may return HebiStatusFailure or
+ *    HebiStatusInvalidArgument.
  */
 HebiStatusCode hebiGroupCommandReadGains(HebiGroupCommandPtr cmd, const char* file);
 
 /**
  * \brief Export gains from a GroupCommand object into a file.
+ *
+ * \param file A null-terminated string that gives the path/filename to save the
+ * gains XML file at. Must not be NULL.
+ *
+ * \returns HebiStatusSuccess on success, or a failure code if the file could
+ * not be written to or an internal error occurs.
  */
 HebiStatusCode hebiGroupCommandWriteGains(HebiGroupCommandPtr cmd, const char* file);
 
@@ -925,7 +930,7 @@ HebiStatusCode hebiGroupCommandWriteGains(HebiGroupCommandPtr cmd, const char* f
  *
  * \returns The command corresponding to the module at the specified index
  */
-HebiCommandPtr hebiGroupCommandGetModuleCommand(HebiGroupCommandPtr cmd, int module_index);
+HebiCommandPtr hebiGroupCommandGetModuleCommand(HebiGroupCommandPtr cmd, size_t module_index);
 
 /**
  * \brief Frees resources created by the GroupCommand object.
@@ -943,14 +948,14 @@ void hebiGroupCommandRelease(HebiGroupCommandPtr cmd);
  * \returns A pointer to a new GroupFeedback object. This must be released
  * with hebiGroupFeedbackRelease(HebiGroupFeedbackPtr).
  */
-HebiGroupFeedbackPtr hebiGroupFeedbackCreate(int size);
+HebiGroupFeedbackPtr hebiGroupFeedbackCreate(size_t size);
 
 /**
  * \brief Return the number of modules in this group Feedback.
  *
  * \returns The number of module feedbacks in this group feedback.
  */
-int hebiGroupFeedbackGetSize(HebiGroupFeedbackPtr fbk);
+size_t hebiGroupFeedbackGetSize(HebiGroupFeedbackPtr fbk);
 
 /**
  * \brief Get an individual feedback for a particular module at index
@@ -961,7 +966,7 @@ int hebiGroupFeedbackGetSize(HebiGroupFeedbackPtr fbk);
  *
  * \returns The feedback corresponding to the module at the specified index.
  */
-HebiFeedbackPtr hebiGroupFeedbackGetModuleFeedback(HebiGroupFeedbackPtr fbk, int module_index);
+HebiFeedbackPtr hebiGroupFeedbackGetModuleFeedback(HebiGroupFeedbackPtr fbk, size_t module_index);
 
 /**
  * \brief Frees resources created by the GroupFeedback object.
@@ -979,17 +984,23 @@ void hebiGroupFeedbackRelease(HebiGroupFeedbackPtr fbk);
  * \returns A pointer to a new GroupInfo object. This must be released
  * with hebiGroupInfoRelease(HebiGroupInfoPtr).
  */
-HebiGroupInfoPtr hebiGroupInfoCreate(int size);
+HebiGroupInfoPtr hebiGroupInfoCreate(size_t size);
 
 /**
  * \brief Return the number of modules in this group Info.
  *
  * \returns The number of module infos in this group info.
  */
-int hebiGroupInfoGetSize(HebiGroupInfoPtr info);
+size_t hebiGroupInfoGetSize(HebiGroupInfoPtr info);
 
 /**
  * \brief Export gains from a GroupInfo object into a file.
+ *
+ * \param file A null-terminated string that gives the path/filename to save the
+ * gains XML file at. Must not be NULL.
+ *
+ * \returns HebiStatusSuccess on success, or a failure code if the file could
+ * not be written to or an internal error occurs.
  */
 HebiStatusCode hebiGroupInfoWriteGains(HebiGroupInfoPtr info, const char* file);
 
@@ -1002,7 +1013,7 @@ HebiStatusCode hebiGroupInfoWriteGains(HebiGroupInfoPtr info, const char* file);
  *
  * \returns The info corresponding to the module at the specified index.
  */
-HebiInfoPtr hebiGroupInfoGetModuleInfo(HebiGroupInfoPtr info, int module_index);
+HebiInfoPtr hebiGroupInfoGetModuleInfo(HebiGroupInfoPtr info, size_t module_index);
 
 /**
  * \brief Frees resources created by the GroupInfo object.
@@ -1024,47 +1035,47 @@ HebiStatusCode hebiCommandGetFloat(HebiCommandPtr cmd, HebiCommandFloatField fie
 /**
  * Sets the given field. If the provided pointer is null, the field is cleared.
  */
-void hebiCommandSetFloat(HebiCommandPtr cmd, HebiCommandFloatField field, float* value);
+void hebiCommandSetFloat(HebiCommandPtr cmd, HebiCommandFloatField field, const float* value);
 
 /**
  * If the specified value is set, writes the value of the field to the pointers
  * (if both are not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field,
-  int64_t* int_part, float* dec_part);
+HebiStatusCode hebiCommandGetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field, int64_t* int_part,
+                                          float* dec_part);
 
 /**
  * Sets the given field. If any of the provided pointers are null, the field is cleared.
  */
-void hebiCommandSetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field,
-  int64_t* int_part, float* dec_part);
+void hebiCommandSetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field, const int64_t* int_part,
+                                const float* dec_part);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetNumberedFloat(HebiCommandPtr cmd, HebiCommandNumberedFloatField field,
-  int number, float* value);
+HebiStatusCode hebiCommandGetNumberedFloat(HebiCommandPtr cmd, HebiCommandNumberedFloatField field, size_t number,
+                                           float* value);
 
 /**
  * Sets the given field. If the provided pointer is null, the field is cleared.
  */
-void hebiCommandSetNumberedFloat(HebiCommandPtr cmd, HebiCommandNumberedFloatField field,
-  int number, float* value);
+void hebiCommandSetNumberedFloat(HebiCommandPtr cmd, HebiCommandNumberedFloatField field, size_t number,
+                                 const float* value);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
- * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet. 
- * 
+ * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
+ *
  * The value written to the pointer will be 1 for true
  * and 0 for false.
  */
-HebiStatusCode hebiCommandGetBool(HebiCommandPtr cmd, HebiCommandBoolField field, int* value);
+HebiStatusCode hebiCommandGetBool(HebiCommandPtr cmd, HebiCommandBoolField field, int32_t* value);
 
 /**
  * Sets the given field. If the provided pointer is null, the field is cleared.
  */
-void hebiCommandSetBool(HebiCommandPtr cmd, HebiCommandBoolField field, int* value);
+void hebiCommandSetBool(HebiCommandPtr cmd, HebiCommandBoolField field, const int32_t* value);
 
 /**
  * Retrieves the value and/or the length of the string field.
@@ -1092,70 +1103,66 @@ void hebiCommandSetBool(HebiCommandPtr cmd, HebiCommandBoolField field, int* val
  *
  * Note - assumes ASCII string encoding.
  */
-HebiStatusCode hebiCommandGetString(HebiCommandPtr cmd, HebiCommandStringField field,
-  char* buffer, size_t* length);
+HebiStatusCode hebiCommandGetString(HebiCommandPtr cmd, HebiCommandStringField field, char* buffer, size_t* length);
 
 /**
  * Sets the given string to the value given in the buffer (if given). If any of
  * the provided pointers are null, the field is cleared.
  *
- * 'length' should be set to the length of the c-style string in 'buffer',
- * without including the terminating null character. The data in 'buffer' does
- * not need to be null terminated.
+ * If not null, 'length' should be set to the length of the c-style string in
+ * 'buffer', without including the terminating null character. The data in
+ * 'buffer' does not need to be null terminated.
  *
  * Note - assumes ASCII string encoding.
  */
-void hebiCommandSetString(HebiCommandPtr cmd, HebiCommandStringField field,
-  const char* buffer, size_t* length);
+void hebiCommandSetString(HebiCommandPtr cmd, HebiCommandStringField field, const char* buffer, const size_t* length);
 
 /**
  * Checks whether this flag is set. Returns '1' for yes, '0' for no.
  */
-int hebiCommandGetFlag(HebiCommandPtr cmd, HebiCommandFlagField field);
+int32_t hebiCommandGetFlag(HebiCommandPtr cmd, HebiCommandFlagField field);
 
 /**
  * Sets or clears a flag value. A nonzero value sets this flag and a value of zero clears this flag.
  */
-void hebiCommandSetFlag(HebiCommandPtr cmd, HebiCommandFlagField field, int value);
+void hebiCommandSetFlag(HebiCommandPtr cmd, HebiCommandFlagField field, int32_t value);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetEnum(HebiCommandPtr cmd, HebiCommandEnumField field, int* value);
+HebiStatusCode hebiCommandGetEnum(HebiCommandPtr cmd, HebiCommandEnumField field, int32_t* value);
 
 /**
  * Sets the given field. If the provided pointer is null, the field is cleared.
  */
-void hebiCommandSetEnum(HebiCommandPtr cmd, HebiCommandEnumField field, int* value);
+void hebiCommandSetEnum(HebiCommandPtr cmd, HebiCommandEnumField field, const int32_t* value);
 
 /**
  * If the indicated pin has an integer value, writes it to the pointer (if not
  * NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetIoPinInt(HebiCommandPtr cmd, HebiCommandIoPinBank field,
-  unsigned int pin_number, int64_t* value);
+HebiStatusCode hebiCommandGetIoPinInt(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number,
+                                      int64_t* value);
 
 /**
  * If the indicated pin has an floating point value, writes it to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field,
-  unsigned int pin_number, float* value);
+HebiStatusCode hebiCommandGetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number,
+                                        float* value);
 
 /**
  * Sets the indicated pin to this integer value. If the provided pointer is NULL
  * the field is cleared (of values of any type).
  */
-void hebiCommandSetIoPinInt(HebiCommandPtr cmd, HebiCommandIoPinBank field,
-  unsigned int pin_number, int64_t* value);
+void hebiCommandSetIoPinInt(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number, const int64_t* value);
 
 /**
  * Sets the indicated pin to this floating point value. If the provided pointer
  * is NULL the field is cleared (of values of any type).
  */
-void hebiCommandSetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field,
-  unsigned int pin_number, float* value);
+void hebiCommandSetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number, const float* value);
 
 /**
  * If the led color is set, writes it to the three output integer pointers (if
@@ -1164,21 +1171,20 @@ void hebiCommandSetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field,
  * For command-style messages, this refers to the color to override the module's
  * default control of the LED.
  */
-HebiStatusCode hebiCommandGetLedColor(HebiCommandPtr cmd, HebiCommandLedField field,
-  uint8_t* r, uint8_t* g, uint8_t* b);
+HebiStatusCode hebiCommandGetLedColor(HebiCommandPtr cmd, HebiCommandLedField field, uint8_t* r, uint8_t* g,
+                                      uint8_t* b);
 
 /**
  * Returns '1' if this message indicates that the module should resume control of the LED.  A '0' can indicate either
  * an override command (if and only if HasLedColor() returns '1'), or no information about the LED (i.e., the module
  * should maintain it's current state regarding the LED).
  */
-int hebiCommandHasLedModuleControl(HebiCommandPtr cmd, HebiCommandLedField field);
+int32_t hebiCommandHasLedModuleControl(HebiCommandPtr cmd, HebiCommandLedField field);
 
 /**
  * Commands a color that overrides the module's control of the LED.
  */
-void hebiCommandSetLedOverrideColor(HebiCommandPtr cmd, HebiCommandLedField field,
-  uint8_t r, uint8_t g, uint8_t b);
+void hebiCommandSetLedOverrideColor(HebiCommandPtr cmd, HebiCommandLedField field, uint8_t r, uint8_t g, uint8_t b);
 
 /**
  * Sets the module to regain control of the LED.
@@ -1205,15 +1211,15 @@ HebiStatusCode hebiFeedbackGetFloat(HebiFeedbackPtr fbk, HebiFeedbackFloatField 
  * If the specified value is set, writes the value of the field to the pointers
  * (if both are not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetHighResAngle(HebiFeedbackPtr fbk, HebiFeedbackHighResAngleField field,
-  int64_t* int_part, float* dec_part);
+HebiStatusCode hebiFeedbackGetHighResAngle(HebiFeedbackPtr fbk, HebiFeedbackHighResAngleField field, int64_t* int_part,
+                                           float* dec_part);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetNumberedFloat(HebiFeedbackPtr fbk, HebiFeedbackNumberedFloatField field,
-  int number, float* value);
+HebiStatusCode hebiFeedbackGetNumberedFloat(HebiFeedbackPtr fbk, HebiFeedbackNumberedFloatField field, size_t number,
+                                            float* value);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
@@ -1225,22 +1231,21 @@ HebiStatusCode hebiFeedbackGetUInt64(HebiFeedbackPtr fbk, HebiFeedbackUInt64Fiel
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetVector3f(HebiFeedbackPtr fbk,
-  HebiFeedbackVector3fField field, HebiVector3f* value);
+HebiStatusCode hebiFeedbackGetVector3f(HebiFeedbackPtr fbk, HebiFeedbackVector3fField field, HebiVector3f* value);
 
 /**
  * If the indicated pin has an integer value, writes it to the pointer (if not
  * NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetIoPinInt(HebiFeedbackPtr fbk, HebiFeedbackIoPinBank field,
-  unsigned int pin_number, int64_t* value);
+HebiStatusCode hebiFeedbackGetIoPinInt(HebiFeedbackPtr fbk, HebiFeedbackIoPinBank field, size_t pin_number,
+                                       int64_t* value);
 
 /**
  * If the indicated pin has an floating point value, writes it to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetIoPinFloat(HebiFeedbackPtr fbk, HebiFeedbackIoPinBank field,
-  unsigned int pin_number, float* value);
+HebiStatusCode hebiFeedbackGetIoPinFloat(HebiFeedbackPtr fbk, HebiFeedbackIoPinBank field, size_t pin_number,
+                                         float* value);
 
 /**
  * If the led color is set, writes it to the three output integer pointers (if
@@ -1249,8 +1254,8 @@ HebiStatusCode hebiFeedbackGetIoPinFloat(HebiFeedbackPtr fbk, HebiFeedbackIoPinB
  * For command-style messages, this refers to the color to override the module's
  * default control of the LED.
  */
-HebiStatusCode hebiFeedbackGetLedColor(HebiFeedbackPtr fbk, HebiFeedbackLedField field,
-  uint8_t* r, uint8_t* g, uint8_t* b);
+HebiStatusCode hebiFeedbackGetLedColor(HebiFeedbackPtr fbk, HebiFeedbackLedField field, uint8_t* r, uint8_t* g,
+                                       uint8_t* b);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Info API
@@ -1269,7 +1274,7 @@ HebiStatusCode hebiInfoGetFloat(HebiInfoPtr info, HebiInfoFloatField field, floa
  * The value written to the pointer will be 1 for true
  * and 0 for false.
  */
-HebiStatusCode hebiInfoGetBool(HebiInfoPtr info, HebiInfoBoolField field, int* value);
+HebiStatusCode hebiInfoGetBool(HebiInfoPtr info, HebiInfoBoolField field, int32_t* value);
 
 /**
  * Retrieves the value and/or the length of the string field.
@@ -1302,13 +1307,13 @@ HebiStatusCode hebiInfoGetString(HebiInfoPtr info, HebiInfoStringField field, ch
 /**
  * Checks whether this flag is set. Returns '1' for yes, '0' for no.
  */
-int hebiInfoGetFlag(HebiInfoPtr info, HebiInfoFlagField field);
+int32_t hebiInfoGetFlag(HebiInfoPtr info, HebiInfoFlagField field);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiInfoGetEnum(HebiInfoPtr info, HebiInfoEnumField field, int* value);
+HebiStatusCode hebiInfoGetEnum(HebiInfoPtr info, HebiInfoEnumField field, int32_t* value);
 
 /**
  * If the led color is set, writes it to the three output integer pointers (if
@@ -1317,147 +1322,166 @@ HebiStatusCode hebiInfoGetEnum(HebiInfoPtr info, HebiInfoEnumField field, int* v
  * For command-style messages, this refers to the color to override the module's
  * default control of the LED.
  */
-HebiStatusCode hebiInfoGetLedColor(HebiInfoPtr info, HebiInfoLedField field,
-  uint8_t* r, uint8_t* g, uint8_t* b);
+HebiStatusCode hebiInfoGetLedColor(HebiInfoPtr info, HebiInfoLedField field, uint8_t* r, uint8_t* g, uint8_t* b);
 
 ////////////////////////////////////////////////////////////////////////////////
-// Kinematics API
+// RobotModel API
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * \brief Creates a one-dof actuator with the specified
- * properties.
+ * \brief Creates a one-dof joint about the specified axis.
  *
- * \param com Vector (length 3) of the center of mass location.
- * \param input_to_joint Matrix (4x4, row major order) of the transform from the
- * input of the actuator to the center of rotation about the degree of freedom.
- * \param joint_rotation_axis vector (length 3) of the axis of rotation for the
- * module.  The relative coordinate frame is the output of the "input_to_joint"
- * transform.
- * \param joint_to_output Matrix (4x4, row major order) of the transform from
- * the output of the rotation about the joint axis to frame of the output of the
- * actuator.
+ * \param joint_type What the axis of motion for this joint is. The coordinate
+ * frame is relative to the previous robot model element this is attached to.
  *
- * \returns NULL if the actuator body could not be created; otherwise, pointer
- * to newly allocated body.  Must either be added to a kinematics object or
- * released via hebiBodyRelease(HebiBodyPtr).
+ * \returns NULL if the joint could not be created; otherwise, pointer
+ * to newly allocated joint.  Must either be added to a robot model object or
+ * released via hebiRobotModelElementRelease(HebiRobotModelElementPtr).
  */
-HebiBodyPtr hebiBodyCreateActuator(const float* com, const float* input_to_joint,
-  const float* joint_rotation_axis, const float* joint_to_output);
+HebiRobotModelElementPtr hebiRobotModelElementCreateJoint(HebiJointType joint_type);
 
 /**
- * \brief Creates a kinematic body with a static transform to the output.
+ * \brief Creates a rigid body defining static transforms to the given outputs.
  *
- * \param com Vector (length 3) of the center of mass location.
+ * \param com Matrix (4x4 tranform, row major order) for the center of mass
+ * location, including the frame which the inertia tensor is given in. Must not
+ * be NULL.
+ * \param inertia Vector (6 elements, Ixx, Iyy, Izz, Ixy, Ixz, Iyz) of the
+ * inertia tensor, in the frame given by the COM. Must not be NULL.
+ * \param mass Mass (in kg) of the rigid body.
  * \param num_outputs The number of available outputs.
  * \param outputs Matrices (list of n 4x4 transforms, row major order) of the
- * transforms from input to the available outputs of the body.
- * NOTE: currently, only a single output is supported.
+ * transforms from input to the available outputs of the body. Must not be NULL
+ * unless num_outputs is 0.
  *
- * \returns NULL if the static body could not be created; otherwise, pointer to
- * newly allocated body.  Must either be added to a kinematics object or
- * released via 'hebiBodyRelease'.
+ * NOTE: currently, num_outputs must be 1.
+ *
+ * \returns NULL if the rigid body could not be created; otherwise, pointer to
+ * newly allocated body.  Must either be added to a robot model object or
+ * released via 'hebiRobotModelElementRelease'.
  */
-HebiBodyPtr hebiBodyCreateStatic(const float* com, int num_outputs, const float* outputs);
+HebiRobotModelElementPtr hebiRobotModelElementCreateRigidBody(const double* com, const double* inertia, double mass,
+                                                              size_t num_outputs, const double* outputs);
 
 /**
- * \brief Frees resources created by this body.
+ * \brief Frees resources created by this element.
  *
- * Note: Only do this if body has not been added to a kinematics object!  Once
- * added, the kinematics object manages the body's resources.
+ * Note: Only do this if element has not been added to a robot model object!
+ * Once added, the robot model object manages the element's resources.
  *
- * The body should no longer be used after this function is called.
+ * The element should no longer be used after this function is called.
  *
- * \param A valid kinematic body object which has not been added to a kinematics
- * object.
+ * \param A valid robot model element object which has not been added to a
+ * robot_model object.
  */
-void hebiBodyRelease(HebiBodyPtr body);
+void hebiRobotModelElementRelease(HebiRobotModelElementPtr element);
 
 /**
- * \brief Creates an object to hold a kinematic tree. This structure has a
- * single output available at the origin.
+ * \brief Creates an object to hold a robot model (tree topology). This
+ * structure has a single output available at the origin.
  *
- * Kinematics object created by this function must be released with
- * 'hebiKinematicsRelease' when no longer needed.
+ * RobotModel object created by this function must be released with
+ * 'hebiRobotModelRelease' when no longer needed.
  */
-HebiKinematicsPtr hebiKinematicsCreate(void);
+HebiRobotModelPtr hebiRobotModelCreate(void);
 
 /**
- * \brief Sets the fixed transform from the origin to the first added body.
+ * \brief Sets the fixed transform from the origin to the input of the first
+ * added model element.
  *
- * \param kinematics A valid HEBI Kinematics object.
- * \param transform A 4x4 homogeneous transform, in row major order.
+ * \param robot_model A valid HEBI RobotModel object.
+ * \param transform A 4x4 homogeneous transform, in row major order. Must not
+ * be null, and must be a valid transform.
+ *
+ * \returns HebiStatusSuccess on success, or HebiStatusInvalidArgument if
+ * transform is null or invalid.
  */
-void hebiKinematicsSetBaseFrame(HebiKinematicsPtr kinematics, const float* transform);
+HebiStatusCode hebiRobotModelSetBaseFrame(HebiRobotModelPtr robot_model, const double* transform);
 
 /**
- * \brief Retreives the fixed transform from the origin to the first added body.
+ * \brief Retreives the fixed transform from the origin to the input of the
+ * first added model element.
  *
- * \param kinematics A valid HEBI Kinematics object.
- * \param transform A allocated 16 element array of floats; this is filled
+ * \param robot_model A valid HEBI RobotModel object.
+ * \param transform A allocated 16 element array of doubles; this is filled
  * in by the function with the 4x4 homogeneous transform in row major order.
+ * Must not be NULL.
+ *
+ * \returns HebiStatusSuccess on success, or HebiStatusInvalidArgument if
+ * transform is null.
  */
-void hebiKinematicsGetBaseFrame(HebiKinematicsPtr kinematics, float* transform);
+HebiStatusCode hebiRobotModelGetBaseFrame(HebiRobotModelPtr robot_model, double* transform);
 
 /**
- * \brief Return the number of frames in the forward kinematics.
+ * \brief Return the number of frames in the forward kinematic tree of the robot
+ * model.
  *
  * Note that this depends on the type of frame requested -- for center of mass
- * frames, there is one per added body; for output frames, there is one per
- * output per body.
+ * frames, there is one per added rigid body (that was not combined with
+ * another); for output frames, there is one per output per element.  For end
+ * effectors, this is the total number of outputs on the leaves of the kinematic
+ * tree.
  *
- * \param kinematics A valid HEBI Kinematics object.
+ * \param robot_model A valid HEBI RobotModel object.
  * \param frame_type Which type of frame to consider -- see HebiFrameType enum.
  */
-int hebiKinematicsGetNumberOfFrames(HebiKinematicsPtr kinematics, HebiFrameType frame_type);
+size_t hebiRobotModelGetNumberOfFrames(HebiRobotModelPtr robot_model, HebiFrameType frame_type);
 
 /**
  * \brief Returns the number of settable degrees of freedom in the kinematic
- * tree. (This is equal to the number of actuators added).
+ * tree. (This is equal to the number of joints added).
  *
- * \param kinematics A valid HEBI Kinematics object.
+ * \param robot_model A valid HEBI RobotModel object.
  */
-int hebiKinematicsGetNumberOfDoFs(HebiKinematicsPtr kinematics);
+size_t hebiRobotModelGetNumberOfDoFs(HebiRobotModelPtr robot_model);
 
 /**
- * \brief Add a body to a parent body connected to a kinematic tree object.
+ * \brief Add an element to a parent element connected to a robot model object.
  *
- * After the addition, the kinematics object manages the resources of the added
- * body.
+ * After the addition, the robot model object manages the resources of the added
+ * element.
  *
- * The added body is assumed to connect to an available output on a body that
- * has already been attached to the kinematic tree. That body should be passed
- * in as 'existing_body', and the index of the requested output on that body
- * should be given as 'output_index'.
+ * The added element is assumed to connect to an available output on a element
+ * that has already been attached to the kinematic tree. That element should be
+ * passed in as 'existing_element', and the index of the requested output on
+ * that element should be given as 'output_index'.
  *
- * To attach the initial body to the kinematics object, use NULL for the
- * 'existing_body' argument.
-*
- * NOTE: currently, only a single output is supported for each body (e.g., a
- * kinematic chain), and so the 'existing_body' and 'output_index' parameters
- * are not checked.
+ * To attach the initial element to the robot model object, use NULL for the
+ * 'existing_element' argument.
  *
- * \param kinematics A valid HEBI Kinematics object.
- * \param existing_body The parent body which the body is added to (or null to
- * add the initial body to the tree).
- * \param output_index The index of the requested output on the parent body on
- * which to attach this body.
- * \param new_body The kinematic body which is added to the tree.
+ * NOTE: currently, only a single output is supported for each element (e.g., a
+ * kinematic chain), and so the 'existing_element' and 'output_index' parameters
+ * are not checked; this will be changed in an upcoming minor release so do not
+ * rely on this behavior!
  *
- * \returns HebiStatusSuccess on success, otherwise HebiStatusFailure (e.g., the parent body's
- * requested output is invalid or already occupied).
+ * \param robot_model A valid HEBI RobotModel object.
+ * \param existing_element The parent element which the element is added to (or
+ * NULL to add the initial element to the tree).
+ * \param output_index The index of the requested output on the parent element
+ * on which to attach this element.
+ * \param new_element The kinematic element which is added to the tree. Must not
+ * be NULL.
+ * \param combine Whether or not to combine this with the output frame where
+ * this is being attached to, essentially "hiding" this existing output frame
+ * from returned frames and replacing it with the output from this.  Body masses
+ * and inertias are also combined. '1' means combine; '0' means do not combine.
+ *
+ * \returns HebiStatusSuccess on success, otherwise HebiStatusFailure (e.g., the
+ * parent body's requested output is invalid or already occupied) or
+ * HebiStatusInvalidArgument (e.g., 'new_element' is NULL).
  */
-HebiStatusCode hebiKinematicsAddBody(HebiKinematicsPtr kinematics, HebiBodyPtr existing_body,
-  int output_index, HebiBodyPtr new_body);
+HebiStatusCode hebiRobotModelAdd(HebiRobotModelPtr robot_model, HebiRobotModelElementPtr existing_element,
+                                 size_t output_index, HebiRobotModelElementPtr new_element, int32_t combine);
 
 /**
- * \brief Generates the forward kinematics for the given kinematic tree.
+ * \brief Generates the transforms for the forward kinematics of the given
+ * robot model.
  *
  * The order of the returned frames is in a depth-first tree. As an example,
- * assume a body A has one output, to which body B is connected to. Body B has
- * two outputs; actuator C is attached to the first output and actuator E is
- * attached to the second output. Body D is attached to the only output of
- * actuator C:
+ * assume an element A has one output, to which element B is connected to.
+ * Element B has two outputs; C is attached to the first output and E is
+ * attached to the second output. Element D is attached to the only output of
+ * element C:
  *
  * (BASE) A - B(1) - C - D
  *           (2)
@@ -1468,113 +1492,66 @@ HebiStatusCode hebiKinematicsAddBody(HebiKinematicsPtr kinematics, HebiBodyPtr e
  *
  * For output frames, the returned frames would be A-B(1)-C-D-B(2)-E.
  *
- * \param kinematics A valid HEBI Kinematics object.
+ * For end effector frames, the returned frames are the outputs of the leaf
+ * nodes; here the output of D and E.
+ *
+ * \param robot_model A valid HEBI RobotModel object.
  * \param frame_type Which type of frame to consider -- see HebiFrameType enum.
  * \param positions A vector of joint positions/angles (in SI units of meters or
- * radians) equal in length to the number of DoFs of the kinematic tree.
- * \param frames An allocated (16 x number of frames) array of floats; this is
+ * radians) equal in length to the number of DoFs of the robot model. Must not
+ * be NULL.
+ * \param frames An allocated (16 x number of frames) array of doubles; this is
  * filled in by the function with the 4x4 homogeneous transform of each frame,
  * each given in row major order. Note that the number of frames depends on the
- * frame type!
+ * frame type! Must not be NULL.
+ *
+ * \returns HebiStatusSuccess on success, or HebiStatusInvalidArgument if
+ * positions or frames are NULL.
  */
-void hebiKinematicsGetForwardKinematics(HebiKinematicsPtr kinematics, HebiFrameType frame_type,
-  const double* positions, float* frames);
+HebiStatusCode hebiRobotModelGetForwardKinematics(HebiRobotModelPtr robot_model, HebiFrameType frame_type,
+                                                  const double* positions, double* frames);
 
 /**
  * \brief Generates the jacobian for each frame in the given kinematic tree.
  *
- * \param kinematics A valid HEBI Kinematics object.
+ * \param robot_model A valid HEBI RobotModel object.
  * \param frame_type Which type of frame to consider -- see HebiFrameType enum.
  * \param positions A vector of joint positions/angles (in SI units of meters or
- * radians) equal in length to the number of DoFs of the kinematic tree.
+ * radians) equal in length to the number of DoFs of the robot model. Must not
+ * be NULL.
  * \param jacobians An allocated (6 x number of dofs x number of frames) array
- * of floats; this is filled in by the function with the 6 x number of dofs
+ * of doubles; this is filled in by the function with the 6 x number of dofs
  * jacobian for each frame, each given in row major order.  Note that the number
- * of frames depends on the frame type!
+ * of frames depends on the frame type! Must not be NULL.
+ *
+ * \returns HebiStatusSuccess on success, or HebiStatusInvalidArgument if
+ * positions or jacobians are NULL.
  */
-void hebiKinematicsGetJacobians(HebiKinematicsPtr kinematics, HebiFrameType frame_type,
-  const double* positions, float* jacobians);
+HebiStatusCode hebiRobotModelGetJacobians(HebiRobotModelPtr robot_model, HebiFrameType frame_type,
+                                          const double* positions, double* jacobians);
 
 /**
- * \brief Generates the forward kinematics to the end effector (leaf node)
- * frame(s).
+ * \brief Fill in the masses vector with the mass of each body with mass in the
+ * kinematic tree, reported in a depth-first ordering.
  *
- * Note -- for center of mass frames, this is one per leaf node; for output
- * frames, this is one per output per leaf node, in depth first order.
+ * \param robot_model A valid HEBI RobotModel object.
+ * \param masses An allocated array of doubles, with length equal to the return
+ * value of hebiRobotModelGetNumberOfFrames with argument
+ * HebiFrameTypeCenterOfMass. Must not be NULL.
  *
- * \param kinematics A valid HEBI Kinematics object.
- * \param frame_type Which type of frame to consider -- see HebiFrameType enum.
- * \param positions A vector of joint positions/angles (in SI units of meters or
- * radians) equal in length to the number of DoFs of the kinematic tree.
- * \param transforms An allocated (16 x number of frames) array of floats; this is
- * filled in by the function with the 4x4 homogeneous transform of each frame,
- * each given in row major order. Note that the number of frames depends on the
- * frame type!
+ * \returns HebiStatusSuccess on success, or HebiStatusInvalidArgument if
+ * masses is NULL.
  */
-void hebiKinematicsGetEndEffector(HebiKinematicsPtr kinematics, HebiFrameType frame_type,
-  const double* positions, float* transforms);
+HebiStatusCode hebiRobotModelGetMasses(HebiRobotModelPtr robot_model, double* masses);
 
 /**
- * \brief Frees resources created by this kinematics object.
+ * \brief Frees resources created by this robot model object.
  *
- * Kinematics object should no longer be used after this function is called!
+ * RobotModel object should no longer be used after this function is called!
  *
- * \param kinematics A valid HEBI Kinematics object.
+ * \param robot_model A valid HEBI RobotModel object.
  */
-void hebiKinematicsRelease(HebiKinematicsPtr kinematics);
-
-// Helper functions for returning parameters for specific kinematic bodies.
-
-/**
- * Sets the input parameter to the kinematic parameters for an X5-series
- * actuator.
- *
- * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
- */
-HebiStatusCode hebiKinematicParametersX5(HebiKinematicParametersActuator* params);
-
-/**
- * Sets the input parameter to the kinematic parameters for an X8-series
- * actuator.
- *
- * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
- */
-HebiStatusCode hebiKinematicParametersX8(HebiKinematicParametersActuator* params);
-
-/**
- * Sets the input parameter to the kinematic parameters for an X5-series
- * light bracket.
- *
- * The "mounting" parameter can be set to "Left" or "Right".
- *
- * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
- */
-HebiStatusCode hebiKinematicParametersX5LightBracket(
-  HebiKinematicParametersStaticBody* params, HebiMountingType mounting);
-
-/**
- * Sets the input parameter to the kinematic parameters for an X5-series
- * heavy bracket.
- *
- * The "mounting" parameter can be set to "LeftInside", "LeftOutside",
- * "RightInside", or "RightOutside".
- *
- * \returns HebiStatusSuccess on success or HebiStatusInvalidArgument (e.g. null pointer or other invalid arguments).
- */
-HebiStatusCode hebiKinematicParametersX5HeavyBracket(
-  HebiKinematicParametersStaticBody* params, HebiMountingType mounting);
-
-/**
- * The kinematic parameters for an X5-series tube link.
- *
- * \param extension The length, from center of the previous actuator's output to
- * the center of the subsequent actuator's input, in meters.
- * \param twist The twist about the central axis of the tube.  A twist of zero
- * refers to an input and output frame that are aligned in rotation, but offset
- * in the z-direction.
- */
-HebiStatusCode hebiKinematicParametersX5Link(
-  HebiKinematicParametersStaticBody* params, float extension, float twist);
+void hebiRobotModelRelease(HebiRobotModelPtr robot_model);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Inverse Kinematics API
@@ -1608,8 +1585,8 @@ HebiIKPtr hebiIKCreate(void);
  * \return HebiStatusSuccess on success, otherwise a failure code (e.g. incompatible with
  * existing objectives, or all components are set to 'NaN')
  */
-HebiStatusCode hebiIKAddObjectiveEndEffectorPosition(HebiIKPtr ik,
-  float weight, float x, float y, float z);
+HebiStatusCode hebiIKAddObjectiveEndEffectorPosition(HebiIKPtr ik, float weight, size_t end_effector_index, double x,
+                                                     double y, double z);
 
 /**
  * \brief Add an objective that optimizes for the end effector output frame
@@ -1623,13 +1600,13 @@ HebiStatusCode hebiIKAddObjectiveEndEffectorPosition(HebiIKPtr ik,
  * functions (this objective is multiplied by this weight before passing to the
  * optimizer). Defaults to 1.0.
  * \param matrix The desired orientation of the end effector frame, as a 3x3
- * rotation matrix in row major order.
+ * rotation matrix in row major order. Must not be NULL.
  *
  * \return HebiStatusSuccess on success, otherwise a failure code (e.g. incompatible with
- * existing objectives, or rotation matrix is invalid.)
+ * existing objectives, or rotation matrix is invalid or null.)
  */
-HebiStatusCode hebiIKAddObjectiveEndEffectorSO3(HebiIKPtr ik,
-  float weight, const float* matrix);
+HebiStatusCode hebiIKAddObjectiveEndEffectorSO3(HebiIKPtr ik, double weight, size_t end_effector_index,
+                                                const double* matrix);
 
 /**
  * \brief Add an objective that points the end effector's z axis in a given
@@ -1649,8 +1626,8 @@ HebiStatusCode hebiIKAddObjectiveEndEffectorSO3(HebiIKPtr ik,
  * \return HebiStatusSuccess on success, otherwise a failure code (e.g. incompatible with
  * existing objectives, or rotation matrix is invalid.)
  */
-HebiStatusCode hebiIKAddObjectiveEndEffectorTipAxis(HebiIKPtr ik,
-  float weight, float x, float y, float z);
+HebiStatusCode hebiIKAddObjectiveEndEffectorTipAxis(HebiIKPtr ik, double weight, size_t end_effector_index, double x,
+                                                    double y, double z);
 
 /**
  * \brief Define joint angle constraints.
@@ -1665,14 +1642,14 @@ HebiStatusCode hebiIKAddObjectiveEndEffectorTipAxis(HebiIKPtr ik,
  * \param num_joints The number of elements in the min_positions and
  * max_positions arrays.
  * \param min_positions An array with the minimum joint limit for each joint, or
- * NaN or inf if unlimited. Must have num_joints elements.
+ * NaN or inf if unlimited. Must have num_joints elements, and must not be NULL.
  * \param max_positions An array with the maximum joint limit for each joint, or
- * NaN or inf if unlimited. Must have num_joints elements.
+ * NaN or inf if unlimited. Must have num_joints elements, and must not be NULL.
  *
- * \return HebiStatusSuccess on success; otherwise a failure code
+ * \return HebiStatusSuccess on success; otherwise a failure code.
  */
-HebiStatusCode hebiIKAddConstraintJointAngles(HebiIKPtr ik,
-  float weight, int num_joints, const double* min_positions, const double* max_positions);
+HebiStatusCode hebiIKAddConstraintJointAngles(HebiIKPtr ik, double weight, size_t num_joints,
+                                              const double* min_positions, const double* max_positions);
 
 /**
  * \brief Clears the objectives and constraints from this IK object, along
@@ -1687,22 +1664,22 @@ void hebiIKClearAll(HebiIKPtr ik);
  * Note: multiple "hebiIKSolve" calls can be made using the same IK object.
  *
  * \param ik A valid HEBI IK object.
- * \param kin A valid HEBI Forward Kinematics object.
+ * \param model A valid HEBI RobotModel object.
  * \param initial_positions The seed positions/angles (in SI units of meters or
  * radians) to start the IK search from; equal in length to the number of DoFs
- * of the kinematic tree.
+ * of the kinematic tree. Must not be NULL.
  * \param ik_solution Allocated array of doubles equal in length to the
  * number of DoFs of the kinematic tree; the function will will in this array
- * with the IK solution (in SI units of meters or radians).
+ * with the IK solution (in SI units of meters or radians). Must not be NULL.
  * \param result_info Reserved for future use (will enable more information
  * about output of optimization such as success/failure, function error, etc).
- * This can currently be set to NULL.
+ * This should currently be set to NULL.
  *
  * \return HebiStatusSuccess on success, other values on failure (e.g., no objectives given or
  * dimension mismatch between kinematics object and stored objectives).
  */
-HebiStatusCode hebiIKSolve(HebiIKPtr ik, HebiKinematicsPtr kin,
-  const double* initial_positions, double* ik_solution, void* result_info);
+HebiStatusCode hebiIKSolve(HebiIKPtr ik, HebiRobotModelPtr model, const double* initial_positions, double* ik_solution,
+                           void* result_info);
 
 /**
  * \brief Frees resources created by this inverse kinematics object.
@@ -1725,7 +1702,7 @@ void hebiIKRelease(HebiIKPtr ik);
  * \param positions A vector of waypoints for this joint; should be
  * num_waypoints in length. Any elements that are NAN will be considered free
  * parameters, and will be set by the function. Values of +/-infinity are not
- * allowed.
+ * allowed. Must not be NULL.
  * \param velocities An optional vector of velocity constraints at the
  * corresponding waypoints; should either be NULL or num_waypoints in length.
  * Any elements that are NAN will be considered free parameters, and will be set
@@ -1742,8 +1719,9 @@ void hebiIKRelease(HebiIKPtr ik);
  * has been created. A NULL value indicates that there was an error, but does
  * not specify any details about the error at this time.
  */
-HebiTrajectoryPtr hebiTrajectoryCreateUnconstrainedQp(int num_waypoints, double* positions,
-  double* velocities, double* accelerations, double* time_vector);
+HebiTrajectoryPtr hebiTrajectoryCreateUnconstrainedQp(size_t num_waypoints, const double* positions,
+                                                      const double* velocities, const double* accelerations,
+                                                      const double* time_vector);
 
 /**
  * \brief Frees resources created by this trajectory.
@@ -1761,19 +1739,19 @@ double hebiTrajectoryGetDuration(HebiTrajectoryPtr trajectory);
  * \brief Gets the value of the trajectory at a given time.
  *
  * \param trajectory A HebiTrajectory object
- * \param time The time within the trajectory (from 0 to the duration of the
- * trajectory) at which to query.
- * \param position The position at the given time, as defined by this
- * trajectory.
- * \param velocity The velocity at the given time, as defined by this
- * trajectory.
- * \param acceleration The acceleration at the given time, as defined by this
- * trajectory.
+ * \param time The time within the trajectory (from the beginning to the end of
+ * the trajectory's time vector) at which to query.
+ * \param position Filled in with the position at the given time, as defined by
+ * this trajectory. Must not be null.
+ * \param velocity Filled in with the velocity at the given time, as defined by
+ * this trajectory. Must not be null.
+ * \param acceleration Filled in with the acceleration at the given time, as
+ * defined by this trajectory. Must not be null.
  *
- * \returns HebiStatusSuccess on success, otherwise HebiStatusFailure
+ * \returns HebiStatusSuccess on success, otherwise an error status.
  */
-HebiStatusCode hebiTrajectoryGetState(HebiTrajectoryPtr trajectory, double time, double* position,
-  double* velocity, double* acceleration);
+HebiStatusCode hebiTrajectoryGetState(HebiTrajectoryPtr trajectory, double time, double* position, double* velocity,
+                                      double* acceleration);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Logging API
@@ -1785,19 +1763,19 @@ HebiStatusCode hebiTrajectoryGetState(HebiTrajectoryPtr trajectory, double time,
 void hebiLogFileRelease(HebiLogFilePtr log_file);
 
 /**
- * \brief Retrieves the name and path of the log file.
+ * \brief Copy the path and name of the log file into a buffer.
  *
  * To only query the length of the string, provide a null pointer for the buffer parameter.
  * If the provided buffer is not large enough to hold the string (the length determined by the length parameter),
  * the call will fail. Note that the size of this buffer includes the null
  * terminating character.
  *
- * \param buffer buffer into which the string will be copied. This string will be null terminated.
- * \param length the length of the provided buffer. After calling this function, the value dereferenced will be
- * updated with the length of the string plus the null character.
- *
- * \returns HebiStatusSuccess on success, HebiStatusBufferTooSmall if the provided buffer is too small, or
- * HebiStatusInvalidArgument if the length parameter is null
+ * \param buffer Pointer to a buffer into which the string will be written. This can be null, in which case this
+ * function will write the size of the string (including null character) into length.
+ * \param length Pointer to the length of the input buffer. This parameter must not be null, or this function
+ * will return HebiStatusInvalidArgument
+ * \return HebiStatusSuccess on success, HebiStatusBufferTooSmall if the value referenced by length is smaller than
+ *         the string (including the character), or HebiStatusInvalidArgument if length pointer is null
  */
 HebiStatusCode hebiLogFileGetFileName(HebiLogFilePtr log_file, char* buffer, size_t* length);
 
@@ -1810,7 +1788,7 @@ HebiStatusCode hebiLogFileGetFileName(HebiLogFilePtr log_file, char* buffer, siz
  * If this function returns a pointer, you must call @c hebiLogFileRelease(HebiLogFilePtr)
  * to release the allocated memory.
  *
- * \param file the directory and path of the file to open
+ * \param file the directory and path of the file to open.  Must not be NULL.
  * \return a pointer to the file;  null if the file could not be opened
  */
 HebiLogFilePtr hebiLogFileOpen(const char* file);
@@ -1820,7 +1798,7 @@ HebiLogFilePtr hebiLogFileOpen(const char* file);
  *
  * \return The number of modules in the group
  */
-int hebiLogFileGetNumberOfModules(HebiLogFilePtr log_file);
+size_t hebiLogFileGetNumberOfModules(HebiLogFilePtr log_file);
 
 /**
  * \brief Retrieve the next group feedback from the opened log file
@@ -1831,13 +1809,43 @@ int hebiLogFileGetNumberOfModules(HebiLogFilePtr log_file);
 HebiStatusCode hebiLogFileGetNextFeedback(HebiLogFilePtr log_file, HebiGroupFeedbackPtr field);
 
 ////////////////////////////////////////////////////////////////////////////////
+// String Functions
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * \brief Copy the string into a buffer
+ *
+ * To only query the length of the string, provide a null pointer for the buffer parameter.
+ * If the provided buffer is not large enough to hold the string (the length determined by the length parameter),
+ * the call will fail. Note that the size of this buffer includes the null terminating character.
+ *
+ * \param buffer Pointer to a buffer into which the string will be written. This can be null, in which case this
+ * function will write the size of the string (including null character) into length.
+ * \param length Pointer to the length of the input buffer. This parameter must not be null, or this function
+ * will return HebiStatusInvalidArgument
+ * \return HebiStatusSuccess on success, HebiStatusBufferTooSmall if the value referenced by length is smaller than
+ * the string (including the character), or HebiStatusInvalidArgument if length pointer is null
+ */
+HebiStatusCode hebiStringGetString(HebiStringPtr str, char* buffer, size_t* length);
+
+/**
+ * \brief Releases a string instance
+ */
+void hebiStringRelease(HebiStringPtr str);
+
+////////////////////////////////////////////////////////////////////////////////
 // Misc Functions
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * \brief Gets the version for the library
+ * \brief Get the version of the library
+ *
+ * All parameters must not be NULL.
+ *
+ * \return HebiStatusSuccess on success, otherwise HebiStatusInvalidArgument if
+ * a parameter is NULL.
  */
-void hebiGetLibraryVersion(int* major, int* minor, int* revision);
+HebiStatusCode hebiGetLibraryVersion(int32_t* major, int32_t* minor, int32_t* revision);
 
 /**
  * \brief Frees all resources created by the library.  Note: any calls to the
@@ -1846,5 +1854,5 @@ void hebiGetLibraryVersion(int* major, int* minor, int* revision);
 void hebiCleanup(void);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif

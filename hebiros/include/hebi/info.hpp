@@ -4,6 +4,7 @@
 #include "color.hpp"
 #include <string>
 #include "util.hpp"
+#include "gains.hpp"
 
 namespace hebi {
 
@@ -29,7 +30,7 @@ namespace hebi {
 class Info final
 {
   public:
-    enum ControlStrategy {
+    enum class ControlStrategy {
       /// The motor is not given power (equivalent to a 0 PWM value)
       Off,
       /// A direct PWM value (-1 to 1) can be sent to the motor (subject to onboard safety limiting).
@@ -160,7 +161,7 @@ class Info final
     };
 
     /// \brief A message field representable by an enum of a given type.
-    template <class T>
+    template <typename T>
     class EnumField final
     {
       public:
@@ -185,7 +186,7 @@ class Info final
         bool has() const { return (hebiInfoGetEnum(internal_, field_, nullptr) == HebiStatusSuccess); }
         /// \brief If the field has a value, returns that value; otherwise,
         /// returns a default.
-        T get() const { T ret{}; hebiInfoGetEnum(internal_, field_, reinterpret_cast<int*>(&ret)); return ret; }
+        T get() const { int32_t ret{}; hebiInfoGetEnum(internal_, field_, &ret); return static_cast<T>(ret); }
 
       private:
         HebiInfoPtr const internal_;
@@ -226,6 +227,8 @@ class Info final
         HEBI_DISABLE_COPY_MOVE(LedField)
     };
 
+    using InfoGains = Gains<HebiInfoPtr, FloatField, BoolField, HebiInfoFloatField, HebiInfoBoolField>;
+
     /// Module settings that are typically changed at a slower rate.
     class Settings final
     {
@@ -234,255 +237,13 @@ class Info final
         /// Actuator-specific settings, such as controller gains.
         class Actuator final
         {
-          // Note: this is 'protected' instead of 'private' for easier use with Doxygen
-          protected:
-            /// Controller gains for the position PID loop.
-            class PositionGains final
-            {
-              public:
-                #ifndef DOXYGEN_OMIT_INTERNAL
-                PositionGains(HebiInfoPtr internal)
-                  : internal_(internal),
-                    position_kp_(internal, HebiInfoFloatPositionKp),
-                    position_ki_(internal, HebiInfoFloatPositionKi),
-                    position_kd_(internal, HebiInfoFloatPositionKd),
-                    position_feed_forward_(internal, HebiInfoFloatPositionFeedForward),
-                    position_dead_zone_(internal, HebiInfoFloatPositionDeadZone),
-                    position_i_clamp_(internal, HebiInfoFloatPositionIClamp),
-                    position_punch_(internal, HebiInfoFloatPositionPunch),
-                    position_min_target_(internal, HebiInfoFloatPositionMinTarget),
-                    position_max_target_(internal, HebiInfoFloatPositionMaxTarget),
-                    position_target_lowpass_(internal, HebiInfoFloatPositionTargetLowpass),
-                    position_min_output_(internal, HebiInfoFloatPositionMinOutput),
-                    position_max_output_(internal, HebiInfoFloatPositionMaxOutput),
-                    position_output_lowpass_(internal, HebiInfoFloatPositionOutputLowpass),
-                    position_d_on_error_(internal, HebiInfoBoolPositionDOnError)
-                {
-                }
-                #endif // DOXYGEN_OMIT_INTERNAL
-            
-                // With all submessage and field getters: Note that the returned reference
-                // should not be used after the lifetime of this parent.
-            
-                // Subfields ----------------
-            
-                /// Proportional PID gain for position
-                const FloatField& positionKp() const { return position_kp_; }
-                /// Integral PID gain for position
-                const FloatField& positionKi() const { return position_ki_; }
-                /// Derivative PID gain for position
-                const FloatField& positionKd() const { return position_kd_; }
-                /// Feed forward term for position (this term is multiplied by the target and added to the output).
-                const FloatField& positionFeedForward() const { return position_feed_forward_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                const FloatField& positionDeadZone() const { return position_dead_zone_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                const FloatField& positionIClamp() const { return position_i_clamp_; }
-                /// Constant offset to the position PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                const FloatField& positionPunch() const { return position_punch_; }
-                /// Minimum allowed value for input to the PID controller
-                const FloatField& positionMinTarget() const { return position_min_target_; }
-                /// Maximum allowed value for input to the PID controller
-                const FloatField& positionMaxTarget() const { return position_max_target_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& positionTargetLowpass() const { return position_target_lowpass_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                const FloatField& positionMinOutput() const { return position_min_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                const FloatField& positionMaxOutput() const { return position_max_output_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& positionOutputLowpass() const { return position_output_lowpass_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                const BoolField& positionDOnError() const { return position_d_on_error_; }
-            
-              private:
-                HebiInfoPtr const internal_;
-            
-                FloatField position_kp_;
-                FloatField position_ki_;
-                FloatField position_kd_;
-                FloatField position_feed_forward_;
-                FloatField position_dead_zone_;
-                FloatField position_i_clamp_;
-                FloatField position_punch_;
-                FloatField position_min_target_;
-                FloatField position_max_target_;
-                FloatField position_target_lowpass_;
-                FloatField position_min_output_;
-                FloatField position_max_output_;
-                FloatField position_output_lowpass_;
-                BoolField position_d_on_error_;
-            
-                HEBI_DISABLE_COPY_MOVE(PositionGains)
-            };
-        
-            /// Controller gains for the velocity PID loop.
-            class VelocityGains final
-            {
-              public:
-                #ifndef DOXYGEN_OMIT_INTERNAL
-                VelocityGains(HebiInfoPtr internal)
-                  : internal_(internal),
-                    velocity_kp_(internal, HebiInfoFloatVelocityKp),
-                    velocity_ki_(internal, HebiInfoFloatVelocityKi),
-                    velocity_kd_(internal, HebiInfoFloatVelocityKd),
-                    velocity_feed_forward_(internal, HebiInfoFloatVelocityFeedForward),
-                    velocity_dead_zone_(internal, HebiInfoFloatVelocityDeadZone),
-                    velocity_i_clamp_(internal, HebiInfoFloatVelocityIClamp),
-                    velocity_punch_(internal, HebiInfoFloatVelocityPunch),
-                    velocity_min_target_(internal, HebiInfoFloatVelocityMinTarget),
-                    velocity_max_target_(internal, HebiInfoFloatVelocityMaxTarget),
-                    velocity_target_lowpass_(internal, HebiInfoFloatVelocityTargetLowpass),
-                    velocity_min_output_(internal, HebiInfoFloatVelocityMinOutput),
-                    velocity_max_output_(internal, HebiInfoFloatVelocityMaxOutput),
-                    velocity_output_lowpass_(internal, HebiInfoFloatVelocityOutputLowpass),
-                    velocity_d_on_error_(internal, HebiInfoBoolVelocityDOnError)
-                {
-                }
-                #endif // DOXYGEN_OMIT_INTERNAL
-            
-                // With all submessage and field getters: Note that the returned reference
-                // should not be used after the lifetime of this parent.
-            
-                // Subfields ----------------
-            
-                /// Proportional PID gain for velocity
-                const FloatField& velocityKp() const { return velocity_kp_; }
-                /// Integral PID gain for velocity
-                const FloatField& velocityKi() const { return velocity_ki_; }
-                /// Derivative PID gain for velocity
-                const FloatField& velocityKd() const { return velocity_kd_; }
-                /// Feed forward term for velocity (this term is multiplied by the target and added to the output).
-                const FloatField& velocityFeedForward() const { return velocity_feed_forward_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                const FloatField& velocityDeadZone() const { return velocity_dead_zone_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                const FloatField& velocityIClamp() const { return velocity_i_clamp_; }
-                /// Constant offset to the velocity PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                const FloatField& velocityPunch() const { return velocity_punch_; }
-                /// Minimum allowed value for input to the PID controller
-                const FloatField& velocityMinTarget() const { return velocity_min_target_; }
-                /// Maximum allowed value for input to the PID controller
-                const FloatField& velocityMaxTarget() const { return velocity_max_target_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& velocityTargetLowpass() const { return velocity_target_lowpass_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                const FloatField& velocityMinOutput() const { return velocity_min_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                const FloatField& velocityMaxOutput() const { return velocity_max_output_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& velocityOutputLowpass() const { return velocity_output_lowpass_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                const BoolField& velocityDOnError() const { return velocity_d_on_error_; }
-            
-              private:
-                HebiInfoPtr const internal_;
-            
-                FloatField velocity_kp_;
-                FloatField velocity_ki_;
-                FloatField velocity_kd_;
-                FloatField velocity_feed_forward_;
-                FloatField velocity_dead_zone_;
-                FloatField velocity_i_clamp_;
-                FloatField velocity_punch_;
-                FloatField velocity_min_target_;
-                FloatField velocity_max_target_;
-                FloatField velocity_target_lowpass_;
-                FloatField velocity_min_output_;
-                FloatField velocity_max_output_;
-                FloatField velocity_output_lowpass_;
-                BoolField velocity_d_on_error_;
-            
-                HEBI_DISABLE_COPY_MOVE(VelocityGains)
-            };
-        
-            /// Controller gains for the effort PID loop.
-            class EffortGains final
-            {
-              public:
-                #ifndef DOXYGEN_OMIT_INTERNAL
-                EffortGains(HebiInfoPtr internal)
-                  : internal_(internal),
-                    effort_kp_(internal, HebiInfoFloatEffortKp),
-                    effort_ki_(internal, HebiInfoFloatEffortKi),
-                    effort_kd_(internal, HebiInfoFloatEffortKd),
-                    effort_feed_forward_(internal, HebiInfoFloatEffortFeedForward),
-                    effort_dead_zone_(internal, HebiInfoFloatEffortDeadZone),
-                    effort_i_clamp_(internal, HebiInfoFloatEffortIClamp),
-                    effort_punch_(internal, HebiInfoFloatEffortPunch),
-                    effort_min_target_(internal, HebiInfoFloatEffortMinTarget),
-                    effort_max_target_(internal, HebiInfoFloatEffortMaxTarget),
-                    effort_target_lowpass_(internal, HebiInfoFloatEffortTargetLowpass),
-                    effort_min_output_(internal, HebiInfoFloatEffortMinOutput),
-                    effort_max_output_(internal, HebiInfoFloatEffortMaxOutput),
-                    effort_output_lowpass_(internal, HebiInfoFloatEffortOutputLowpass),
-                    effort_d_on_error_(internal, HebiInfoBoolEffortDOnError)
-                {
-                }
-                #endif // DOXYGEN_OMIT_INTERNAL
-            
-                // With all submessage and field getters: Note that the returned reference
-                // should not be used after the lifetime of this parent.
-            
-                // Subfields ----------------
-            
-                /// Proportional PID gain for effort
-                const FloatField& effortKp() const { return effort_kp_; }
-                /// Integral PID gain for effort
-                const FloatField& effortKi() const { return effort_ki_; }
-                /// Derivative PID gain for effort
-                const FloatField& effortKd() const { return effort_kd_; }
-                /// Feed forward term for effort (this term is multiplied by the target and added to the output).
-                const FloatField& effortFeedForward() const { return effort_feed_forward_; }
-                /// Error values within +/- this value from zero are treated as zero (in terms of computed proportional output, input to numerical derivative, and accumulated integral error).
-                const FloatField& effortDeadZone() const { return effort_dead_zone_; }
-                /// Maximum allowed value for the output of the integral component of the PID loop; the integrated error is not allowed to exceed value that will generate this number.
-                const FloatField& effortIClamp() const { return effort_i_clamp_; }
-                /// Constant offset to the effort PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
-                const FloatField& effortPunch() const { return effort_punch_; }
-                /// Minimum allowed value for input to the PID controller
-                const FloatField& effortMinTarget() const { return effort_min_target_; }
-                /// Maximum allowed value for input to the PID controller
-                const FloatField& effortMaxTarget() const { return effort_max_target_; }
-                /// A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& effortTargetLowpass() const { return effort_target_lowpass_; }
-                /// Output from the PID controller is limited to a minimum of this value.
-                const FloatField& effortMinOutput() const { return effort_min_output_; }
-                /// Output from the PID controller is limited to a maximum of this value.
-                const FloatField& effortMaxOutput() const { return effort_max_output_; }
-                /// A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
-                const FloatField& effortOutputLowpass() const { return effort_output_lowpass_; }
-                /// Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
-                const BoolField& effortDOnError() const { return effort_d_on_error_; }
-            
-              private:
-                HebiInfoPtr const internal_;
-            
-                FloatField effort_kp_;
-                FloatField effort_ki_;
-                FloatField effort_kd_;
-                FloatField effort_feed_forward_;
-                FloatField effort_dead_zone_;
-                FloatField effort_i_clamp_;
-                FloatField effort_punch_;
-                FloatField effort_min_target_;
-                FloatField effort_max_target_;
-                FloatField effort_target_lowpass_;
-                FloatField effort_min_output_;
-                FloatField effort_max_output_;
-                FloatField effort_output_lowpass_;
-                BoolField effort_d_on_error_;
-            
-                HEBI_DISABLE_COPY_MOVE(EffortGains)
-            };
-        
           public:
             #ifndef DOXYGEN_OMIT_INTERNAL
             Actuator(HebiInfoPtr internal)
               : internal_(internal),
-                position_gains_(internal),
-                velocity_gains_(internal),
-                effort_gains_(internal),
+                position_gains_(internal, HebiInfoFloatPositionKp, HebiInfoBoolPositionDOnError),
+                velocity_gains_(internal, HebiInfoFloatVelocityKp, HebiInfoBoolVelocityDOnError),
+                effort_gains_(internal, HebiInfoFloatEffortKp, HebiInfoBoolEffortDOnError),
                 spring_constant_(internal, HebiInfoFloatSpringConstant),
                 control_strategy_(internal, HebiInfoEnumControlStrategy)
             {
@@ -495,11 +256,11 @@ class Info final
             // Submessages ----------------
         
             /// Controller gains for the position PID loop.
-            const PositionGains& positionGains() const { return position_gains_; }
+            const InfoGains& positionGains() const { return position_gains_; }
             /// Controller gains for the velocity PID loop.
-            const VelocityGains& velocityGains() const { return velocity_gains_; }
+            const InfoGains& velocityGains() const { return velocity_gains_; }
             /// Controller gains for the effort PID loop.
-            const EffortGains& effortGains() const { return effort_gains_; }
+            const InfoGains& effortGains() const { return effort_gains_; }
         
             // Subfields ----------------
         
@@ -511,9 +272,9 @@ class Info final
           private:
             HebiInfoPtr const internal_;
         
-            PositionGains position_gains_;
-            VelocityGains velocity_gains_;
-            EffortGains effort_gains_;
+            InfoGains position_gains_;
+            InfoGains velocity_gains_;
+            InfoGains effort_gains_;
         
             FloatField spring_constant_;
             EnumField<ControlStrategy> control_strategy_;
@@ -584,7 +345,7 @@ class Info final
     /**
      * \brief Cleans up info object as necessary.
      */
-    virtual ~Info() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~Info() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     // With all submessage and field getters: Note that the returned reference
     // should not be used after the lifetime of this parent.
@@ -599,14 +360,14 @@ class Info final
     /// The module's LED.
     const LedField& led() const;
 
-    /// Gets the serial number for this module (e.g., X5-0001). 
+    /// Gets the serial number for this module (e.g., X5-0001).
     const StringField& serial() const { return serial_; }
-
+    
   private:
     Settings settings_;
 
     LedField led_;
-
+  
     StringField serial_;
 
     /**
