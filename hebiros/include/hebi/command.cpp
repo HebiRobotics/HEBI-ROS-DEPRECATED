@@ -1,6 +1,7 @@
 #include "command.hpp"
 #include <cmath>
 #include <limits>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -107,12 +108,12 @@ Command::NumberedFloatField::NumberedFloatField(HebiCommandPtr internal, HebiCom
 {
 }
 
-bool Command::NumberedFloatField::has(int fieldNumber) const
+bool Command::NumberedFloatField::has(size_t fieldNumber) const
 {
   return (hebiCommandGetNumberedFloat(internal_, field_, fieldNumber, nullptr) == HebiStatusSuccess);
 }
 
-float Command::NumberedFloatField::get(int fieldNumber) const
+float Command::NumberedFloatField::get(size_t fieldNumber) const
 {
   float ret;
   if (hebiCommandGetNumberedFloat(internal_, field_, fieldNumber, &ret) != HebiStatusSuccess)
@@ -122,12 +123,12 @@ float Command::NumberedFloatField::get(int fieldNumber) const
   return ret;
 }
 
-void Command::NumberedFloatField::set(int fieldNumber, float value)
+void Command::NumberedFloatField::set(size_t fieldNumber, float value)
 {
   hebiCommandSetNumberedFloat(internal_, field_, fieldNumber, &value);
 }
 
-void Command::NumberedFloatField::clear(int fieldNumber)
+void Command::NumberedFloatField::clear(size_t fieldNumber)
 {
   hebiCommandSetNumberedFloat(internal_, field_, fieldNumber, nullptr);
 }
@@ -236,41 +237,41 @@ Command::IoBank::IoBank(HebiCommandPtr internal, HebiCommandIoPinBank bank)
 {
 }
 
-bool Command::IoBank::hasInt(int pinNumber) const
+bool Command::IoBank::hasInt(size_t pinNumber) const
 {
   return (hebiCommandGetIoPinInt(internal_, bank_, pinNumber, nullptr) == HebiStatusSuccess);
 }
 
-bool Command::IoBank::hasFloat(int pinNumber) const
+bool Command::IoBank::hasFloat(size_t pinNumber) const
 {
   return (hebiCommandGetIoPinFloat(internal_, bank_, pinNumber, nullptr) == HebiStatusSuccess);
 }
 
-int64_t Command::IoBank::getInt(int pinNumber) const
+int64_t Command::IoBank::getInt(size_t pinNumber) const
 {
   int64_t ret;
   hebiCommandGetIoPinInt(internal_, bank_, pinNumber, &ret);
   return ret;
 }
 
-float Command::IoBank::getFloat(int pinNumber) const
+float Command::IoBank::getFloat(size_t pinNumber) const
 {
   float ret;
   hebiCommandGetIoPinFloat(internal_, bank_, pinNumber, &ret);
   return ret;
 }
 
-void Command::IoBank::setInt(int pinNumber, int64_t value)
+void Command::IoBank::setInt(size_t pinNumber, int64_t value)
 {
   hebiCommandSetIoPinInt(internal_, bank_, pinNumber, &value);
 }
 
-void Command::IoBank::setFloat(int pinNumber, float value)
+void Command::IoBank::setFloat(size_t pinNumber, float value)
 {
   hebiCommandSetIoPinFloat(internal_, bank_, pinNumber, &value);
 }
 
-void Command::IoBank::clear(int pinNumber)
+void Command::IoBank::clear(size_t pinNumber)
 {
   hebiCommandSetIoPinInt(internal_, bank_, pinNumber, nullptr);
   hebiCommandSetIoPinFloat(internal_, bank_, pinNumber, nullptr);
@@ -281,32 +282,32 @@ Command::LedField::LedField(HebiCommandPtr internal, HebiCommandLedField field)
 {
 }
 
-bool Command::LedField::hasColor() const
+bool Command::LedField::has() const
 {
-  return (hebiCommandGetLedColor(internal_, field_, nullptr, nullptr, nullptr) == HebiStatusSuccess);
+  return
+    (hebiCommandGetLedColor(internal_, field_, nullptr, nullptr, nullptr) == HebiStatusSuccess) ||
+    (hebiCommandHasLedModuleControl(internal_, field_) == 1);
 }
 
-bool Command::LedField::hasModuleControl() const
+Color Command::LedField::get() const
 {
-  return (hebiCommandHasLedModuleControl(internal_, field_) == 1);
-}
-
-Color Command::LedField::getColor() const
-{
+  bool module_ctrl = hebiCommandHasLedModuleControl(internal_, field_) == 1;
   uint8_t r, g, b;
   hebiCommandGetLedColor(internal_, field_, &r, &g, &b);
-  return Color(r, g, b);
+  return Color(r, g, b, module_ctrl ? 0 : 255);
 }
 
-void Command::LedField::setOverrideColor(const Color& new_color)
+void Command::LedField::set(const Color& new_color)
 {
-  hebiCommandSetLedOverrideColor(internal_, field_,
-    new_color.getRed(), new_color.getGreen(), new_color.getBlue());
-}
-
-void Command::LedField::setModuleControl()
-{
-  hebiCommandSetLedModuleControl(internal_, field_);
+  if (new_color.getAlpha() == 0)
+  {
+    hebiCommandSetLedModuleControl(internal_, field_);
+  }
+  else
+  {
+    hebiCommandSetLedOverrideColor(internal_, field_,
+      new_color.getRed(), new_color.getGreen(), new_color.getBlue());
+  }
 }
 
 void Command::LedField::clear()

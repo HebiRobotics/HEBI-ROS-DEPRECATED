@@ -75,12 +75,12 @@ Feedback::NumberedFloatField::NumberedFloatField(HebiFeedbackPtr internal, HebiF
 {
 }
 
-bool Feedback::NumberedFloatField::has(int fieldNumber) const
+bool Feedback::NumberedFloatField::has(size_t fieldNumber) const
 {
   return (hebiFeedbackGetNumberedFloat(internal_, field_, fieldNumber, nullptr) == HebiStatusSuccess);
 }
 
-float Feedback::NumberedFloatField::get(int fieldNumber) const
+float Feedback::NumberedFloatField::get(size_t fieldNumber) const
 {
   float ret;
   if (hebiFeedbackGetNumberedFloat(internal_, field_, fieldNumber, &ret) != HebiStatusSuccess)
@@ -147,24 +147,24 @@ Feedback::IoBank::IoBank(HebiFeedbackPtr internal, HebiFeedbackIoPinBank bank)
 {
 }
 
-bool Feedback::IoBank::hasInt(int pinNumber) const
+bool Feedback::IoBank::hasInt(size_t pinNumber) const
 {
   return (hebiFeedbackGetIoPinInt(internal_, bank_, pinNumber, nullptr) == HebiStatusSuccess);
 }
 
-bool Feedback::IoBank::hasFloat(int pinNumber) const
+bool Feedback::IoBank::hasFloat(size_t pinNumber) const
 {
   return (hebiFeedbackGetIoPinFloat(internal_, bank_, pinNumber, nullptr) == HebiStatusSuccess);
 }
 
-int64_t Feedback::IoBank::getInt(int pinNumber) const
+int64_t Feedback::IoBank::getInt(size_t pinNumber) const
 {
   int64_t ret;
   hebiFeedbackGetIoPinInt(internal_, bank_, pinNumber, &ret);
   return ret;
 }
 
-float Feedback::IoBank::getFloat(int pinNumber) const
+float Feedback::IoBank::getFloat(size_t pinNumber) const
 {
   float ret;
   hebiFeedbackGetIoPinFloat(internal_, bank_, pinNumber, &ret);

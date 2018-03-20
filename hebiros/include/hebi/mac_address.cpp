@@ -53,7 +53,12 @@ bool MacAddress::setToHexString(std::string mac_str)
   return true;
 }
 
-uint8_t MacAddress::operator[](std::size_t idx)
+uint8_t& MacAddress::operator[](std::size_t idx)
+{
+  return internal_.bytes_[idx];
+}
+
+const uint8_t& MacAddress::operator[](std::size_t idx) const
 {
   return internal_.bytes_[idx];
 }

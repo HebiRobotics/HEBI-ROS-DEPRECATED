@@ -3,7 +3,7 @@
 namespace hebi {
 namespace trajectory {
 
-Trajectory::Trajectory(std::vector<HebiTrajectoryPtr> trajectories, int number_of_waypoints, double start_time, double end_time)
+Trajectory::Trajectory(std::vector<HebiTrajectoryPtr> trajectories, size_t number_of_waypoints, double start_time, double end_time)
   : trajectories_(trajectories),
     number_of_joints_ (trajectories.size()),
     number_of_waypoints_(number_of_waypoints),
@@ -22,12 +22,14 @@ std::shared_ptr<Trajectory> Trajectory::createUnconstrainedQp(
 
   // Check argument validity
   int num_joints = positions.rows();
-  int num_waypoints = positions.cols();
+  size_t num_waypoints = positions.cols();
   if (time_vector.size() != num_waypoints)
     return res;
   if (velocities != nullptr && (velocities->rows() != num_joints && velocities->cols() != num_waypoints))
     return res;
   if (accelerations != nullptr && (accelerations->rows() != num_joints && accelerations->cols() != num_waypoints))
+    return res;
+  if (num_waypoints < 2)
     return res;
 
   // Put data into C-style arrays:
@@ -48,17 +50,35 @@ std::shared_ptr<Trajectory> Trajectory::createUnconstrainedQp(
   if (velocities != nullptr)
   {
     velocities_c = new double[num_joints * num_waypoints];
+    Map<Matrix<double, Dynamic, Dynamic, RowMajor> > tmp(velocities_c, num_joints, num_waypoints);
+    tmp = *velocities;
+  }
+  else // Default to [0 nan .... nan 0] (can remove when C API is updated)
+  {
+    velocities_c = new double[num_joints * num_waypoints];
+    for (size_t joint = 0; joint < num_joints; ++joint)
     {
-      Map<Matrix<double, Dynamic, Dynamic, RowMajor> > tmp(velocities_c, num_joints, num_waypoints);
-      tmp = *velocities;
+      velocities_c[joint * num_waypoints + 0] = 0.0f;
+      velocities_c[joint * num_waypoints + num_waypoints - 1] = 0.0f;
+      for (size_t waypoint = 1; waypoint < num_waypoints - 1; ++waypoint)
+        velocities_c[joint * num_waypoints + waypoint] = std::numeric_limits<double>::quiet_NaN();
     }
   }
   if (accelerations != nullptr)
   {
     accelerations_c = new double[num_joints * num_waypoints];
+    Map<Matrix<double, Dynamic, Dynamic, RowMajor> > tmp(accelerations_c, num_joints, num_waypoints);
+    tmp = *accelerations;
+  }
+  else // Default to [0 nan .... nan 0] (can remove when C API is updated)
+  {
+    accelerations_c = new double[num_joints * num_waypoints];
+    for (size_t joint = 0; joint < num_joints; ++joint)
     {
-      Map<Matrix<double, Dynamic, Dynamic, RowMajor> > tmp(accelerations_c, num_joints, num_waypoints);
-      tmp = *accelerations;
+      accelerations_c[joint * num_waypoints + 0] = 0.0f;
+      accelerations_c[joint * num_waypoints + num_waypoints - 1] = 0.0f;
+      for (size_t waypoint = 1; waypoint < num_waypoints - 1; ++waypoint)
+        accelerations_c[joint * num_waypoints + waypoint] = std::numeric_limits<double>::quiet_NaN();
     }
   }
 
@@ -99,13 +119,13 @@ Trajectory::~Trajectory() noexcept
     hebiTrajectoryRelease(traj);
 }
 
-double Trajectory::getDuration()
+double Trajectory::getDuration() const
 {
   // Note -- could use any joint here, as they all have the same time vector
   return hebiTrajectoryGetDuration(trajectories_[0]);
 }
 
-bool Trajectory::getState(double time, VectorXd* position, VectorXd* velocity, VectorXd* acceleration)
+bool Trajectory::getState(double time, VectorXd* position, VectorXd* velocity, VectorXd* acceleration) const
 {
   double tmp_p, tmp_v, tmp_a;
   bool success = true;

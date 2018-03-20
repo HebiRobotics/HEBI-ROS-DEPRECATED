@@ -31,7 +31,7 @@ class GroupFeedback final
     /**
      * The number of modules in this group feedback.
      */
-    const int number_of_modules_;
+    const size_t number_of_modules_;
     /**
      * The list of Feedback subobjects
      */
@@ -41,7 +41,7 @@ class GroupFeedback final
     /**
      * \brief Create a group feedback with the specified number of modules.
      */
-    GroupFeedback(int number_of_modules);
+    GroupFeedback(size_t number_of_modules);
     #ifndef DOXYGEN_OMIT_INTERNAL
     /**
      * Wraps an existing C-style feedback object; object lifetime is assumed to
@@ -54,17 +54,17 @@ class GroupFeedback final
     /**
      * \brief Destructor cleans up group feedback object as necessary.
      */
-    virtual ~GroupFeedback() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~GroupFeedback() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     /**
      * \brief Returns the number of module feedbacks in this group feedback.
      */
-    int size() const;
+    size_t size() const;
 
     /**
      * \brief Access the feedback for an individual module.
      */
-    const Feedback& operator[](int index) const;
+    const Feedback& operator[](size_t index) const;
 
     /**
      * \brief Convenience function for returning feedback board temperature values.
