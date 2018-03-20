@@ -24,14 +24,9 @@ class GroupCommand final
 
   private:
     /**
-     * True if this object is responsible for creating and destroying the
-     * underlying C pointer; false otherwise.
-     */
-    const bool manage_pointer_lifetime_;
-    /**
      * The number of modules in this group command.
      */
-    const int number_of_modules_;
+    const size_t number_of_modules_;
     /**
      * The list of Command subobjects
      */
@@ -41,22 +36,27 @@ class GroupCommand final
     /**
      * \brief Create a group command with the specified number of modules.
      */
-    GroupCommand(int number_of_modules);
+    GroupCommand(size_t number_of_modules);
 
     /**
      * \brief Destructor cleans up group command object as necessary.
      */
-    virtual ~GroupCommand() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~GroupCommand() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     /**
      * \brief Returns the number of module commands in this group command.
      */
-    int size() const;
+    size_t size() const;
 
     /**
      * \brief Access the command for an individual module.
      */
-    Command& operator[](int index);
+    Command& operator[](size_t index);
+
+    /**
+     * \brief Access the command for an individual module.
+     */
+    const Command& operator[](size_t index) const;
 
     /**
      * \brief Import the gains from a file into this GroupCommand object.
@@ -68,7 +68,7 @@ class GroupCommand final
      * \brief Export the gains from this GroupCommand object into a file, creating it as necessary.
      * \param file The filename (or path + filename) to the file to write to.
      */
-    bool writeGains(const std::string& file);
+    bool writeGains(const std::string& file) const;
 
     /**
      * \brief Convenience function for setting position commands from Eigen

@@ -7,7 +7,7 @@
 
 namespace hebi {
 
-class LogFile {
+class LogFile final {
 
   friend class Group;
 
@@ -32,7 +32,7 @@ public:
   /**
    * @brief Returns the number of modules in the log file
    */
-  int size();
+  int size() const;
 
   /**
    * @brief retrieves the next group feedback from the log file, if any exists
@@ -43,7 +43,7 @@ public:
      * into this structure.
    * @return @c true if feedback was returned, otherwise @c false on failure
    */
-  bool getNextFeedback(GroupFeedback* feedback);
+  bool getNextFeedback(GroupFeedback& feedback);
 
   LogFile() = delete;
   ~LogFile();

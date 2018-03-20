@@ -1,14 +1,12 @@
 #pragma once
 
 #include "hebi.h"
-#include "group_command.hpp"
-#include "group_feedback.hpp"
-#include "group_info.hpp"
 #include "util.hpp"
 
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace hebi {
 
@@ -33,13 +31,16 @@ namespace hebi {
  *
  */
 
+class LogFile;
+class GroupCommand;
+class GroupFeedback;
+class GroupInfo;
+
 /**
  * \brief Definition of a callback function for GroupFeedback returned from a 
  * Group of modules.
  */
-typedef std::function<void (const GroupFeedback&)> GroupFeedbackHandler;
-
-class LogFile;
+using GroupFeedbackHandler = std::function<void (const GroupFeedback&)>;
 
 /**
  * \brief Represents a group of physical HEBI modules, and allows Command,
@@ -88,7 +89,7 @@ class Group final
      * \brief The default timeout for any send-with-acknowledgement or request
      * operation is 500 ms.
      */
-    static const int DEFAULT_TIMEOUT_MS = 500;
+    static const int32_t DEFAULT_TIMEOUT_MS = 500;
 
     #ifndef DOXYGEN_OMIT_INTERNAL
     /**
@@ -96,13 +97,15 @@ class Group final
      * only be called to create groups from the lookup class, not from user
      * code!
      */
-    Group(HebiGroupPtr group);
+    Group(HebiGroupPtr group,
+          float initial_feedback_frequency = 0.0f,
+          int32_t initial_command_lifetime = 0);
     #endif // DOXYGEN_OMIT_INTERNAL
 
     /**
      * \brief Destructor cleans up group.
      */
-    virtual ~Group() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~Group() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     /**
      * \brief Returns the number of modules in the group
@@ -119,7 +122,7 @@ class Group final
      *
      * See docs.hebi.us for more information.
      */
-    bool setCommandLifetimeMs(int ms);
+    bool setCommandLifetimeMs(int32_t ms);
 
     /**
      * \brief Send a command to the given group without requesting an
@@ -153,7 +156,7 @@ class Group final
      * result from an error while sending or simply a timeout/dropped response
      * packet after a successful transmission.
      */
-    bool sendCommandWithAcknowledgement(const GroupCommand& group_command, int timeout_ms=DEFAULT_TIMEOUT_MS);
+    bool sendCommandWithAcknowledgement(const GroupCommand& group_command, int32_t timeout_ms=DEFAULT_TIMEOUT_MS);
 
     /**
      * \brief Requests feedback from the group.
@@ -188,7 +191,7 @@ class Group final
      * \returns @c true if feedback was returned, otherwise @c false on failure (i.e., connection
      * error or timeout waiting for response).
      */
-    bool getNextFeedback(GroupFeedback* feedback, int timeout_ms=DEFAULT_TIMEOUT_MS);
+    bool getNextFeedback(GroupFeedback& feedback, int32_t timeout_ms=DEFAULT_TIMEOUT_MS);
 
     /** 
      * \brief Request info from the group, and store it in the passed-in info
@@ -198,7 +201,7 @@ class Group final
      * in this case 'info' has been updated. Otherwise, returns false and does
      * not update 'info'.
      */
-    bool requestInfo(GroupInfo* info, int timeout_ms=DEFAULT_TIMEOUT_MS);
+    bool requestInfo(GroupInfo& info, int32_t timeout_ms=DEFAULT_TIMEOUT_MS);
 
     #ifndef DOXYGEN_OMIT_INTERNAL
     /**
@@ -207,9 +210,9 @@ class Group final
      * \param dir The relative or absolute path to the directory to log in. To
      * use the current directory, just use an empty string.
      *
-     * \returns true on success.
+     * \returns the path to the log file, otherwise an empty string on failure
      */
-    bool startLog(std::string dir);
+    std::string startLog(const std::string& dir);
 
     /**
      * \brief Starts log (stopping any active log).
@@ -219,9 +222,9 @@ class Group final
      *
      * \param file The name of the file within the directory
      *
-     * \returns true on success.
+     * \returns the path to the log file, otherwise an empty string on failure
      */
-    bool startLog(std::string dir, std::string file);
+    std::string startLog(const std::string& dir, const std::string& file);
 
     /**
      * \brief Stops any active log.
@@ -263,7 +266,7 @@ class Group final
      * 
      * \returns A shared pointer to the created imitation group
      */
-    static std::shared_ptr<Group> createImitation(unsigned int size);
+    static std::shared_ptr<Group> createImitation(size_t size);
 
   private:
     /**

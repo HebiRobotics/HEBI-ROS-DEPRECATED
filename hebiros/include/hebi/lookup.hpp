@@ -34,12 +34,22 @@ namespace hebi {
 class Lookup final
 {
   private:
-    static const long DEFAULT_TIMEOUT = 500;
+    static const int32_t DEFAULT_TIMEOUT = 500;
 
     /**
      * \internal C-style lookup object
      */
     HebiLookupPtr lookup_;
+
+    /**
+     * Default value of feedback frequency used when creating new groups.
+     */
+    float initial_group_feedback_frequency_{100.0f};
+
+    /**
+     * Default value of command lifetime used when creating new groups.
+     */
+    int32_t initial_group_command_lifetime_{250};
 
   public:
     /**
@@ -56,7 +66,7 @@ class Lookup final
      * \brief Destructor frees all resources created by Lookup object, and stops the
      * background query thread.
      */
-    virtual ~Lookup() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~Lookup() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     /**
      * \brief Get a group from modules with the given names and families.
@@ -79,7 +89,7 @@ class Lookup final
      * time, or reference to a newly allocated group object corresponding to
      * the given parameters otherwise.
      */
-    std::shared_ptr<Group> getGroupFromNames(const std::vector<std::string>& families, const std::vector<std::string>& names, long timeout_ms=DEFAULT_TIMEOUT);
+    std::shared_ptr<Group> getGroupFromNames(const std::vector<std::string>& families, const std::vector<std::string>& names, int32_t timeout_ms=DEFAULT_TIMEOUT);
 
     /**
      * \brief Get a group from modules with the given mac addresses.
@@ -95,7 +105,7 @@ class Lookup final
      * time, or reference to a newly allocated group object corresponding to
      * the given parameters otherwise.
      */
-    std::shared_ptr<Group> getGroupFromMacs(const std::vector<MacAddress>& addresses, long timeout_ms=DEFAULT_TIMEOUT);
+    std::shared_ptr<Group> getGroupFromMacs(const std::vector<MacAddress>& addresses, int32_t timeout_ms=DEFAULT_TIMEOUT);
 
     /**
      * \brief Get a group from all known modules with the given family.
@@ -111,7 +121,7 @@ class Lookup final
      * time, or reference to a newly allocated group object corresponding to
      * the given parameters otherwise.
      */
-    std::shared_ptr<Group> getGroupFromFamily(const std::string& family, long timeout_ms=DEFAULT_TIMEOUT);
+    std::shared_ptr<Group> getGroupFromFamily(const std::string& family, int32_t timeout_ms=DEFAULT_TIMEOUT);
 
     /**
      * \brief Get a group from all modules known to connect to a module with the
@@ -131,7 +141,7 @@ class Lookup final
      * time, or reference to a newly allocated group object corresponding to
      * the given parameters otherwise.
      */
-    std::shared_ptr<Group> getConnectedGroupFromName(const std::string& family, const std::string& name, long timeout_ms=DEFAULT_TIMEOUT);
+    std::shared_ptr<Group> getConnectedGroupFromName(const std::string& family, const std::string& name, int32_t timeout_ms=DEFAULT_TIMEOUT);
 
     /**
      * \brief Get a group from all modules known to connect to a module with the
@@ -148,16 +158,54 @@ class Lookup final
      * time, or reference to a newly allocated group object corresponding to
      * the given parameters otherwise.
      */
-    std::shared_ptr<Group> getConnectedGroupFromMac(const MacAddress& address, long timeout_ms=DEFAULT_TIMEOUT);
+    std::shared_ptr<Group> getConnectedGroupFromMac(const MacAddress& address, int32_t timeout_ms=DEFAULT_TIMEOUT);
+
+    /**
+     * \brief Gets the default feedback frequency value for groups created from
+     * this lookup.
+     *
+     * Defaults to 100 Hz.
+     *
+     * See Group documentation for detailed usage, and docs.hebi.us for more
+     * information on feedback requests.
+     */
+    float getInitialGroupFeedbackFrequencyHz();
+    /**
+     * \brief Sets the default feedback frequency value for groups created from
+     * this lookup.
+     *
+     * @param frequency The frequency, in Hz, that newly-created groups will
+     * request feedback at.
+     */
+    void setInitialGroupFeedbackFrequencyHz(float frequency);
+
+    /**
+     * \brief Gets the default command lifetime value for groups created from
+     * this lookup.
+     *
+     * Defaults to 250 ms.
+     *
+     * See Group documentation for detailed usage, and docs.hebi.us for more
+     * information on Command Lifetime.
+     */
+    int32_t getInitialGroupCommandLifetimeMs();
+    /**
+     * \brief Sets the default command lifetime value for groups created from
+     * this lookup.
+     *
+     * @param ms The number of milliseconds that newly-created groups will use
+     * as their command lifetime when sending out commands.
+     */
+    void setInitialGroupCommandLifetimeMs(int32_t ms);
   
     class EntryList final
     {
-      typedef struct Entry final
+      struct Entry final
       {
         std::string name_;
         std::string family_;
         MacAddress mac_address_;
-      } Entry;
+      };
 
       private:
         /**
@@ -181,7 +229,7 @@ class Lookup final
 
             // Default constructable
             Iterator() = default;
-            explicit Iterator(const EntryList* list, size_t current);
+            explicit Iterator(const EntryList& list, size_t current);
 
             // Dereferencable
             reference operator*() const;
@@ -193,11 +241,11 @@ class Lookup final
             Iterator operator--(int);
 
             // Equality / inequality
-            bool operator==(const Iterator& rhs);
-            bool operator!=(const Iterator& rhs);
+            bool operator==(const Iterator& rhs) const;
+            bool operator!=(const Iterator& rhs) const;
 
           private:
-            const EntryList* list_;
+            const EntryList& list_;
             size_t current_ { 0 };
         };
 
@@ -208,11 +256,11 @@ class Lookup final
          */
         EntryList(HebiLookupEntryListPtr lookup_list) : lookup_list_(lookup_list) {}
 
-        virtual ~EntryList() noexcept;
+        ~EntryList() noexcept;
 
-        Entry getEntry(int index) const;
+        Entry operator[](size_t index) const;
 
-        int size() const;
+        size_t size() const;
 
         Iterator begin() const;
         Iterator end() const;

@@ -25,12 +25,12 @@ class Trajectory final
     /**
      * The number of modules controlled by this trajectory.
      */
-    const int number_of_joints_;
+    const size_t number_of_joints_;
 
     /**
      * The number of waypoints in this trajectory.
      */
-    const int number_of_waypoints_;
+    const size_t number_of_waypoints_;
 
     /**
      * The time at which the trajectory starts (seconds).
@@ -45,7 +45,7 @@ class Trajectory final
     /**
      * Creates a Trajectory from a list of the underlying C-style objects.
      */
-    Trajectory(std::vector<HebiTrajectoryPtr> trajectories, int number_of_waypoints, double start_time, double end_time);
+    Trajectory(std::vector<HebiTrajectoryPtr> trajectories, size_t number_of_waypoints, double start_time, double end_time);
 
   public:
 
@@ -86,34 +86,34 @@ class Trajectory final
     /**
      * \brief Destructor cleans up resources for trajectory.
      */
-    virtual ~Trajectory() noexcept;
+    ~Trajectory() noexcept;
 
     /**
      * \brief The number of independent position trajectories over the same time
      * domain that are managed by this object.
      */
-    int getJointCount() { return number_of_joints_; }
+    size_t getJointCount() const { return number_of_joints_; }
 
     /**
      * \brief The number of fixed waypoints that each joint is moving through.
      */
-    int getWaypointCount() { return number_of_waypoints_; }
+    size_t getWaypointCount() const { return number_of_waypoints_; }
 
     /**
      * \brief Get the time (in seconds) at which the defined trajectory begins.
      */
-    double getStartTime() { return start_time_; }
+    double getStartTime() const { return start_time_; }
 
     /**
      * \brief Get the time (in seconds) at which the defined trajectory ends.
      */
-    double getEndTime() { return end_time_; }
+    double getEndTime() const { return end_time_; }
 
     /**
      * \brief The time (in seconds) between the start and end of this
      * trajectory.
      */
-    double getDuration();
+    double getDuration() const;
 
     /**
      * \brief Returns the position, velocity, and acceleration for a given
@@ -128,7 +128,7 @@ class Trajectory final
      * \param acceleration If not nullptr, this vector is filled in with the
      * acceleration along the trajectory for each joint at the given time.
      */
-    bool getState(double time, VectorXd* position, VectorXd* velocity, VectorXd* acceleration);
+    bool getState(double time, VectorXd* position, VectorXd* velocity, VectorXd* acceleration) const;
 
   private:
     /**
