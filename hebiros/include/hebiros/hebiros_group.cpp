@@ -54,7 +54,7 @@ void Hebiros_Node::register_group(std::string group_name) {
   if (!use_gazebo) {
     std::shared_ptr<Group> group = groups[group_name];
     group_infos[group_name] = new GroupInfo(group->size());
-    group->requestInfo(group_infos[group_name]);
+    group->requestInfo(*(group_infos[group_name]));
 
     group->addFeedbackHandler([this, group_name](const GroupFeedback& group_fbk) {
       this->publish_group(group_name, group_fbk);
