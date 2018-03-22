@@ -9,6 +9,7 @@
   <!-- load macros for modules -->
   <xacro:include filename="./x_series_common.xacro"/>
   <xacro:include filename="./x5.xacro"/>
+  <xacro:include filename="./x8.xacro"/>
   <xacro:include filename="./x_shoulder_bracket.xacro"/>
   <xacro:include filename="./x_wrist_bracket.xacro"/>
   <xacro:include filename="./x_tube_link.xacro"/>
