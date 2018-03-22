@@ -6,6 +6,8 @@
   <xacro:include filename="./x_series_common.xacro"/>
   <xacro:include filename="./x5.xacro"/>
   <xacro:include filename="./x8.xacro"/>
+  <xacro:include filename="./x5_light_left_bracket.xacro"/>
+  <xacro:include filename="./x5_light_right_bracket.xacro"/>
   <xacro:include filename="./x5_heavy_left_outside_bracket.xacro"/>
   <xacro:include filename="./x5_heavy_left_inside_bracket.xacro"/>
   <xacro:include filename="./x5_heavy_right_outside_bracket.xacro"/>
