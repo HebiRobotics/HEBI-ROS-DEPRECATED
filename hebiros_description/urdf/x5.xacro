@@ -5,14 +5,14 @@
   <xacro:property name="model_name" value="${model}"/>
     <link name="${joint}/INPUT_INTERFACE">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 3.1415" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <xacro:red_material/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 3.1415" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
         </geometry>

@@ -26,14 +26,14 @@
   <!-- just for visualization: base post -->
   <link name="base">
     <visual>
-      <origin xyz=".125 0 -.0254" rpy="0 0 0" />
+      <origin xyz="-.125 0 -.0254" rpy="0 0 0" />
       <geometry>
         <box size="0.25 0.5 0.0508" />
       </geometry>
       <xacro:silver_material/>
     </visual>
     <collision>
-      <origin xyz=".125 0 -.0254" rpy="0 0 0" />
+      <origin xyz="-.125 0 -.0254" rpy="0 0 0" />
       <geometry>
         <box size="0.25 0.5 0.0508" />
       </geometry>
@@ -54,9 +54,9 @@
   <xacro:x5 joint="HEBI/base" child="shoulder_bracket" model="X5_4"/>
   <xacro:x_wrist_bracket name="shoulder_bracket" child="HEBI/shoulder"/>
   <xacro:x5 joint="HEBI/shoulder" child="shoulder_elbow" model="X5_4"/>
-  <xacro:x_tube_link name="shoulder_elbow" child="HEBI/elbow" length="0.33" twist="0.7"/>
+  <xacro:x_tube_link name="shoulder_elbow" child="HEBI/elbow" extension="0.33" twist="0.25"/>
   <xacro:x5 joint="HEBI/elbow" child="elbow_end" model="X5_4"/>
-  <xacro:x_tube_link name="elbow_end" child="end_effector" length="0.325" twist="0.6"/>
+  <xacro:x_tube_link name="elbow_end" child="end_effector" extension="0.325" twist="1.9"/>
 
   <!-- end link -->
   <link name="end_effector/INPUT_INTERFACE">
