@@ -4,15 +4,7 @@
 
   <!-- *************************** XACRO MACROS *************************** -->
 
-  <xacro:property name="PI" value="3.1415926535897931" />
-
-  <!-- load macros for modules -->
-  <xacro:include filename="./x_series_common.xacro"/>
-  <xacro:include filename="./x5.xacro"/>
-  <xacro:include filename="./x8.xacro"/>
-  <xacro:include filename="./x_shoulder_bracket.xacro"/>
-  <xacro:include filename="./x_wrist_bracket.xacro"/>
-  <xacro:include filename="./x_tube_link.xacro"/>
+  <xacro:include filename="./x_library.xacro"/>
 
   <!-- ************************* ROBOT DEFINITION ************************* -->
 
@@ -52,11 +44,11 @@
 
   <!-- joints -->
   <xacro:x5 joint="HEBI/base" child="shoulder_bracket" model="X5_4"/>
-  <xacro:x_wrist_bracket name="shoulder_bracket" child="HEBI/shoulder"/>
+  <xacro:x5_heavy_right_inside_bracket name="shoulder_bracket" child="HEBI/shoulder"/>
   <xacro:x5 joint="HEBI/shoulder" child="shoulder_elbow" model="X5_4"/>
-  <xacro:x_tube_link name="shoulder_elbow" child="HEBI/elbow" extension="0.33" twist="0.25"/>
+  <xacro:x_tube_link name="shoulder_elbow" child="HEBI/elbow" extension="0.33" twist="${PI}"/>
   <xacro:x5 joint="HEBI/elbow" child="elbow_end" model="X5_4"/>
-  <xacro:x_tube_link name="elbow_end" child="end_effector" extension="0.325" twist="1.9"/>
+  <xacro:x_tube_link name="elbow_end" child="end_effector" extension="0.325" twist="${PI}"/>
 
   <!-- end link -->
   <link name="end_effector/INPUT_INTERFACE">
