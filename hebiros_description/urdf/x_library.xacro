@@ -12,7 +12,6 @@
   <xacro:include filename="./x5_heavy_left_inside_bracket.xacro"/>
   <xacro:include filename="./x5_heavy_right_outside_bracket.xacro"/>
   <xacro:include filename="./x5_heavy_right_inside_bracket.xacro"/>
-  <xacro:include filename="./x_wrist_bracket.xacro"/>
   <xacro:include filename="./x_tube_link.xacro"/>
 
 </robot>
