@@ -208,7 +208,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2146-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -224,9 +224,9 @@
       </material>
     </visual>
     <visual>
-      <origin rpy="-9.26535897929e-05 0 3.1415" xyz="0.33 -2.44929359829e-18 0.0"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.33 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2147-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -235,7 +235,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2146-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
     </collision>
     <collision>
@@ -245,9 +245,9 @@
       </geometry>
     </collision>
     <collision>
-      <origin rpy="-9.26535897929e-05 0 3.1415" xyz="0.33 -2.44929359829e-18 0.0"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.33 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2147-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
     </collision>
     <!-- Approximate inertia as thin rod about x axis -->
@@ -328,7 +328,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2146-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -344,9 +344,9 @@
       </material>
     </visual>
     <visual>
-      <origin rpy="-9.26535897929e-05 0 3.1415" xyz="0.325 -2.44929359829e-18 0.0"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.325 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2147-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
@@ -355,7 +355,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2146-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
     </collision>
     <collision>
@@ -365,9 +365,9 @@
       </geometry>
     </collision>
     <collision>
-      <origin rpy="-9.26535897929e-05 0 3.1415" xyz="0.325 -2.44929359829e-18 0.0"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.325 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/PM-2147-02.stl" scale=".001 .001 .001"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
     </collision>
     <!-- Approximate inertia as thin rod about x axis -->

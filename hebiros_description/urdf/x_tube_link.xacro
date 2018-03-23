@@ -8,7 +8,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://hebiros_description/meshes/PM-2146-02.stl" scale=".001 .001 .001"/>
+          <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
         </geometry>
         <xacro:black_material/>
       </visual>
@@ -20,9 +20,9 @@
         <xacro:silver_material/>
       </visual>
       <visual>
-        <origin xyz="${extension} ${sin(-twist) * edge_to_center} ${edge_to_center * (1 + cos(-twist))}" rpy="${-twist + 3.1415} 0 3.1415"/>
+        <origin xyz="${extension} ${sin(-twist) * edge_to_center} ${edge_to_center * (1 + cos(-twist))}" rpy="${-twist} 0 0"/>
         <geometry>
-          <mesh filename="package://hebiros_description/meshes/PM-2147-02.stl" scale=".001 .001 .001"/>
+          <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
         </geometry>
         <xacro:black_material/>
       </visual>
@@ -30,7 +30,7 @@
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://hebiros_description/meshes/PM-2146-02.stl" scale=".001 .001 .001"/>
+          <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
         </geometry>
       </collision>
       <collision>
@@ -40,9 +40,9 @@
         </geometry>
       </collision>
       <collision>
-        <origin xyz="${extension} ${sin(-twist) * edge_to_center} ${edge_to_center * (1 + cos(-twist))}" rpy="${-twist + 3.1415} 0 3.1415"/>
+        <origin xyz="${extension} ${sin(-twist) * edge_to_center} ${edge_to_center * (1 + cos(-twist))}" rpy="${-twist} 0 0"/>
         <geometry>
-          <mesh filename="package://hebiros_description/meshes/PM-2147-02.stl" scale=".001 .001 .001"/>
+          <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
         </geometry>
       </collision>
 
