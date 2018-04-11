@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="x5_heavy_right_outside_bracket"
+               params="name child">
+  <link name="${name}/INPUT_INTERFACE">
+    <visual>
+      <origin xyz="0 0 0.005" rpy="${PI/2} 0 ${PI/2}"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/PM-2149-01.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <xacro:black_material/>
+    </visual>
+    <visual>
+      <origin xyz="0 -.03 .04" rpy="${PI/2} 0 0"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/PM-2150-01R.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <xacro:black_material/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.005" rpy="${PI/2} 0 ${PI/2}"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/PM-2149-01.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 -.03 .04" rpy="${PI/2} 0 0"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/PM-2150-01R.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+
+    <!-- NOTE: inertia is just modelled as small sphere, and could be improved. -->
+    <inertial>
+      <origin xyz="0 ${0.5 * -.0375} .0275" rpy="0 0 0" />
+      <mass value="0.215"/>
+      <inertia ixx="${0.4 * 0.215 * 0.06 * 0.06}" ixy="0.0" ixz="0.0" iyy="${0.4 * 0.215 * 0.06 * 0.06}" iyz="0.0" izz="${0.4 * 0.215 * 0.06 * 0.06}"/>
+    </inertial>
+
+  </link>
+  <joint name="${name}/OUTPUT_INTERFACE" type="fixed">
+    <parent link="${name}/INPUT_INTERFACE"/>
+    <child link="${child}/INPUT_INTERFACE"/>
+    <origin xyz="0 -.0375 .055" rpy="${PI/2} 0 0"/>
+  </joint>
+  <gazebo reference="${name}/INPUT_INTERFACE">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  </xacro:macro>
+</robot>

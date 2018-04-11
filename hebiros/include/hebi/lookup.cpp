@@ -13,7 +13,7 @@ Lookup::~Lookup() noexcept
   hebiLookupRelease(lookup_);
 }
 
-std::shared_ptr<Group> Lookup::getGroupFromNames(const std::vector<std::string>& families, const std::vector<std::string>& names, long timeout_ms)
+std::shared_ptr<Group> Lookup::getGroupFromNames(const std::vector<std::string>& families, const std::vector<std::string>& names, int32_t timeout_ms)
 {
   std::shared_ptr<Group> ptr;
   std::vector<const char *> names_cstrs;
@@ -28,11 +28,11 @@ std::shared_ptr<Group> Lookup::getGroupFromNames(const std::vector<std::string>&
 
   HebiGroupPtr group = hebiGroupCreateFromNames(lookup_, families_cstrs.data(), families_cstrs.size(), names_cstrs.data(), names_cstrs.size(), timeout_ms);
   if (group != nullptr)
-    return std::make_shared<Group>(group);
+    return std::make_shared<Group>(group, initial_group_feedback_frequency_, initial_group_command_lifetime_);
   return ptr;
 }
 
-std::shared_ptr<Group> Lookup::getGroupFromMacs(const std::vector<MacAddress>& addresses, long timeout_ms)
+std::shared_ptr<Group> Lookup::getGroupFromMacs(const std::vector<MacAddress>& addresses, int32_t timeout_ms)
 {
   std::shared_ptr<Group> ptr;
   std::vector<const HebiMacAddress*> addresses_c;
@@ -41,44 +41,64 @@ std::shared_ptr<Group> Lookup::getGroupFromMacs(const std::vector<MacAddress>& a
     std::back_inserter(addresses_c), [] (const MacAddress& addr) { return &addr.internal_; });
   HebiGroupPtr group = hebiGroupCreateFromMacs(lookup_, addresses_c.data(), addresses.size(), timeout_ms);
   if (group != nullptr)
-    return std::make_shared<Group>(group);
+    return std::make_shared<Group>(group, initial_group_feedback_frequency_, initial_group_command_lifetime_);
   return ptr;
 }
 
-std::shared_ptr<Group> Lookup::getGroupFromFamily(const std::string& family, long timeout_ms)
+std::shared_ptr<Group> Lookup::getGroupFromFamily(const std::string& family, int32_t timeout_ms)
 {
   std::shared_ptr<Group> ptr;
   HebiGroupPtr group = hebiGroupCreateFromFamily(lookup_, family.c_str(), timeout_ms);
   if (group != nullptr)
-    return std::make_shared<Group>(group);
+    return std::make_shared<Group>(group, initial_group_feedback_frequency_, initial_group_command_lifetime_);
   return ptr;
 }
 
-std::shared_ptr<Group> Lookup::getConnectedGroupFromName(const std::string& family_name, const std::string& name, long timeout_ms)
+std::shared_ptr<Group> Lookup::getConnectedGroupFromName(const std::string& family_name, const std::string& name, int32_t timeout_ms)
 {
   std::shared_ptr<Group> ptr;
   HebiGroupPtr group = hebiGroupCreateConnectedFromName(lookup_, family_name.c_str(), name.c_str(), timeout_ms);
   if (group != nullptr)
-    return std::make_shared<Group>(group);
+    return std::make_shared<Group>(group, initial_group_feedback_frequency_, initial_group_command_lifetime_);
   return ptr;
 }
 
-std::shared_ptr<Group> Lookup::getConnectedGroupFromMac(const MacAddress& address, long timeout_ms)
+std::shared_ptr<Group> Lookup::getConnectedGroupFromMac(const MacAddress& address, int32_t timeout_ms)
 {
   std::shared_ptr<Group> ptr;
   HebiGroupPtr group = hebiGroupCreateConnectedFromMac(lookup_, &(address.internal_), timeout_ms);
   if (group != nullptr)
-    return std::make_shared<Group>(group);
+    return std::make_shared<Group>(group, initial_group_feedback_frequency_, initial_group_command_lifetime_);
   return ptr;
 }
 
-Lookup::EntryList::Iterator::Iterator(const EntryList* list, size_t current)
+float Lookup::getInitialGroupFeedbackFrequencyHz()
+{
+  return initial_group_feedback_frequency_;
+}
+
+void Lookup::setInitialGroupFeedbackFrequencyHz(float frequency)
+{
+  initial_group_feedback_frequency_ = frequency;
+}
+
+int32_t Lookup::getInitialGroupCommandLifetimeMs()
+{
+  return initial_group_command_lifetime_;
+}
+
+void Lookup::setInitialGroupCommandLifetimeMs(int32_t ms)
+{
+  initial_group_command_lifetime_ = ms;
+}
+
+Lookup::EntryList::Iterator::Iterator(const EntryList& list, size_t current)
   : list_(list), current_(current)
 { }
 
 Lookup::EntryList::Iterator::reference Lookup::EntryList::Iterator::operator*() const
 {
-  return list_->getEntry(current_);
+  return list_[current_];
 }
 
 Lookup::EntryList::Iterator& Lookup::EntryList::Iterator::operator++()
@@ -107,12 +127,12 @@ Lookup::EntryList::Iterator Lookup::EntryList::Iterator::operator--(int)
   return tmp;
 }
 
-bool Lookup::EntryList::Iterator::operator==(const Lookup::EntryList::Iterator& rhs)
+bool Lookup::EntryList::Iterator::operator==(const Lookup::EntryList::Iterator& rhs) const
 {
   return this->current_ == rhs.current_;
 }
 
-bool Lookup::EntryList::Iterator::operator!=(const Lookup::EntryList::Iterator& rhs)
+bool Lookup::EntryList::Iterator::operator!=(const Lookup::EntryList::Iterator& rhs) const
 {
   return !(*this == rhs);
 }
@@ -123,7 +143,7 @@ Lookup::EntryList::~EntryList() noexcept
   lookup_list_ = nullptr;
 }
 
-Lookup::EntryList::Entry Lookup::EntryList::getEntry(int index) const
+Lookup::EntryList::Entry Lookup::EntryList::operator[](size_t index) const
 {
   size_t required_size;
   hebiLookupEntryListGetName(lookup_list_, index, nullptr, &required_size);
@@ -147,19 +167,19 @@ Lookup::EntryList::Entry Lookup::EntryList::getEntry(int index) const
   return e;
 }
 
-int Lookup::EntryList::size() const
+size_t Lookup::EntryList::size() const
 {
   return hebiLookupEntryListGetSize(lookup_list_);
 }
 
 Lookup::EntryList::Iterator Lookup::EntryList::begin() const
 {
-  return Lookup::EntryList::Iterator(this, 0);
+  return Lookup::EntryList::Iterator(*this, 0);
 }
 
 Lookup::EntryList::Iterator Lookup::EntryList::end() const
 {
-  return Lookup::EntryList::Iterator(this, size());
+  return Lookup::EntryList::Iterator(*this, size());
 }
 
 std::shared_ptr<Lookup::EntryList> Lookup::getEntryList()
