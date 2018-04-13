@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   //Construct a group using 3 known modules
   add_group_srv.request.group_name = group_name;
   add_group_srv.request.names = {"base", "shoulder", "elbow"};
-  add_group_srv.request.families = {"HEBI"};
+  add_group_srv.request.families = {"TASCK3DOF"};
   //Call the add_group_from_urdf service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
   while(!add_group_client.call(add_group_srv)) {}
@@ -48,9 +48,9 @@ int main(int argc, char **argv) {
   //Construct a JointState to command the modules
   //This may potentially contain a name, position, velocity, and effort for each module
   sensor_msgs::JointState command_msg;
-  command_msg.name.push_back("HEBI/base");
-  command_msg.name.push_back("HEBI/shoulder");
-  command_msg.name.push_back("HEBI/elbow");
+  command_msg.name.push_back("TASCK3DOF/base");
+  command_msg.name.push_back("TASCK3DOF/shoulder");
+  command_msg.name.push_back("TASCK3DOF/elbow");
 
   command_msg.effort.resize(3);
 

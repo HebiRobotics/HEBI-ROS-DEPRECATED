@@ -1,9 +1,27 @@
-#include "hebiros.hpp"
+#include "hebiros_actions.h"
+
+#include "hebiros.h"
+
+using namespace hebiros;
 
 
-//Action callback which controls following a trajectory
-void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name) {
+std::map<std::string,
+  std::shared_ptr<actionlib::SimpleActionServer<hebiros::TrajectoryAction>>>
+  HebirosActions::trajectory_actions;
 
+void HebirosActions::registerGroupActions(std::string group_name) {
+
+  trajectory_actions[group_name] = std::make_shared<
+    actionlib::SimpleActionServer<TrajectoryAction>>(
+    *HebirosNode::n_ptr, "/hebiros/"+group_name+"/trajectory",
+    boost::bind(&HebirosActions::trajectory, this, _1, group_name), false);
+
+  trajectory_actions[group_name]->start();
+}
+
+void HebirosActions::trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name) {
+
+  std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(group_name);
   std::shared_ptr<actionlib::SimpleActionServer<TrajectoryAction>> action_server =
     trajectory_actions[group_name];
 
@@ -25,7 +43,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
 
   for (int i = 0; i < num_joints; i++) {
     std::string joint_name = goal->waypoints[0].names[i];
-    int joint_index = group_joints[group_name][joint_name];
+    int joint_index = group->joints[joint_name];
 
     for (int j = 0; j < num_waypoints; j++) {
       double position = goal->waypoints[j].positions[i];
@@ -49,7 +67,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
   double loop_duration;
   TrajectoryFeedback feedback;
 
-  ros::Rate loop_rate(action_frequency);
+  ros::Rate loop_rate(HebirosParameters::getInt("/hebiros/action_frequency"));
 
   ROS_INFO("Group [%s]: Executing trajectory", group_name.c_str());
   previous_time = ros::Time::now().toSec();
@@ -65,19 +83,19 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
     action_server->publishFeedback(feedback);
 
     trajectory->getState(t, &position_command, &velocity_command, nullptr);
-    sensor_msgs::JointState command_msg;
-    command_msg.name.resize(num_joints);
-    command_msg.position.resize(num_joints);
-    command_msg.velocity.resize(num_joints);
+    sensor_msgs::JointState joint_state_msg;
+    joint_state_msg.name.resize(num_joints);
+    joint_state_msg.position.resize(num_joints);
+    joint_state_msg.velocity.resize(num_joints);
 
     for (int i = 0; i < num_joints; i++) {
       std::string joint_name = goal->waypoints[0].names[i];
-      int joint_index = group_joints[group_name][joint_name];
-      command_msg.name[joint_index] = joint_name;
-      command_msg.position[joint_index] = position_command(i);
-      command_msg.velocity[joint_index] = velocity_command(i);
+      int joint_index = group->joints[joint_name];
+      joint_state_msg.name[joint_index] = joint_name;
+      joint_state_msg.position[joint_index] = position_command(i);
+      joint_state_msg.velocity[joint_index] = velocity_command(i);
     }
-    publishers["/hebiros/"+group_name+"/command/joint_state"].publish(command_msg);
+    HebirosNode::publishers.commandJointState(group_name, joint_state_msg);
 
     ros::spinOnce();
     loop_rate.sleep();
@@ -87,9 +105,7 @@ void Hebiros_Node::action_trajectory(const TrajectoryGoalConstPtr& goal, std::st
   }
 
   TrajectoryResult result;
-  result.final_state = group_joint_states[group_name];
+  result.final_state = group->joint_state_msg;
   action_server->setSucceeded(result);
   ROS_INFO("Group [%s]: Finished executing trajectory", group_name.c_str());
 }
-
-

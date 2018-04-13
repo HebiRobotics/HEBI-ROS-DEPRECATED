@@ -1,70 +1,80 @@
-#include "hebiros.hpp"
+#include "hebiros_subscribers_physical.h"
+
+#include "hebiros.h"
+
+using namespace hebi;
 
 
-//Split a joint into name and family by '/'
-bool Hebiros_Node::split(const std::string &orig, std::string &name, std::string &family)
-{
-  std::stringstream ss(orig);
+void HebirosSubscribersPhysical::registerGroupSubscribers(std::string group_name) {
 
-  if (!std::getline(ss, family, '/')) {
-    return false;
-  }
+  subscribers["/hebiros/"+group_name+"/command"] = 
+    HebirosNode::n_ptr->subscribe<CommandMsg>("/hebiros/"+group_name+"/command", 100,
+    boost::bind(&HebirosSubscribersPhysical::command, this, _1, group_name));
 
-  std::getline(ss, name);
-  return true;
+  subscribers["/hebiros/"+group_name+"/command/joint_state"] = 
+    HebirosNode::n_ptr->subscribe<sensor_msgs::JointState>(
+    "/hebiros/"+group_name+"/command/joint_state", 100,
+    boost::bind(&HebirosSubscribersPhysical::jointCommand, this, _1, group_name));
+
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  group->group_ptr->requestInfo(group->group_info_ptr);
+
+  group->group_ptr->addFeedbackHandler([this, group_name](const GroupFeedback& group_fbk) {
+    this->feedback(group_name, group_fbk);
+  });
+
+  group->group_ptr->setFeedbackFrequencyHz(
+    HebirosParameters::getInt("/hebiros/feedback_frequency"));
+  group->group_ptr->setCommandLifetimeMs(
+    HebirosParameters::getInt("/hebiros/command_lifetime"));
 }
 
-//Creates a list of names and families from joints in a urdf
-void Hebiros_Node::add_joint_children(std::set<std::string>& names, std::set<std::string>& families, std::set<std::string>& full_names, const urdf::Link* link)
-{
-  for (auto& joint : link->child_joints) {
+void HebirosSubscribersPhysical::command(const boost::shared_ptr<CommandMsg const> data,
+  std::string group_name) {
 
-    if (joint->type != urdf::Joint::FIXED) {
-      std::string name, family;
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
 
-      if (split(joint->name, name, family)) {
-        names.insert(name);
-        families.insert(family);
-        full_names.insert(joint->name);
-      }
-    }
-  }
+  sensor_msgs::JointState joint_data;
+  joint_data.name = data->name;
+  joint_data.position = data->position;
+  joint_data.velocity = data->velocity;
+  joint_data.effort = data->effort;
+  SettingsMsg settings_data;
+  settings_data = data->settings;
 
-  for (auto& link_child : link->child_links) {
-    add_joint_children(names, families, full_names, link_child.get());
-  }
+  GroupCommand group_command(group->size);
+  addJointCommand(&group_command, joint_data, group_name);
+  addSettingsCommand(&group_command, settings_data, group_name);
+
+  group->group_ptr->sendCommand(group_command);
 }
 
-//Determine whether a CommandMsg has valid lists of names
-bool Hebiros_Node::names_in_order(CommandMsg command_msg) {
-  return (command_msg.name == command_msg.settings.name ||
-    command_msg.settings.name.size() == 0) &&
-    (command_msg.name == command_msg.settings.position_gains.name || 
-    command_msg.settings.position_gains.name.size() == 0) &&
-    (command_msg.name == command_msg.settings.velocity_gains.name ||
-    command_msg.settings.velocity_gains.name.size() == 0) &&
-    (command_msg.name == command_msg.settings.effort_gains.name ||
-    command_msg.settings.effort_gains.name.size() == 0);
+void HebirosSubscribersPhysical::jointCommand(
+  const boost::shared_ptr<sensor_msgs::JointState const> data, std::string group_name) {
+
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+
+  sensor_msgs::JointState joint_data;
+  joint_data.name = data->name;
+  joint_data.position = data->position;
+  joint_data.velocity = data->velocity;
+  joint_data.effort = data->effort;
+
+  GroupCommand group_command(group->size);
+  addJointCommand(&group_command, joint_data, group_name);
+
+  group->group_ptr->sendCommand(group_command);
 }
 
-//Determine whether a joint is in a specific group
-bool Hebiros_Node::joint_found(std::string group_name, std::string joint_name) {
-  return group_joints[group_name].find(joint_name) != group_joints[group_name].end();
-}
-
-//Print a warning indicating that a joint could not be found
-void Hebiros_Node::joint_not_found(std::string joint_name) {
-  ROS_WARN("Unable to find joint: %s.  Command will not be sent.", joint_name.c_str());
-}
-
-//Add joint state values to a group command
-void Hebiros_Node::add_joint_command(GroupCommand* group_command,
+void HebirosSubscribersPhysical::addJointCommand(GroupCommand* group_command,
   sensor_msgs::JointState data, std::string group_name) {
 
-  for (int i = 0; i < data.name.size(); i++) {
-    if (joint_found(group_name, data.name[i])) {
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
 
-      int joint_index = group_joints[group_name][data.name[i]];
+  for (int i = 0; i < data.name.size(); i++) {
+    if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
+
+      int joint_index = group->joints[data.name[i]];
 
       if (i < data.position.size()) {
         (*group_command)[joint_index].actuator().position().set(data.position[i]);
@@ -77,19 +87,20 @@ void Hebiros_Node::add_joint_command(GroupCommand* group_command,
       }
     }
     else {
-      joint_not_found(data.name[i]);
+      HebirosSubscribers::jointNotFound(data.name[i]);
     }
   }
 }
 
-//Add settings values to a group command
-void Hebiros_Node::add_settings_command(GroupCommand* group_command,
+void HebirosSubscribersPhysical::addSettingsCommand(GroupCommand* group_command,
   SettingsMsg data, std::string group_name) {
 
-  for (int i = 0; i < data.name.size(); i++) {
-    if (joint_found(group_name, data.name[i])) {
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
 
-      int joint_index = group_joints[group_name][data.name[i]];
+  for (int i = 0; i < data.name.size(); i++) {
+    if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
+
+      int joint_index = group->joints[data.name[i]];
 
       if (i < data.save_current_settings.size()) {
         if (data.save_current_settings[i]) {
@@ -104,23 +115,24 @@ void Hebiros_Node::add_settings_command(GroupCommand* group_command,
       }
     }
     else {
-      joint_not_found(data.name[i]);
+      HebirosSubscribers::jointNotFound(data.name[i]);
     }
   }
 
-  add_position_gains_command(group_command, data.position_gains, group_name);
-  add_velocity_gains_command(group_command, data.velocity_gains, group_name);
-  add_effort_gains_command(group_command, data.effort_gains, group_name);
+  addPositionGainsCommand(group_command, data.position_gains, group_name);
+  addVelocityGainsCommand(group_command, data.velocity_gains, group_name);
+  addEffortGainsCommand(group_command, data.effort_gains, group_name);
 }
 
-//Add position gain values to a group command
-void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
+void HebirosSubscribersPhysical::addPositionGainsCommand(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  for (int i = 0; i < data.name.size(); i++) {
-    if (joint_found(group_name, data.name[i])) {
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
 
-      int joint_index = group_joints[group_name][data.name[i]];
+  for (int i = 0; i < data.name.size(); i++) {
+    if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
+
+      int joint_index = group->joints[data.name[i]];
 
       if (i < data.kp.size()) {
         (*group_command)[joint_index].
@@ -180,19 +192,20 @@ void Hebiros_Node::add_position_gains_command(GroupCommand* group_command,
       }
     }
     else {
-      joint_not_found(data.name[i]);
+      HebirosSubscribers::jointNotFound(data.name[i]);
     }
   }
 }
 
-//Add velocity gain values to a group command
-void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
+void HebirosSubscribersPhysical::addVelocityGainsCommand(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  for (int i = 0; i < data.name.size(); i++) {
-    if (joint_found(group_name, data.name[i])) {
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
 
-      int joint_index = group_joints[group_name][data.name[i]];
+  for (int i = 0; i < data.name.size(); i++) {
+    if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
+
+      int joint_index = group->joints[data.name[i]];
 
       if (i < data.kp.size()) {
         (*group_command)[joint_index].
@@ -252,21 +265,20 @@ void Hebiros_Node::add_velocity_gains_command(GroupCommand* group_command,
       }
     }
     else {
-      joint_not_found(data.name[i]);
+      HebirosSubscribers::jointNotFound(data.name[i]);
     }
   }
 }
 
-//Add effort gain values to a group command
-void Hebiros_Node::add_effort_gains_command(GroupCommand* group_command,
+void HebirosSubscribersPhysical::addEffortGainsCommand(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  std::shared_ptr<Group> group = groups[group_name];
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
 
   for (int i = 0; i < data.name.size(); i++) {
-    if (joint_found(group_name, data.name[i])) {
+    if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
 
-      int joint_index = group_joints[group_name][data.name[i]];
+      int joint_index = group->joints[data.name[i]];
 
       if (i < data.kp.size()) {
         (*group_command)[joint_index].
@@ -326,9 +338,89 @@ void Hebiros_Node::add_effort_gains_command(GroupCommand* group_command,
       }
     }
     else {
-      joint_not_found(data.name[i]);
+      HebirosSubscribers::jointNotFound(data.name[i]);
     }
   }
 }
+
+
+void HebirosSubscribersPhysical::feedback(std::string group_name, const GroupFeedback& group_fbk) {
+
+  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+
+  FeedbackMsg feedback_msg;
+  sensor_msgs::JointState joint_state_msg;
+
+  for (int i = 0; i < group_fbk.size(); i++) {
+    std::string name = (*group->group_info_ptr)[i].settings().name().get();
+    std::string family = (*group->group_info_ptr)[i].settings().family().get();
+    double position = group_fbk[i].actuator().position().get();
+    double velocity = group_fbk[i].actuator().velocity().get();
+    double effort = group_fbk[i].actuator().effort().get();
+
+    joint_state_msg.name.push_back(family+"/"+name);
+    joint_state_msg.position.push_back(position);
+    joint_state_msg.velocity.push_back(velocity);
+    joint_state_msg.effort.push_back(effort);
+
+    feedback_msg.name.push_back(family+"/"+name);
+    feedback_msg.position.push_back(position);
+    feedback_msg.velocity.push_back(velocity);
+    feedback_msg.effort.push_back(effort);
+    feedback_msg.position_command.push_back(group_fbk[i].actuator().positionCommand().get());
+    feedback_msg.velocity_command.push_back(group_fbk[i].actuator().velocityCommand().get());
+    feedback_msg.effort_command.push_back(group_fbk[i].actuator().effortCommand().get());
+    geometry_msgs::Vector3 accelerometer_msg;
+    accelerometer_msg.x = group_fbk[i].imu().accelerometer().get().getX();
+    accelerometer_msg.y = group_fbk[i].imu().accelerometer().get().getY();
+    accelerometer_msg.z = group_fbk[i].imu().accelerometer().get().getZ();
+    feedback_msg.accelerometer.push_back(accelerometer_msg);
+    geometry_msgs::Vector3 gyro_msg;
+    gyro_msg.x = group_fbk[i].imu().gyro().get().getX();
+    gyro_msg.y = group_fbk[i].imu().gyro().get().getY();
+    gyro_msg.z = group_fbk[i].imu().gyro().get().getZ();
+    feedback_msg.gyro.push_back(gyro_msg);
+    feedback_msg.deflection.push_back(group_fbk[i].actuator().deflection().get());
+    feedback_msg.deflection_velocity.push_back(group_fbk[i].actuator().deflectionVelocity().get());
+    feedback_msg.motor_velocity.push_back(group_fbk[i].actuator().motorVelocity().get());
+    feedback_msg.motor_current.push_back(group_fbk[i].actuator().motorCurrent().get());
+    feedback_msg.motor_winding_current.push_back(group_fbk[i].actuator().motorWindingCurrent().get());
+    feedback_msg.motor_sensor_temperature.push_back(
+      group_fbk[i].actuator().motorSensorTemperature().get());
+    feedback_msg.motor_winding_temperature.push_back(
+      group_fbk[i].actuator().motorWindingTemperature().get());
+    feedback_msg.motor_housing_temperature.push_back(
+      group_fbk[i].actuator().motorHousingTemperature().get());
+    feedback_msg.board_temperature.push_back(group_fbk[i].boardTemperature().get());
+    feedback_msg.processor_temperature.push_back(group_fbk[i].processorTemperature().get());
+    feedback_msg.voltage.push_back(group_fbk[i].voltage().get());
+    std_msgs::ColorRGBA led_msg;
+    led_msg.r = group_fbk[i].led().getColor().getRed();
+    led_msg.g = group_fbk[i].led().getColor().getGreen();
+    led_msg.b = group_fbk[i].led().getColor().getBlue();
+    if (group_fbk[i].led().hasColor()) {
+      led_msg.a = 255;
+    }
+    else {
+      led_msg.a = 0;
+    }
+    feedback_msg.led_color.push_back(led_msg);
+    feedback_msg.sequence_number.push_back(group_fbk[i].actuator().sequenceNumber().get());
+    feedback_msg.receive_time.push_back(group_fbk[i].actuator().receiveTime().get());
+    feedback_msg.transmit_time.push_back(group_fbk[i].actuator().transmitTime().get());
+    feedback_msg.hardware_receive_time.push_back(group_fbk[i].actuator().hardwareReceiveTime().get());
+    feedback_msg.hardware_transmit_time.push_back(
+      group_fbk[i].actuator().hardwareTransmitTime().get());
+  }
+
+  group->joint_state_msg = joint_state_msg;
+  group->feedback_msg = feedback_msg;
+
+  HebirosNode::publishers.feedback(group_name, feedback_msg);
+
+  HebirosNode::publishers.feedbackJointState(group_name, joint_state_msg);
+}
+
+
 
 
