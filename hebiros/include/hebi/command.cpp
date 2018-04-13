@@ -321,6 +321,9 @@ Command::Command(HebiCommandPtr command)
     settings_(internal_),
     actuator_(internal_),
     debug_(internal_, HebiCommandNumberedFloatDebug),
+    reset_(internal_, HebiCommandFlagReset),
+    boot_(internal_, HebiCommandFlagBoot),
+    stop_boot_(internal_, HebiCommandFlagStopBoot),
     led_(internal_, HebiCommandLedLed)
 {
 }
@@ -334,6 +337,9 @@ Command::Command(Command&& other)
     settings_(internal_),
     actuator_(internal_),
     debug_(internal_, HebiCommandNumberedFloatDebug),
+    reset_(internal_, HebiCommandFlagReset),
+    boot_(internal_, HebiCommandFlagBoot),
+    stop_boot_(internal_, HebiCommandFlagStopBoot),
     led_(internal_, HebiCommandLedLed)
 {
   // NOTE: it would be nice to also cleanup the actual internal pointer of other
@@ -343,6 +349,18 @@ Command::Command(Command&& other)
 Command::NumberedFloatField& Command::debug()
 {
   return debug_;
+}
+Command::FlagField& Command::reset()
+{
+  return reset_;
+}
+Command::FlagField& Command::boot()
+{
+  return boot_;
+}
+Command::FlagField& Command::stopBoot()
+{
+  return stop_boot_;
 }
 Command::LedField& Command::led()
 {
