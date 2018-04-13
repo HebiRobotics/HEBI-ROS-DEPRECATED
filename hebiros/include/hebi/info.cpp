@@ -28,6 +28,42 @@ float Info::FloatField::get() const
   return ret;
 }
 
+Info::HighResAngleField::HighResAngleField(HebiInfoPtr internal, HebiInfoHighResAngleField field)
+  : internal_(internal), field_(field) {}
+
+Info::HighResAngleField::operator bool() const
+{
+  return has();
+}
+
+bool Info::HighResAngleField::has() const
+{
+  return (hebiInfoGetHighResAngle(internal_, field_, nullptr, nullptr) == HebiStatusSuccess);
+}
+
+double Info::HighResAngleField::get() const
+{
+  int64_t revolutions;
+  float radian_offset;
+  if (hebiInfoGetHighResAngle(internal_, field_, &revolutions, &radian_offset) != HebiStatusSuccess)
+  {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+  return (
+    static_cast<double>(revolutions) * 2.0 * M_PI +
+    static_cast<double>(radian_offset)
+  );
+}
+
+void Info::HighResAngleField::get(int64_t* revolutions, float* radian_offset) const
+{
+  if (hebiInfoGetHighResAngle(internal_, field_, revolutions, radian_offset) != HebiStatusSuccess)
+  {
+    *revolutions = 0;
+    *radian_offset = std::numeric_limits<float>::quiet_NaN();
+  }
+}
+
 Info::BoolField::BoolField(HebiInfoPtr internal, HebiInfoBoolField field)
   : internal_(internal), field_(field)
 {
@@ -119,6 +155,7 @@ Color Info::LedField::getColor() const
 Info::Info(HebiInfoPtr info)
   : internal_(info),
     settings_(internal_),
+    actuator_(internal_),
     led_(internal_, HebiInfoLedLed),
     serial_(internal_, HebiInfoStringSerial)
 {
@@ -130,6 +167,7 @@ Info::~Info() noexcept
 Info::Info(Info&& other)
   : internal_(other.internal_),
     settings_(internal_),
+    actuator_(internal_),
     led_(internal_, HebiInfoLedLed),
     serial_(internal_, HebiInfoStringSerial)
 {

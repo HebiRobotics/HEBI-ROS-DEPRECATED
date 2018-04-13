@@ -54,10 +54,10 @@ typedef enum HebiCommandFloatField {
   HebiCommandFloatVelocityPunch, ///Constant offset to the velocity PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
   HebiCommandFloatVelocityMinTarget, ///Minimum allowed value for input to the PID controller
   HebiCommandFloatVelocityMaxTarget, ///Maximum allowed value for input to the PID controller
-  HebiCommandFloatVelocityTargetLowpass, ///A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
+  HebiCommandFloatVelocityTargetLowpass, ///A simple lowpass filter applied to the target set point; needs to be between 0 and 1. At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
   HebiCommandFloatVelocityMinOutput, ///Output from the PID controller is limited to a minimum of this value.
   HebiCommandFloatVelocityMaxOutput, ///Output from the PID controller is limited to a maximum of this value.
-  HebiCommandFloatVelocityOutputLowpass, ///A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
+  HebiCommandFloatVelocityOutputLowpass, ///A simple lowpass filter applied to the controller output; needs to be between 0 and 1. At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
   HebiCommandFloatEffortKp, ///Proportional PID gain for effort
   HebiCommandFloatEffortKi, ///Integral PID gain for effort
   HebiCommandFloatEffortKd, ///Derivative PID gain for effort
@@ -67,10 +67,10 @@ typedef enum HebiCommandFloatField {
   HebiCommandFloatEffortPunch, ///Constant offset to the effort PID output outside of the deadzone; it is added when the error is positive and subtracted when it is negative.
   HebiCommandFloatEffortMinTarget, ///Minimum allowed value for input to the PID controller
   HebiCommandFloatEffortMaxTarget, ///Maximum allowed value for input to the PID controller
-  HebiCommandFloatEffortTargetLowpass, ///A simple lowpass filter applied to the target set point; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
+  HebiCommandFloatEffortTargetLowpass, ///A simple lowpass filter applied to the target set point; needs to be between 0 and 1. At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
   HebiCommandFloatEffortMinOutput, ///Output from the PID controller is limited to a minimum of this value.
   HebiCommandFloatEffortMaxOutput, ///Output from the PID controller is limited to a maximum of this value.
-  HebiCommandFloatEffortOutputLowpass, ///A simple lowpass filter applied to the controller output; needs to be between 0 and 1.  At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
+  HebiCommandFloatEffortOutputLowpass, ///A simple lowpass filter applied to the controller output; needs to be between 0 and 1. At each timestep: x_t = x_t * a + x_{t-1} * (1 - a).
   HebiCommandFloatSpringConstant, ///The spring constant of the module.
   HebiCommandFloatReferencePosition, ///Set the internal encoder reference offset so that the current position matches the given reference command
   HebiCommandFloatReferenceEffort, ///Set the internal effort reference offset so that the current effort matches the given reference command
@@ -78,6 +78,8 @@ typedef enum HebiCommandFloatField {
 
 typedef enum HebiCommandHighResAngleField {
   HebiCommandHighResAnglePosition, ///Position of the module output (post-spring), in radians.
+  HebiCommandHighResAnglePositionLimitMin, ///Set the firmware safety limit for the minimum allowed position.
+  HebiCommandHighResAnglePositionLimitMax, ///Set the firmware safety limit for the maximum allowed position.
 } HebiCommandHighResAngleField;
 
 typedef enum HebiCommandNumberedFloatField {
@@ -97,6 +99,9 @@ typedef enum HebiCommandStringField {
 
 typedef enum HebiCommandFlagField {
   HebiCommandFlagSaveCurrentSettings, ///Indicates if the module should save the current values of all of its settings.
+  HebiCommandFlagReset, ///Restart the module.
+  HebiCommandFlagBoot, ///Boot the module from bootloader into application.
+  HebiCommandFlagStopBoot, ///Stop the module from automatically booting into application.
 } HebiCommandFlagField;
 
 typedef enum HebiCommandEnumField {
@@ -161,6 +166,19 @@ typedef enum HebiFeedbackVector3fField {
   HebiFeedbackVector3fGyro, ///Gyro data, in radians/second.
 } HebiFeedbackVector3fField;
 
+typedef enum HebiFeedbackQuaternionfField {
+  HebiFeedbackQuaternionfOrientation, ///A filtered estimate of the orientation of the module.
+} HebiFeedbackQuaternionfField;
+
+typedef enum HebiFeedbackEnumField {
+  HebiFeedbackEnumTemperatureState, ///Describes how the temperature inside the module is limiting the output of the motor
+  HebiFeedbackEnumMstopState, ///Current status of the MStop
+  HebiFeedbackEnumPositionLimitState, ///Software-controlled bounds on the allowable position of the module; user settable
+  HebiFeedbackEnumVelocityLimitState, ///Software-controlled bounds on the allowable velocity of the module
+  HebiFeedbackEnumEffortLimitState, ///Software-controlled bounds on the allowable effort of the module
+  HebiFeedbackEnumCommandLifetimeState, ///The state of the command lifetime safety controller, with respect to the current group
+} HebiFeedbackEnumField;
+
 typedef enum HebiFeedbackIoPinBank {
   HebiFeedbackIoBankA, ///I/O pin bank a (pins 1-8 available)
   HebiFeedbackIoBankB, ///I/O pin bank b (pins 1-8 available)
@@ -221,6 +239,11 @@ typedef enum HebiInfoFloatField {
   HebiInfoFloatSpringConstant, ///The spring constant of the module.
 } HebiInfoFloatField;
 
+typedef enum HebiInfoHighResAngleField {
+  HebiInfoHighResAnglePositionLimitMin, ///The firmware safety limit for the minimum allowed position.
+  HebiInfoHighResAnglePositionLimitMax, ///The firmware safety limit for the maximum allowed position.
+} HebiInfoHighResAngleField;
+
 typedef enum HebiInfoBoolField {
   HebiInfoBoolPositionDOnError, ///Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
   HebiInfoBoolVelocityDOnError, ///Controls whether the Kd term uses the "derivative of error" or "derivative of measurement."  When the setpoints have step inputs or are noisy, setting this to @c false can eliminate corresponding spikes or noise in the output.
@@ -239,6 +262,7 @@ typedef enum HebiInfoFlagField {
 
 typedef enum HebiInfoEnumField {
   HebiInfoEnumControlStrategy, ///How the position, velocity, and effort PID loops are connected in order to control motor PWM.
+  HebiInfoEnumCalibrationState, ///The calibration state of the module
 } HebiInfoEnumField;
 
 typedef enum HebiInfoLedField {
@@ -266,7 +290,10 @@ typedef enum HebiFrameType {
 typedef enum HebiJointType {
   HebiJointTypeRotationX,
   HebiJointTypeRotationY,
-  HebiJointTypeRotationZ
+  HebiJointTypeRotationZ,
+  HebiJointTypeTranslationX,
+  HebiJointTypeTranslationY,
+  HebiJointTypeTranslationZ
 } HebiJointType;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -399,6 +426,13 @@ typedef struct _HebiVector3f {
   float y;
   float z;
 } HebiVector3f;
+
+typedef struct _HebiQuaternionf {
+  float w;
+  float x;
+  float y;
+  float z;
+} HebiQuaternionf;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Lookup API
@@ -547,8 +581,8 @@ HebiGroupPtr hebiGroupCreateImitation(size_t size);
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress* const* addresses, size_t num_addresses,
-                                     int32_t timeout_ms);
+HebiGroupPtr hebiGroupCreateFromMacs(HebiLookupPtr lookup, const HebiMacAddress* const* addresses,
+                                     size_t num_addresses, int32_t timeout_ms);
 
 /**
  * \brief Create a group with modules matching the given names and families.
@@ -627,7 +661,8 @@ HebiGroupPtr hebiGroupCreateFromFamily(HebiLookupPtr lookup, const char* family,
  * \returns NULL if matching group not found in allotted time; pointer to newly
  * allocated group object otherwise.
  */
-HebiGroupPtr hebiGroupCreateConnectedFromMac(HebiLookupPtr lookup, const HebiMacAddress* address, int32_t timeout_ms);
+HebiGroupPtr hebiGroupCreateConnectedFromMac(HebiLookupPtr lookup, const HebiMacAddress* address,
+                                             int32_t timeout_ms);
 
 /**
  * \brief Create a group with all modules connected to module with the given name
@@ -815,7 +850,8 @@ HebiStatusCode hebiGroupSendFeedbackRequest(HebiGroupPtr group);
  * \returns HebiStatusSuccess if feedback was returned, or a failure code if not
  * (i.e., connection error or timeout waiting for response).
  */
-HebiStatusCode hebiGroupGetNextFeedback(HebiGroupPtr group, HebiGroupFeedbackPtr feedback, int32_t timeout_ms);
+HebiStatusCode hebiGroupGetNextFeedback(HebiGroupPtr group, HebiGroupFeedbackPtr feedback,
+                                        int32_t timeout_ms);
 
 /**
  * \brief Requests info from the group, and writes it to the provided info
@@ -933,6 +969,28 @@ HebiStatusCode hebiGroupCommandWriteGains(HebiGroupCommandPtr cmd, const char* f
 HebiCommandPtr hebiGroupCommandGetModuleCommand(HebiGroupCommandPtr cmd, size_t module_index);
 
 /**
+ * \brief Clears the `dest` GroupCommand object, and copies all data from the
+ * `src` GroupCommand object to `dest`.
+ *
+ * The GroupCommand objects should have identical state after this.
+ *
+ * \param dest The GroupCommandPtr to copy data into.  The previous state of
+ * this object will be cleared.
+ * \param src The GroupCommandPtr to copy data from.  This object will remain
+ * unchanged.
+ *
+ * \return HebiStatusSuccess if the operation succeeds; HebiStatusInvalidArgument
+ * if the sizes of the two messages do not match; HebiStatusError for any other
+ * error.
+ */
+HebiStatusCode hebiGroupCommandCopy(HebiGroupCommandPtr dest, HebiGroupCommandPtr src);
+
+/**
+ * \brief Clears all data in the GroupCommand object.
+ */
+void hebiGroupCommandClear(HebiGroupCommandPtr cmd);
+
+/**
  * \brief Frees resources created by the GroupCommand object.
  *
  * The GroupCommandPtr must not be used after this function is called.
@@ -967,6 +1025,28 @@ size_t hebiGroupFeedbackGetSize(HebiGroupFeedbackPtr fbk);
  * \returns The feedback corresponding to the module at the specified index.
  */
 HebiFeedbackPtr hebiGroupFeedbackGetModuleFeedback(HebiGroupFeedbackPtr fbk, size_t module_index);
+
+/**
+ * \brief Clears the `dest` GroupFeedback object, and copies all data from the
+ * `src` GroupFeedback object to `dest`.
+ *
+ * The GroupFeedback objects should have identical state after this.
+ *
+ * \param dest The GroupFeedbackPtr to copy data into.  The previous state of
+ * this object will be cleared.
+ * \param src The GroupFeedbackPtr to copy data from.  This object will remain
+ * unchanged.
+ *
+ * \return HebiStatusSuccess if the operation succeeds; HebiStatusInvalidArgument
+ * if the sizes of the two messages do not match; HebiStatusError for any other
+ * error.
+ */
+HebiStatusCode hebiGroupFeedbackCopy(HebiGroupFeedbackPtr dest, HebiGroupFeedbackPtr src);
+
+/**
+ * \brief Clears all data in the GroupFeedback object.
+ */
+void hebiGroupFeedbackClear(HebiGroupFeedbackPtr fbk);
 
 /**
  * \brief Frees resources created by the GroupFeedback object.
@@ -1016,6 +1096,28 @@ HebiStatusCode hebiGroupInfoWriteGains(HebiGroupInfoPtr info, const char* file);
 HebiInfoPtr hebiGroupInfoGetModuleInfo(HebiGroupInfoPtr info, size_t module_index);
 
 /**
+ * \brief Clears the `dest` GroupInfo object, and copies all data from the
+ * `src` GroupInfo object to `dest`.
+ *
+ * The GroupInfo objects should have identical state after this.
+ *
+ * \param dest The GroupInfoPtr to copy data into.  The previous state of
+ * this object will be cleared.
+ * \param src The GroupInfoPtr to copy data from.  This object will remain
+ * unchanged.
+ *
+ * \return HebiStatusSuccess if the operation succeeds; HebiStatusInvalidArgument
+ * if the sizes of the two messages do not match; HebiStatusError for any other
+ * error.
+ */
+HebiStatusCode hebiGroupInfoCopy(HebiGroupInfoPtr dest, HebiGroupInfoPtr src);
+
+/**
+ * \brief Clears all data in the GroupInfo object.
+ */
+void hebiGroupInfoClear(HebiGroupInfoPtr info);
+
+/**
  * \brief Frees resources created by the GroupInfo object.
  *
  * The GroupInfoPtr must not be used after this function is called.
@@ -1041,21 +1143,21 @@ void hebiCommandSetFloat(HebiCommandPtr cmd, HebiCommandFloatField field, const 
  * If the specified value is set, writes the value of the field to the pointers
  * (if both are not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field, int64_t* int_part,
-                                          float* dec_part);
+HebiStatusCode hebiCommandGetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field,
+                                          int64_t* int_part, float* dec_part);
 
 /**
  * Sets the given field. If any of the provided pointers are null, the field is cleared.
  */
-void hebiCommandSetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field, const int64_t* int_part,
-                                const float* dec_part);
+void hebiCommandSetHighResAngle(HebiCommandPtr cmd, HebiCommandHighResAngleField field,
+                                const int64_t* int_part, const float* dec_part);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiCommandGetNumberedFloat(HebiCommandPtr cmd, HebiCommandNumberedFloatField field, size_t number,
-                                           float* value);
+HebiStatusCode hebiCommandGetNumberedFloat(HebiCommandPtr cmd, HebiCommandNumberedFloatField field,
+                                           size_t number, float* value);
 
 /**
  * Sets the given field. If the provided pointer is null, the field is cleared.
@@ -1103,7 +1205,8 @@ void hebiCommandSetBool(HebiCommandPtr cmd, HebiCommandBoolField field, const in
  *
  * Note - assumes ASCII string encoding.
  */
-HebiStatusCode hebiCommandGetString(HebiCommandPtr cmd, HebiCommandStringField field, char* buffer, size_t* length);
+HebiStatusCode hebiCommandGetString(HebiCommandPtr cmd, HebiCommandStringField field, char* buffer,
+                                    size_t* length);
 
 /**
  * Sets the given string to the value given in the buffer (if given). If any of
@@ -1115,7 +1218,8 @@ HebiStatusCode hebiCommandGetString(HebiCommandPtr cmd, HebiCommandStringField f
  *
  * Note - assumes ASCII string encoding.
  */
-void hebiCommandSetString(HebiCommandPtr cmd, HebiCommandStringField field, const char* buffer, const size_t* length);
+void hebiCommandSetString(HebiCommandPtr cmd, HebiCommandStringField field, const char* buffer,
+                          const size_t* length);
 
 /**
  * Checks whether this flag is set. Returns '1' for yes, '0' for no.
@@ -1156,13 +1260,15 @@ HebiStatusCode hebiCommandGetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank
  * Sets the indicated pin to this integer value. If the provided pointer is NULL
  * the field is cleared (of values of any type).
  */
-void hebiCommandSetIoPinInt(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number, const int64_t* value);
+void hebiCommandSetIoPinInt(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number,
+                            const int64_t* value);
 
 /**
  * Sets the indicated pin to this floating point value. If the provided pointer
  * is NULL the field is cleared (of values of any type).
  */
-void hebiCommandSetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number, const float* value);
+void hebiCommandSetIoPinFloat(HebiCommandPtr cmd, HebiCommandIoPinBank field, size_t pin_number,
+                              const float* value);
 
 /**
  * If the led color is set, writes it to the three output integer pointers (if
@@ -1184,7 +1290,8 @@ int32_t hebiCommandHasLedModuleControl(HebiCommandPtr cmd, HebiCommandLedField f
 /**
  * Commands a color that overrides the module's control of the LED.
  */
-void hebiCommandSetLedOverrideColor(HebiCommandPtr cmd, HebiCommandLedField field, uint8_t r, uint8_t g, uint8_t b);
+void hebiCommandSetLedOverrideColor(HebiCommandPtr cmd, HebiCommandLedField field, uint8_t r, uint8_t g,
+                                    uint8_t b);
 
 /**
  * Sets the module to regain control of the LED.
@@ -1211,15 +1318,15 @@ HebiStatusCode hebiFeedbackGetFloat(HebiFeedbackPtr fbk, HebiFeedbackFloatField 
  * If the specified value is set, writes the value of the field to the pointers
  * (if both are not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetHighResAngle(HebiFeedbackPtr fbk, HebiFeedbackHighResAngleField field, int64_t* int_part,
-                                           float* dec_part);
+HebiStatusCode hebiFeedbackGetHighResAngle(HebiFeedbackPtr fbk, HebiFeedbackHighResAngleField field,
+                                           int64_t* int_part, float* dec_part);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetNumberedFloat(HebiFeedbackPtr fbk, HebiFeedbackNumberedFloatField field, size_t number,
-                                            float* value);
+HebiStatusCode hebiFeedbackGetNumberedFloat(HebiFeedbackPtr fbk, HebiFeedbackNumberedFloatField field,
+                                            size_t number, float* value);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
@@ -1229,9 +1336,25 @@ HebiStatusCode hebiFeedbackGetUInt64(HebiFeedbackPtr fbk, HebiFeedbackUInt64Fiel
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
+ * (if not NULL), and returns HebiStatusSuccess.  Otherwise, returns
+ * HebiStatusValueNotSet.
+ */
+HebiStatusCode hebiFeedbackGetEnum(HebiFeedbackPtr, HebiFeedbackEnumField, int32_t*);
+
+/**
+ * If the specified value is set, writes the value of the field to the pointer
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
-HebiStatusCode hebiFeedbackGetVector3f(HebiFeedbackPtr fbk, HebiFeedbackVector3fField field, HebiVector3f* value);
+HebiStatusCode hebiFeedbackGetVector3f(HebiFeedbackPtr fbk, HebiFeedbackVector3fField field,
+                                       HebiVector3f* value);
+
+/**
+ * If the specified value is set, writes the value of the field to the pointer
+ * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
+ */
+HebiStatusCode hebiFeedbackGetQuaternionf(HebiFeedbackPtr fbk,
+                                          HebiFeedbackQuaternionfField field,
+                                          HebiQuaternionf* value);
 
 /**
  * If the indicated pin has an integer value, writes it to the pointer (if not
@@ -1254,8 +1377,8 @@ HebiStatusCode hebiFeedbackGetIoPinFloat(HebiFeedbackPtr fbk, HebiFeedbackIoPinB
  * For command-style messages, this refers to the color to override the module's
  * default control of the LED.
  */
-HebiStatusCode hebiFeedbackGetLedColor(HebiFeedbackPtr fbk, HebiFeedbackLedField field, uint8_t* r, uint8_t* g,
-                                       uint8_t* b);
+HebiStatusCode hebiFeedbackGetLedColor(HebiFeedbackPtr fbk, HebiFeedbackLedField field, uint8_t* r,
+                                       uint8_t* g, uint8_t* b);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Info API
@@ -1266,6 +1389,14 @@ HebiStatusCode hebiFeedbackGetLedColor(HebiFeedbackPtr fbk, HebiFeedbackLedField
  * (if not NULL), and returns HebiStatusSuccess. Otherwise, returns HebiStatusValueNotSet.
  */
 HebiStatusCode hebiInfoGetFloat(HebiInfoPtr info, HebiInfoFloatField field, float* value);
+
+/**
+ * If the specified value is set, writes the value of the field to the pointers
+ * (if both are not NULL), and returns HebiStatusSuccess.  Otherwise, returns
+ * HebiStatusValueNotSet.
+ */
+HebiStatusCode hebiInfoGetHighResAngle(HebiInfoPtr, HebiInfoHighResAngleField,
+                                       int64_t* int_part, float* dec_part);
 
 /**
  * If the specified value is set, writes the value of the field to the pointer
@@ -1322,7 +1453,8 @@ HebiStatusCode hebiInfoGetEnum(HebiInfoPtr info, HebiInfoEnumField field, int32_
  * For command-style messages, this refers to the color to override the module's
  * default control of the LED.
  */
-HebiStatusCode hebiInfoGetLedColor(HebiInfoPtr info, HebiInfoLedField field, uint8_t* r, uint8_t* g, uint8_t* b);
+HebiStatusCode hebiInfoGetLedColor(HebiInfoPtr info, HebiInfoLedField field, uint8_t* r, uint8_t* g,
+                                   uint8_t* b);
 
 ////////////////////////////////////////////////////////////////////////////////
 // RobotModel API
@@ -1360,8 +1492,9 @@ HebiRobotModelElementPtr hebiRobotModelElementCreateJoint(HebiJointType joint_ty
  * newly allocated body.  Must either be added to a robot model object or
  * released via 'hebiRobotModelElementRelease'.
  */
-HebiRobotModelElementPtr hebiRobotModelElementCreateRigidBody(const double* com, const double* inertia, double mass,
-                                                              size_t num_outputs, const double* outputs);
+HebiRobotModelElementPtr hebiRobotModelElementCreateRigidBody(const double* com, const double* inertia,
+                                                              double mass, size_t num_outputs,
+                                                              const double* outputs);
 
 /**
  * \brief Frees resources created by this element.
@@ -1585,8 +1718,8 @@ HebiIKPtr hebiIKCreate(void);
  * \return HebiStatusSuccess on success, otherwise a failure code (e.g. incompatible with
  * existing objectives, or all components are set to 'NaN')
  */
-HebiStatusCode hebiIKAddObjectiveEndEffectorPosition(HebiIKPtr ik, float weight, size_t end_effector_index, double x,
-                                                     double y, double z);
+HebiStatusCode hebiIKAddObjectiveEndEffectorPosition(HebiIKPtr ik, float weight, size_t end_effector_index,
+                                                     double x, double y, double z);
 
 /**
  * \brief Add an objective that optimizes for the end effector output frame
@@ -1626,8 +1759,8 @@ HebiStatusCode hebiIKAddObjectiveEndEffectorSO3(HebiIKPtr ik, double weight, siz
  * \return HebiStatusSuccess on success, otherwise a failure code (e.g. incompatible with
  * existing objectives, or rotation matrix is invalid.)
  */
-HebiStatusCode hebiIKAddObjectiveEndEffectorTipAxis(HebiIKPtr ik, double weight, size_t end_effector_index, double x,
-                                                    double y, double z);
+HebiStatusCode hebiIKAddObjectiveEndEffectorTipAxis(HebiIKPtr ik, double weight, size_t end_effector_index,
+                                                    double x, double y, double z);
 
 /**
  * \brief Define joint angle constraints.
@@ -1651,6 +1784,37 @@ HebiStatusCode hebiIKAddObjectiveEndEffectorTipAxis(HebiIKPtr ik, double weight,
 HebiStatusCode hebiIKAddConstraintJointAngles(HebiIKPtr ik, double weight, size_t num_joints,
                                               const double* min_positions, const double* max_positions);
 
+
+/**
+ * \brief Add a custom objective function to be minimized by the IK solver.
+ *
+ * The given callback is called at each iteration of the local optimization, and
+ * is expected to fill in each entry of the "errors" vector.
+ *
+ * \param weight The weight of this constraint relative to any other objective
+ * functions (this constraint is multiplied by this weight before passing to the
+ * optimizer). Defaults to 1.0.
+ * \param num_errors The number of independent error values that this objective
+ * returns.
+ * \param err_fnc The callback function which is used to compute the errors. The
+ * arguments are:
+ *   user_data - The pointer passed in when adding a custom objective; this can
+ *     be anything (even NULL), and is designed to allow the user to easily
+ *     access information in the callback.
+ *   num_positions - the number of elements in the 'positions' array
+ *   positions - an array of the joint positions at this point in the
+ *     optimization; of length 'num_positions'
+ *   errors - an array of error values which must be filled in by the callback;
+ *     of length 'num_errors'.
+ */
+HebiStatusCode hebiIKAddObjectiveCustom(HebiIKPtr ik, double weight,
+                                        size_t num_errors,
+                                        void(*err_fnc)(void* user_data,
+                                                       size_t num_positions,
+                                                       const double* positions,
+                                                       double* errors),
+                                        void* user_data);
+
 /**
  * \brief Clears the objectives and constraints from this IK object, along
  * with any modifications to the default algorithm parameters.
@@ -1669,7 +1833,7 @@ void hebiIKClearAll(HebiIKPtr ik);
  * radians) to start the IK search from; equal in length to the number of DoFs
  * of the kinematic tree. Must not be NULL.
  * \param ik_solution Allocated array of doubles equal in length to the
- * number of DoFs of the kinematic tree; the function will will in this array
+ * number of DoFs of the kinematic tree; the function will fill in this array
  * with the IK solution (in SI units of meters or radians). Must not be NULL.
  * \param result_info Reserved for future use (will enable more information
  * about output of optimization such as success/failure, function error, etc).
@@ -1678,8 +1842,8 @@ void hebiIKClearAll(HebiIKPtr ik);
  * \return HebiStatusSuccess on success, other values on failure (e.g., no objectives given or
  * dimension mismatch between kinematics object and stored objectives).
  */
-HebiStatusCode hebiIKSolve(HebiIKPtr ik, HebiRobotModelPtr model, const double* initial_positions, double* ik_solution,
-                           void* result_info);
+HebiStatusCode hebiIKSolve(HebiIKPtr ik, HebiRobotModelPtr model, const double* initial_positions,
+                           double* ik_solution, void* result_info);
 
 /**
  * \brief Frees resources created by this inverse kinematics object.
@@ -1750,8 +1914,8 @@ double hebiTrajectoryGetDuration(HebiTrajectoryPtr trajectory);
  *
  * \returns HebiStatusSuccess on success, otherwise an error status.
  */
-HebiStatusCode hebiTrajectoryGetState(HebiTrajectoryPtr trajectory, double time, double* position, double* velocity,
-                                      double* acceleration);
+HebiStatusCode hebiTrajectoryGetState(HebiTrajectoryPtr trajectory, double time, double* position,
+                                      double* velocity, double* acceleration);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Logging API
@@ -1854,5 +2018,5 @@ HebiStatusCode hebiGetLibraryVersion(int32_t* major, int32_t* minor, int32_t* re
 void hebiCleanup(void);
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif

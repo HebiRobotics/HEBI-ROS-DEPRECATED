@@ -499,6 +499,8 @@ class Command final
                 spring_constant_(internal, HebiCommandFloatSpringConstant),
                 reference_position_(internal, HebiCommandFloatReferencePosition),
                 reference_effort_(internal, HebiCommandFloatReferenceEffort),
+                position_limit_min_(internal, HebiCommandHighResAnglePositionLimitMin),
+                position_limit_max_(internal, HebiCommandHighResAnglePositionLimitMax),
                 control_strategy_(internal, HebiCommandEnumControlStrategy)
             {
             }
@@ -536,6 +538,14 @@ class Command final
             FloatField& referenceEffort() { return reference_effort_; }
             /// The internal effort reference offset (setting this matches the current effort to the given reference command)
             const FloatField& referenceEffort() const { return reference_effort_; }
+            /// The firmware safety limit for the minimum allowed position.
+            HighResAngleField& positionLimitMin() { return position_limit_min_; }
+            /// The firmware safety limit for the minimum allowed position.
+            const HighResAngleField& positionLimitMin() const { return position_limit_min_; }
+            /// The firmware safety limit for the maximum allowed position.
+            HighResAngleField& positionLimitMax() { return position_limit_max_; }
+            /// The firmware safety limit for the maximum allowed position.
+            const HighResAngleField& positionLimitMax() const { return position_limit_max_; }
             /// How the position, velocity, and effort PID loops are connected in order to control motor PWM.
             EnumField<ControlStrategy>& controlStrategy() { return control_strategy_; }
             /// How the position, velocity, and effort PID loops are connected in order to control motor PWM.
@@ -551,6 +561,8 @@ class Command final
             FloatField spring_constant_;
             FloatField reference_position_;
             FloatField reference_effort_;
+            HighResAngleField position_limit_min_;
+            HighResAngleField position_limit_max_;
             EnumField<ControlStrategy> control_strategy_;
         
             HEBI_DISABLE_COPY_MOVE(Actuator)
@@ -697,6 +709,18 @@ class Command final
     /// Values for internal debug functions (channel 1-9 available).
     const NumberedFloatField& debug() const;
     #endif // DOXYGEN_OMIT_INTERNAL
+    /// Restart the module.
+    FlagField& reset();
+    /// Restart the module.
+    const FlagField& reset() const;
+    /// Boot the module from bootloader into application.
+    FlagField& boot();
+    /// Boot the module from bootloader into application.
+    const FlagField& boot() const;
+    /// Stop the module from automatically booting into application.
+    FlagField& stopBoot();
+    /// Stop the module from automatically booting into application.
+    const FlagField& stopBoot() const;
     /// The module's LED.
     LedField& led();
     /// The module's LED.
@@ -708,6 +732,9 @@ class Command final
     Actuator actuator_;
 
     NumberedFloatField debug_;
+    FlagField reset_;
+    FlagField boot_;
+    FlagField stop_boot_;
     LedField led_;
 
     /**

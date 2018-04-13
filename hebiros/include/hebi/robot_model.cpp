@@ -16,7 +16,7 @@ EndEffectorPositionObjective::EndEffectorPositionObjective(double weight, const 
 
 HebiStatusCode EndEffectorPositionObjective::addObjective(HebiIKPtr ik) const
 {
-  return hebiIKAddObjectiveEndEffectorPosition(ik, _weight, 0, _x, _y, _z);
+  return hebiIKAddObjectiveEndEffectorPosition(ik, static_cast<float>(_weight), 0, _x, _y, _z);
 }
 
 EndEffectorSO3Objective::EndEffectorSO3Objective(const Eigen::Matrix3d& matrix)
@@ -174,18 +174,12 @@ Eigen::Matrix4d RobotModel::getBaseFrame() const
 
 size_t RobotModel::getFrameCount(HebiFrameType frame_type) const
 {
-  int res = hebiRobotModelGetNumberOfFrames(internal_, frame_type);
-  if (res < 0)
-    return 0;
-  return (size_t)res;
+  return hebiRobotModelGetNumberOfFrames(internal_, frame_type);
 }
 
 size_t RobotModel::getDoFCount() const
 {
-  int res = hebiRobotModelGetNumberOfDoFs(internal_);
-  if (res < 0)
-    return 0;
-  return (size_t)res;
+  return hebiRobotModelGetNumberOfDoFs(internal_);
 }
 
 // TODO: handle trees/etc by passing in parent object here, and output index
@@ -260,7 +254,7 @@ bool RobotModel::addActuator(ActuatorType actuator_type)
            actuator_type == ActuatorType::X8_9 ||
            actuator_type == ActuatorType::X8_16)
   {
-    setTranslate(com, -0.145, -0.0031, 0.0242);
+    setTranslate(com, -0.0145, -0.0031, 0.0242);
     setTranslate(input_to_axis, 0.0, 0.0, 0.0451);
     inertia << 0.000246, // XX
                0.000380, // YY
@@ -364,7 +358,7 @@ bool RobotModel::addBracket(BracketType bracket_type)
       break;
     }
     default:
-      return NULL;
+      return false;
   }
 
   // Inertia: current approximation is a 6cm sphere; will be improved in future.
@@ -395,7 +389,7 @@ void RobotModel::getFK(HebiFrameType frame_type, const Eigen::VectorXd& position
   delete[] positions_array;
   // Copy into vector of matrices passed in
   frames.resize(num_frames);
-  for (int i = 0; i < num_frames; ++i)
+  for (size_t i = 0; i < num_frames; ++i)
   {
     Map<Matrix<double, 4, 4, RowMajor> > tmp(frame_array + i * 16);
     frames[i] = tmp;
@@ -442,7 +436,7 @@ void RobotModel::getJ(HebiFrameType frame_type, const Eigen::VectorXd& positions
   hebiRobotModelGetJacobians(internal_, frame_type, positions_array, jacobians_array);
   delete[] positions_array;
   jacobians.resize(num_frames);
-  for (int i = 0; i < num_frames; ++i)
+  for (size_t i = 0; i < num_frames; ++i)
   {
     Map<Matrix<double, Dynamic, Dynamic, RowMajor> > tmp(jacobians_array + i * cols * 6, 6, cols);
     jacobians[i] = tmp;
