@@ -21,7 +21,7 @@ std::shared_ptr<Trajectory> Trajectory::createUnconstrainedQp(
   std::shared_ptr<Trajectory> res;
 
   // Check argument validity
-  int num_joints = positions.rows();
+  size_t num_joints = positions.rows();
   size_t num_waypoints = positions.cols();
   if (time_vector.size() != num_waypoints)
     return res;
@@ -84,7 +84,7 @@ std::shared_ptr<Trajectory> Trajectory::createUnconstrainedQp(
 
   // Build C trajectory objects
   std::vector<HebiTrajectoryPtr> trajectories(num_joints, nullptr);
-  for (int i = 0; i < num_joints; ++i)
+  for (size_t i = 0; i < num_joints; ++i)
   {
     HebiTrajectoryPtr trajectory = hebiTrajectoryCreateUnconstrainedQp(num_waypoints,
       (positions_c + i * num_waypoints),
@@ -94,7 +94,7 @@ std::shared_ptr<Trajectory> Trajectory::createUnconstrainedQp(
     // Failure? cleanup previous trajectories
     if (trajectory == nullptr)
     {
-      for (int j = 0; j < i; ++j)
+      for (size_t j = 0; j < i; ++j)
       {
         hebiTrajectoryRelease(trajectories[j]);
       }
@@ -129,7 +129,7 @@ bool Trajectory::getState(double time, VectorXd* position, VectorXd* velocity, V
 {
   double tmp_p, tmp_v, tmp_a;
   bool success = true;
-  for (int i = 0; i < trajectories_.size(); ++i)
+  for (size_t i = 0; i < trajectories_.size(); ++i)
   {
     success = (hebiTrajectoryGetState(
       trajectories_[i],

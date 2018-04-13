@@ -142,6 +142,31 @@ Vector3f Feedback::Vector3fField::get() const
   return ret;
 }
 
+Feedback::QuaternionfField::QuaternionfField(HebiFeedbackPtr internal, HebiFeedbackQuaternionfField field)
+  : internal_(internal), field_(field) {}
+
+Feedback::QuaternionfField::operator bool() const
+{
+  return has();
+}
+
+bool Feedback::QuaternionfField::has() const
+{
+  return (hebiFeedbackGetQuaternionf(internal_, field_, nullptr) == HebiStatusSuccess);
+}
+
+Quaternionf Feedback::QuaternionfField::get() const
+{
+  HebiQuaternionf ret;
+  if (hebiFeedbackGetQuaternionf(internal_, field_, &ret) != HebiStatusSuccess) {
+    ret.w = std::numeric_limits<float>::quiet_NaN();
+    ret.x = std::numeric_limits<float>::quiet_NaN();
+    ret.y = std::numeric_limits<float>::quiet_NaN();
+    ret.z = std::numeric_limits<float>::quiet_NaN();
+  }
+  return ret;
+}
+
 Feedback::IoBank::IoBank(HebiFeedbackPtr internal, HebiFeedbackIoPinBank bank)
   : internal_(internal), bank_(bank)
 {

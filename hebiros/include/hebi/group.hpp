@@ -203,7 +203,6 @@ class Group final
      */
     bool requestInfo(GroupInfo& info, int32_t timeout_ms=DEFAULT_TIMEOUT_MS);
 
-    #ifndef DOXYGEN_OMIT_INTERNAL
     /**
      * \brief Starts log (stopping any active log).
      *
@@ -233,7 +232,6 @@ class Group final
      * If the file was not successfully created, this will return null.
      */
     std::shared_ptr<LogFile> stopLog();
-    #endif // DOXYGEN_OMIT_INTERNAL
 
     /**
      * \brief Sets the frequency of the internal feedback request + callback thread.
