@@ -7,6 +7,7 @@ float64[] velocity_command
 float64[] effort_command
 geometry_msgs/Vector3[] accelerometer
 geometry_msgs/Vector3[] gyro
+geometry_msgs/Quaternion[] orientation
 float64[] deflection
 float64[] deflection_velocity
 float64[] motor_velocity
