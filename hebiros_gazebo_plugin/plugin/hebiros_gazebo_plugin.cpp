@@ -209,14 +209,13 @@ void HebirosGazeboPlugin::AddJoint(std::string joint_name) {
 
   hebiros_joints[joint_name] = hebiros_joint;
 
-  physics::JointPtr joint;
-  if (joint = this->model->GetJoint(joint_name+"/X5_1")) {
+  if (this->model->GetJoint(joint_name+"/X5_1")) {
     hebiros_joint->model_name = "X5_1";
   }
-  else if (joint = this->model->GetJoint(joint_name+"/X5_4")) {
+  else if (this->model->GetJoint(joint_name+"/X5_4")) {
     hebiros_joint->model_name = "X5_4";
   }
-  else if (joint = this->model->GetJoint(joint_name+"/X5_9")) {
+  else if (this->model->GetJoint(joint_name+"/X5_9")) {
     hebiros_joint->model_name = "X5_9";
   }
 
