@@ -3,6 +3,7 @@
 #include "hebi.h"
 #include "color.hpp"
 #include "vector_3_f.hpp"
+#include "quaternion_f.hpp"
 #include "util.hpp"
 
 namespace hebi {
@@ -27,7 +28,86 @@ namespace hebi {
 /// in general the online documentation at apidocs.hebi.us presents this information.
 /// in a more readable form.
 class Feedback final
-{
+  {
+  public:
+    enum class TemperatureState
+    {
+      /// Temperature within normal range
+      Normal,
+      /// Motor output beginning to be limited due to high temperature
+      Critical,
+      /// Temperature exceeds max allowable for motor; motor output disabled
+      ExceedMaxMotor,
+      /// Temperature exceeds max allowable for electronics; motor output disabled
+      ExceedMaxBoard,
+    };
+
+    enum class MstopState
+    {
+      /// The MStop is pressed
+      Triggered,
+      /// The MStop is not pressed
+      NotTriggered,
+    };
+
+    enum class PositionLimitState
+    {
+      /// The position of the module was below the lower safety limit; the motor output is set to return the module to within the limits
+      Below,
+      /// The position of the module was near the lower safety limit, and the motor output is being limited or reversed
+      AtLower,
+      /// The position of the module was within the safety limits
+      Inside,
+      /// The position of the module was near the upper safety limit, and the motor output is being limited or reversed
+      AtUpper,
+      /// The position of the module was above the upper safety limit; the motor output is set to return the module to within the limits
+      Above,
+      /// The module has not been inside the safety limits since it was booted or the safety limits were set
+      Uninitialized,
+    };
+
+    enum class VelocityLimitState
+    {
+      /// The velocity of the module was below the lower safety limit; the motor output is set to return the module to within the limits
+      Below,
+      /// The velocity of the module was near the lower safety limit, and the motor output is being limited or reversed
+      AtLower,
+      /// The velocity of the module was within the safety limits
+      Inside,
+      /// The velocity of the module was near the upper safety limit, and the motor output is being limited or reversed
+      AtUpper,
+      /// The velocity of the module was above the upper safety limit; the motor output is set to return the module to within the limits
+      Above,
+      /// The module has not been inside the safety limits since it was booted or the safety limits were set
+      Uninitialized,
+    };
+
+    enum class EffortLimitState
+    {
+      /// The effort of the module was below the lower safety limit; the motor output is set to return the module to within the limits
+      Below,
+      /// The effort of the module was near the lower safety limit, and the motor output is being limited or reversed
+      AtLower,
+      /// The effort of the module was within the safety limits
+      Inside,
+      /// The effort of the module was near the upper safety limit, and the motor output is being limited or reversed
+      AtUpper,
+      /// The effort of the module was above the upper safety limit; the motor output is set to return the module to within the limits
+      Above,
+      /// The module has not been inside the safety limits since it was booted or the safety limits were set
+      Uninitialized,
+    };
+
+    enum class CommandLifetimeState
+    {
+      /// There is not command lifetime active on this module
+      Unlocked,
+      /// Commands are locked out due to control from other users
+      LockedByOther,
+      /// Commands from others are locked out due to control from this group
+      LockedBySender,
+    };
+
   // Note: this is 'protected' instead of 'private' for easier use with Doxygen
   protected:
     /// \brief A message field representable by a single-precision floating point value.
@@ -208,6 +288,74 @@ class Feedback final
         HEBI_DISABLE_COPY_MOVE(Vector3fField)
     };
 
+    /// \brief A message field representable by a 3-D vector of single-precision
+    /// floating point values.
+    class QuaternionfField final {
+      public:
+        #ifndef DOXYGEN_OMIT_INTERNAL
+        QuaternionfField(HebiFeedbackPtr internal, HebiFeedbackQuaternionfField field);
+        #endif // DOXYGEN_OMIT_INTERNAL
+        /// \brief Allows casting to a bool to check if the field has a value
+        /// without directly calling @c has().
+        ///
+        /// This can be used as in the following (assuming 'parent' is a parent message,
+        /// and this field is called 'myField')
+        /// \code{.cpp}
+        /// Feedback::QuaternionfField& f = parent.myField();
+        /// if (f)
+        ///   std::cout << "Field has value!" << std::endl;
+        /// else
+        ///   std::cout << "Field has no value!" << std::endl;
+        /// \endcode
+        explicit operator bool() const;
+        /// \brief True if (and only if) the field has a value.
+        bool has() const;
+        /// \brief If the field has a value, returns that value; otherwise,
+        /// returns a default.
+        Quaternionf get() const;
+
+      private:
+        HebiFeedbackPtr const internal_;
+        HebiFeedbackQuaternionfField const field_;
+
+        HEBI_DISABLE_COPY_MOVE(QuaternionfField)
+    };
+
+    /// \brief A message field representable by an enum of a given type.
+    template <typename T>
+    class EnumField final
+    {
+      public:
+        #ifndef DOXYGEN_OMIT_INTERNAL
+        EnumField(HebiFeedbackPtr internal, HebiFeedbackEnumField field)
+          : internal_(internal), field_(field) {}
+        #endif // DOXYGEN_OMIT_INTERNAL
+        /// \brief Allows casting to a bool to check if the field has a value
+        /// without directly calling @c has().
+        ///
+        /// This can be used as in the following (assuming 'parent' is a parent message,
+        /// and this field is called 'myField')
+        /// \code{.cpp}
+        /// Feedback::EnumField& f = parent.myField();
+        /// if (f)
+        ///   std::cout << "Field has value: " << f.get() << std::endl;
+        /// else
+        ///   std::cout << "Field has no value!" << std::endl;
+        /// \endcode
+        explicit operator bool() const { return has(); }
+        /// \brief True if (and only if) the field has a value.
+        bool has() const { return (hebiFeedbackGetEnum(internal_, field_, nullptr) == HebiStatusSuccess); }
+        /// \brief If the field has a value, returns that value; otherwise,
+        /// returns a default.
+        T get() const { int32_t ret; hebiFeedbackGetEnum(internal_, field_, &ret); return static_cast<T>(ret); }
+
+      private:
+        HebiFeedbackPtr const internal_;
+        HebiFeedbackEnumField const field_;
+
+        HEBI_DISABLE_COPY_MOVE(EnumField)
+    };
+
     /// \brief A message field for interfacing with a bank of I/O pins.
     class IoBank final
     {
@@ -353,7 +501,13 @@ class Feedback final
             transmit_time_(internal, HebiFeedbackUInt64TransmitTime),
             hardware_receive_time_(internal, HebiFeedbackUInt64HardwareReceiveTime),
             hardware_transmit_time_(internal, HebiFeedbackUInt64HardwareTransmitTime),
-            sender_id_(internal, HebiFeedbackUInt64SenderId)
+            sender_id_(internal, HebiFeedbackUInt64SenderId),
+            temperature_state_(internal, HebiFeedbackEnumTemperatureState),
+            mstop_state_(internal, HebiFeedbackEnumMstopState),
+            position_limit_state_(internal, HebiFeedbackEnumPositionLimitState),
+            velocity_limit_state_(internal, HebiFeedbackEnumVelocityLimitState),
+            effort_limit_state_(internal, HebiFeedbackEnumEffortLimitState),
+            command_lifetime_state_(internal, HebiFeedbackEnumCommandLifetimeState)
         {
         }
         #endif // DOXYGEN_OMIT_INTERNAL
@@ -403,6 +557,18 @@ class Feedback final
         const UInt64Field& hardwareTransmitTime() const { return hardware_transmit_time_; }
         /// Unique ID of the module transmitting this feedback
         const UInt64Field& senderId() const { return sender_id_; }
+        /// Describes how the temperature inside the module is limiting the output of the motor
+        const EnumField<TemperatureState>& temperatureState() const { return temperature_state_; }
+        /// Current status of the MStop
+        const EnumField<MstopState>& mstopState() const { return mstop_state_; }
+        /// Software-controlled bounds on the allowable position of the module; user settable
+        const EnumField<PositionLimitState>& positionLimitState() const { return position_limit_state_; }
+        /// Software-controlled bounds on the allowable velocity of the module
+        const EnumField<VelocityLimitState>& velocityLimitState() const { return velocity_limit_state_; }
+        /// Software-controlled bounds on the allowable effort of the module
+        const EnumField<EffortLimitState>& effortLimitState() const { return effort_limit_state_; }
+        /// The state of the command lifetime safety controller, with respect to the current group
+        const EnumField<CommandLifetimeState>& commandLifetimeState() const { return command_lifetime_state_; }
     
       private:
         HebiFeedbackPtr const internal_;
@@ -427,6 +593,12 @@ class Feedback final
         UInt64Field hardware_receive_time_;
         UInt64Field hardware_transmit_time_;
         UInt64Field sender_id_;
+        EnumField<TemperatureState> temperature_state_;
+        EnumField<MstopState> mstop_state_;
+        EnumField<PositionLimitState> position_limit_state_;
+        EnumField<VelocityLimitState> velocity_limit_state_;
+        EnumField<EffortLimitState> effort_limit_state_;
+        EnumField<CommandLifetimeState> command_lifetime_state_;
     
         HEBI_DISABLE_COPY_MOVE(Actuator)
     };
@@ -439,7 +611,8 @@ class Feedback final
         Imu(HebiFeedbackPtr internal)
           : internal_(internal),
             accelerometer_(internal, HebiFeedbackVector3fAccelerometer),
-            gyro_(internal, HebiFeedbackVector3fGyro)
+            gyro_(internal, HebiFeedbackVector3fGyro),
+            orientation_(internal, HebiFeedbackQuaternionfOrientation)
         {
         }
         #endif // DOXYGEN_OMIT_INTERNAL
@@ -453,12 +626,15 @@ class Feedback final
         const Vector3fField& accelerometer() const { return accelerometer_; }
         /// Gyro data, in radians/second.
         const Vector3fField& gyro() const { return gyro_; }
+        /// On-board filtered orientation estimate.
+        const QuaternionfField& orientation() const { return orientation_; }
     
       private:
         HebiFeedbackPtr const internal_;
     
         Vector3fField accelerometer_;
         Vector3fField gyro_;
+        QuaternionfField orientation_;
     
         HEBI_DISABLE_COPY_MOVE(Imu)
     };
