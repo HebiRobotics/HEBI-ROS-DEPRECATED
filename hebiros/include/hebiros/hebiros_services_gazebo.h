@@ -17,6 +17,10 @@ class HebirosServicesGazebo : public HebirosServices {
     bool entryList(
       EntryListSrv::Request &req, EntryListSrv::Response &res);
 
+    bool addGroup(
+      AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
+      std::map<std::string, std::string> joint_full_names);
+
     bool addGroupFromNames(
       AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);
 

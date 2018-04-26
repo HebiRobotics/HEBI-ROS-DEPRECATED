@@ -11,8 +11,9 @@ bool HebirosServices::entryList(
   return true;
 }
 
-bool HebirosServices::addGroupFromNames(
-  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
+bool HebirosServices::addGroup(
+  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
+  std::map<std::string, std::string> joint_full_names) {
 
   if (req.families.size() != 1 && req.families.size() != req.names.size()) {
     ROS_WARN("Invalid number of familes for group [%s]", req.group_name.c_str());
@@ -48,11 +49,14 @@ bool HebirosServices::addGroupFromNames(
     }
   }
 
+  group->joint_full_names = joint_full_names;
+
   if (HebirosGroupGazebo::getGroup(req.group_name)) {
     std::shared_ptr<HebirosGroupGazebo> group_gazebo =
       HebirosGroupGazebo::getGroup(req.group_name);
     group_gazebo->size = group_gazebo->joints.size();
     group->size = group_gazebo->size;
+    group_gazebo->joint_full_names = joint_full_names;
   }
 
   if (HebirosGroupPhysical::getGroup(req.group_name)) {
@@ -60,6 +64,7 @@ bool HebirosServices::addGroupFromNames(
       HebirosGroupPhysical::getGroup(req.group_name);
     group_physical->size = group_physical->joints.size();
     group->size = group_physical->size;
+    group_physical->joint_full_names = joint_full_names;
   }
 
   return true;
@@ -76,13 +81,16 @@ bool HebirosServices::split(const std::string &orig, std::string &name, std::str
   if (!std::getline(ss, family, '/')) {
     return false;
   }
+  if (!std::getline(ss, name, '/')) {
+    return false;
+  }
 
-  std::getline(ss, name, '/');
   return true;
 }
 
 void HebirosServices::addJointChildren(std::set<std::string>& names,
-  std::set<std::string>& families, std::set<std::string>& full_names, const urdf::Link* link) {
+  std::set<std::string>& families, std::map<std::string, std::string>& full_names,
+  const urdf::Link* link) {
   for (auto& joint : link->child_joints) {
 
     if (joint->type != urdf::Joint::FIXED) {
@@ -91,7 +99,7 @@ void HebirosServices::addJointChildren(std::set<std::string>& names,
       if (split(joint->name, name, family)) {
         names.insert(name);
         families.insert(family);
-        full_names.insert(joint->name);
+        full_names[family+'/'+name] = joint->name;
       }
     }
   }

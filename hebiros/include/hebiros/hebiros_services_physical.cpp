@@ -65,8 +65,9 @@ bool HebirosServicesPhysical::entryList(
   return true;
 }
 
-bool HebirosServicesPhysical::addGroupFromNames(
-  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
+bool HebirosServicesPhysical::addGroup(
+  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
+  std::map<std::string, std::string> joint_full_names) {
 
   if (HebirosGroup::findGroup(req.group_name)) {
 
@@ -83,13 +84,15 @@ bool HebirosServicesPhysical::addGroupFromNames(
     return false;
   }
 
-  if (!HebirosServices::addGroupFromNames(req, res)) {
+  if (!HebirosServices::addGroup(req, res, joint_full_names)) {
     HebirosGroupPhysical::removeGroup(req.group_name);
     return false;
   }
 
   std::shared_ptr<HebirosGroupPhysical> group_physical =
     HebirosGroupPhysical::getGroup(req.group_name);
+
+  group_physical->joint_full_names = joint_full_names;
   group_physical->group_ptr = group.group_ptr;
   group_physical->group_info_ptr = new GroupInfo(group_physical->size);
 
@@ -99,6 +102,14 @@ bool HebirosServicesPhysical::addGroupFromNames(
   HebirosNode::actions.registerGroupActions(req.group_name);
 
   return true;
+}
+
+bool HebirosServicesPhysical::addGroupFromNames(
+  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
+  
+  std::map<std::string, std::string> joint_full_names;
+
+  return HebirosNode::services_physical.addGroup(req, res, joint_full_names);
 }
 
 bool HebirosServicesPhysical::addGroupFromURDF(
@@ -114,9 +125,10 @@ bool HebirosServicesPhysical::addGroupFromURDF(
 
   std::set<std::string> joint_names;
   std::set<std::string> family_names;
-  std::set<std::string> joint_full_names;
-  HebirosServices::addJointChildren(
-    joint_names, family_names, joint_full_names, urdf_model.getRoot().get());
+  std::map<std::string, std::string> joint_full_names;
+
+  HebirosServices::addJointChildren(joint_names, family_names, joint_full_names,
+    urdf_model.getRoot().get());
 
   AddGroupFromNamesSrv::Request names_req;
   AddGroupFromNamesSrv::Response names_res;
@@ -124,7 +136,7 @@ bool HebirosServicesPhysical::addGroupFromURDF(
   names_req.families.insert(names_req.families.end(), family_names.begin(), family_names.end());
   names_req.names.insert(names_req.names.end(), joint_names.begin(), joint_names.end());
 
-  return HebirosNode::services_physical.addGroupFromNames(names_req, names_res);
+  return HebirosNode::services_physical.addGroup(names_req, names_res, joint_full_names);
 }
 
 bool HebirosServicesPhysical::size(

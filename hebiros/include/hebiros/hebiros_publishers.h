@@ -16,6 +16,7 @@ class HebirosPublishers {
     void registerGroupPublishers(std::string group_name);
     void feedback(std::string group_name, hebiros::FeedbackMsg feedback_msg);
     void feedbackJointState(std::string group_name, sensor_msgs::JointState joint_state_msg);
+    void feedbackJointStateUrdf(std::string group_name, sensor_msgs::JointState joint_state_msg);
     void commandJointState(std::string group_name, sensor_msgs::JointState joint_state_msg);
 
 };

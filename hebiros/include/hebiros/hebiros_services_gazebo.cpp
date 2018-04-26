@@ -47,8 +47,9 @@ bool HebirosServicesGazebo::entryList(
   return true;
 }
 
-bool HebirosServicesGazebo::addGroupFromNames(
-  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
+bool HebirosServicesGazebo::addGroup(
+  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
+  std::map<std::string, std::string> joint_full_names) {
 
   if (HebirosGroup::findGroup(req.group_name)) {
 
@@ -58,7 +59,7 @@ bool HebirosServicesGazebo::addGroupFromNames(
   
   HebirosGroupGazebo group(req.group_name);
 
-  if (!HebirosServices::addGroupFromNames(req, res)) {
+  if (!HebirosServices::addGroup(req, res, joint_full_names)) {
     HebirosGroupGazebo::removeGroup(req.group_name);
     return false;
   }
@@ -66,6 +67,14 @@ bool HebirosServicesGazebo::addGroupFromNames(
   registerGroupServices(req.group_name);
 
   return true;
+}
+
+bool HebirosServicesGazebo::addGroupFromNames(
+  AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res) {
+
+  std::map<std::string, std::string> joint_full_names;
+
+  return HebirosNode::services_gazebo.addGroup(req, res, joint_full_names);
 }
 
 bool HebirosServicesGazebo::addGroupFromURDF(
@@ -81,9 +90,10 @@ bool HebirosServicesGazebo::addGroupFromURDF(
 
   std::set<std::string> joint_names;
   std::set<std::string> family_names;
-  std::set<std::string> joint_full_names;
-  HebirosServices::addJointChildren(
-    joint_names, family_names, joint_full_names, urdf_model.getRoot().get());
+  std::map<std::string, std::string> joint_full_names;
+
+  HebirosServices::addJointChildren(joint_names, family_names, joint_full_names,
+    urdf_model.getRoot().get());
 
   AddGroupFromNamesSrv::Request names_req;
   AddGroupFromNamesSrv::Response names_res;

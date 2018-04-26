@@ -20,6 +20,7 @@ class HebirosGazeboJoint {
     CommandMsg command_target;
     FeedbackMsg feedback;
 
+    int feedback_index;
     int command_index;
     bool command_received = false;
 

@@ -15,6 +15,7 @@ class HebirosGroup {
 
     std::string name;
     int size;
+    std::map<std::string, std::string> joint_full_names;
     std::map<std::string, int> joints;
     sensor_msgs::JointState joint_state_msg;
     hebiros::FeedbackMsg feedback_msg;

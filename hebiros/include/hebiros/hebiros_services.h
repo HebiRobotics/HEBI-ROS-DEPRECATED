@@ -28,6 +28,10 @@ class HebirosServices {
     bool entryList(
       EntryListSrv::Request &req, EntryListSrv::Response &res);
 
+    bool addGroup(
+      AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
+      std::map<std::string, std::string> joint_full_names);
+
     bool addGroupFromNames(
       AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);
 
@@ -52,7 +56,7 @@ class HebirosServices {
     bool split(const std::string &orig, std::string &name, std::string &family);
 
     void addJointChildren(std::set<std::string>& names, std::set<std::string>& families, 
-      std::set<std::string>& full_names, const urdf::Link* link);
+      std::map<std::string, std::string>& full_names, const urdf::Link* link);
 
 };
 
