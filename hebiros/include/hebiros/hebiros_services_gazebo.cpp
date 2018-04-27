@@ -65,6 +65,7 @@ bool HebirosServicesGazebo::addGroup(
   }
 
   registerGroupServices(req.group_name);
+  HebirosNode::clients.addGroup(req);
 
   return true;
 }

@@ -1,5 +1,6 @@
 
 #include <hebiros_gazebo_group.h>
+#include "hebiros_gazebo_controller.h"
 
 HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   std::shared_ptr<ros::NodeHandle> n) {
@@ -12,11 +13,16 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
 
   this->command_sub = n->subscribe<CommandMsg>("/hebiros_gazebo_plugin/command/"+name, 100,
     boost::bind(&HebirosGazeboGroup::SubCommand, this, _1));
+
+  this->acknowledge_srv =
+    n->advertiseService<std_srvs::Empty::Request, std_srvs::Empty::Response>(
+    "/hebiros_gazebo_plugin/acknowledge/"+name, boost::bind(
+    &HebirosGazeboGroup::SrvAcknowledge, this, _1, _2));
 }
 
 HebirosGazeboGroup::~HebirosGazeboGroup() {}
 
-HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
+void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
 
   if (this->check_acknowledgement) {
     this->acknowledgement = true;
@@ -40,8 +46,25 @@ HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
       std::shared_ptr<HebirosGazeboJoint> hebiros_joint = joints[joint_name];
       hebiros_joint->command_index = i;
 
-      HebirosGazeboController::ChangeSettings(hebiros_group, hebiros_joint);
+      HebirosGazeboController::ChangeSettings(shared_from_this(),
+        hebiros_joint);
     }
+  }
+}
+
+//Service callback which acknowledges that a command has been received
+bool HebirosGazeboGroup::SrvAcknowledge(std_srvs::Empty::Request &req,
+  std_srvs::Empty::Response &res) {
+
+  this->check_acknowledgement = true;
+
+  if (this->acknowledgement) {
+    this->check_acknowledgement = false;
+    this->acknowledgement = false;
+    return true;
+  }
+  else {
+    return false;
   }
 }
 

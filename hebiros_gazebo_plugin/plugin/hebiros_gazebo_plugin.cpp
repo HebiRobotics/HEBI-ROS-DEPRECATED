@@ -8,7 +8,7 @@ HebirosGazeboPlugin::~HebirosGazeboPlugin() {}
 
 //Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-
+std::cout << "load 3" << std::endl;
   this->model = _model;
 
   int argc = 0;
@@ -16,18 +16,10 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   ros::init(argc, argv, "hebiros_gazebo_plugin_node");
   this->n.reset(new ros::NodeHandle);
 
-  this->check_acknowledgement = false;
-  this->acknowledgement = false;
-
   this->add_group_srv =
     this->n->advertiseService<AddGroupFromNamesSrv::Request, AddGroupFromNamesSrv::Response>(
     "/hebiros_gazebo_plugin/add_group", boost::bind(
     &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
-
-  this->acknowledge_srv =
-    this->n->advertiseService<std_srvs::Empty::Request, std_srvs::Empty::Response>(
-    "/hebiros_gazebo_plugin/acknowledge", boost::bind(
-    &HebirosGazeboPlugin::SrvAcknowledge, this, _1, _2));
 
   this->command_lifetime_srv =
     this->n->advertiseService<SetCommandLifetimeSrv::Request,
@@ -47,17 +39,15 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
 //Update the joints at every simulation iteration
 void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
-
   for (auto group_pair : hebiros_groups) {
-    group_pair.second
+    UpdateGroup(group_pair.second);
   }
 }
 
 //Publish feedback and compute PID control to command a joint
-void HebirosGazeboPlugin::UpdateGroup(
-  std::string joint_name, physics::JointPtr joint) {
+void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group) {
 
-  for (auto joint_pair : hebiros_group.joints) {
+  for (auto joint_pair : hebiros_group->joints) {
     std::string joint_name = joint_pair.first;
     std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_joints[joint_name];
 
@@ -68,8 +58,8 @@ void HebirosGazeboPlugin::UpdateGroup(
       std::shared_ptr<HebirosGazeboJoint> hebiros_joint = joint_pair.second;
 
       ros::Time current_time = ros::Time::now();
-      ros::Duration elapsed_time = current_time - hebiros_joint->start_time;
-      ros::Duration feedback_time = current_time - hebiros_joint->prev_feedback_time;
+      ros::Duration elapsed_time = current_time - hebiros_group->start_time;
+      ros::Duration feedback_time = current_time - hebiros_group->prev_feedback_time;
 
       int i = hebiros_joint->feedback_index;
 
@@ -78,60 +68,46 @@ void HebirosGazeboPlugin::UpdateGroup(
       physics::JointWrench wrench = joint->GetForceTorque(0);
       double effort = wrench.body1Force.z;
 
-      hebiros_group->feedback_msg.position[i] = position;
-      hebiros_group->feedback_msg.velocity[i] = velocity;
-      hebiros_group->feedback_msg.effort[i] = effort;
+      hebiros_group->feedback.position[i] = position;
+      hebiros_group->feedback.velocity[i] = velocity;
+      hebiros_group->feedback.effort[i] = effort;
 
-      hebiros_group->feedback_msg.accelerometer[i] = hebiros_joint.accelerometer;
-      hebiros_group->feedback_msg.gyro[i] = hebiros_joint.gyro;
+      hebiros_group->feedback.accelerometer[i] = hebiros_joint->accelerometer;
+      hebiros_group->feedback.gyro[i] = hebiros_joint->gyro;
 
-      if (hebiros_joint->command_received) {
-        double force = this->controller.ComputeForce(hebiros_joint, position, velocity, effort);
+      if (hebiros_group->command_received) {
+        double force = HebirosGazeboController::ComputeForce(hebiros_group, hebiros_joint,
+          position, velocity, effort);
 
         if ((this->command_lifetime == 0) || (
-          elapsed_time.toSec() <= hebiros_group->command_lifetime/1000.0)) {
+          //elapsed_time.toSec() <= hebiros_group->command_lifetime/1000.0)) {
+          elapsed_time.toSec() <= this->command_lifetime/1000.0)) {
 
           joint->SetForce(0, force);
         }
 
         int j = hebiros_joint->command_index;
-        if (i < hebiros_joint->command_target.position.size()) {
-          hebiros_group->feedback_msg.position_command[j] = hebiros_joint->command_target.position[i];
+        if (i < hebiros_group->command_target.position.size()) {
+          hebiros_group->feedback.position_command[j] = hebiros_group->command_target.position[j];
         }
-        if (i < hebiros_joint->command_target.velocity.size()) {
-          hebiros_joint->feedback.velocity_command = {hebiros_joint->command_target.velocity[i]};
+        if (i < hebiros_group->command_target.velocity.size()) {
+          hebiros_group->feedback.velocity_command[j] = hebiros_group->command_target.velocity[j];
         }
-        if (i < hebiros_joint->command_target.effort.size()) {
-          hebiros_joint->feedback.effort_command = {hebiros_joint->command_target.effort[i]};
+        if (i < hebiros_group->command_target.effort.size()) {
+          hebiros_group->feedback.effort_command[j] = hebiros_group->command_target.effort[j];
         }
       }
 
-      if (!hebiros_joint->feedback_publisher.getTopic().empty() &&
+      if (!hebiros_group->feedback_pub.getTopic().empty() &&
         feedback_time.toSec() >= 1.0/this->feedback_frequency) {
 
-        hebiros_group->feedback_publisher.publish(hebiros_group->feedback_msg);
+        hebiros_group->feedback_pub.publish(hebiros_group->feedback);
         hebiros_group->prev_feedback_time = current_time;
       }
     }
     else {
       ROS_WARN("Joint %s not found", joint_name.c_str());
     }
-  }
-}
-
-//Service callback which acknowledges that a command has been received
-bool HebirosGazeboPlugin::SrvAcknowledge(std_srvs::Empty::Request &req,
-  std_srvs::Empty::Response &res) {
-
-  this->check_acknowledgement = true;
-
-  if (this->acknowledgement) {
-    this->check_acknowledgement = false;
-    this->acknowledgement = false;
-    return true;
-  }
-  else {
-    return false;
   }
 }
 
@@ -150,7 +126,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
         (req.families.size() == req.names.size() && i == j)) {
 
         std::string joint_name = req.families[i]+"/"+req.names[j];
-        hebiros_group->feedback_msg.name.push_back(joint_name);
+        hebiros_group->feedback.name.push_back(joint_name);
 
         AddJointToGroup(hebiros_group, joint_name);
       }
@@ -159,17 +135,17 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
 
   int size = hebiros_group->joints.size();
 
-  hebiros_group->feedback_msg.position.resize(size);
-  hebiros_group->feedback_msg.velocity.resize(size);
-  hebiros_group->feedback_msg.effort.resize(size);
-  hebiros_group->feedback_msg.position_command.resize(size);
-  hebiros_group->feedback_msg.velocity_command.resize(size);
-  hebiros_group->feedback_msg.effort_command.resize(size);
-  hebiros_group->feedback_msg.accelerometer.resize(size);
-  hebiros_group->feedback_msg.gyro.resize(size);
+  hebiros_group->feedback.position.resize(size);
+  hebiros_group->feedback.velocity.resize(size);
+  hebiros_group->feedback.effort.resize(size);
+  hebiros_group->feedback.position_command.resize(size);
+  hebiros_group->feedback.velocity_command.resize(size);
+  hebiros_group->feedback.effort_command.resize(size);
+  hebiros_group->feedback.accelerometer.resize(size);
+  hebiros_group->feedback.gyro.resize(size);
 
-  hebiros_group->feedback_publisher = this->n->advertise<FeedbackMsg>(
-    "/hebiros_gazebo_plugin/feedback/"+group_name, 100);
+  hebiros_group->feedback_pub = this->n->advertise<FeedbackMsg>(
+    "/hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
 
   return true;
 }
@@ -214,8 +190,8 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
     hebiros_joint->model_name = "X5_9";
   }
 
-  this->controller.SetSettings(hebiros_group, hebiros_joint);
-  this->controller.ChangeSettings(hebiros_group, hebiros_joint);
+  HebirosGazeboController::SetSettings(hebiros_group, hebiros_joint);
+  HebirosGazeboController::ChangeSettings(hebiros_group, hebiros_joint);
 }
 
 //Tell Gazebo about this plugin

@@ -187,6 +187,7 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebiros/hebiros_subscribers_gazebo.cpp
   include/hebiros/hebiros_subscribers_physical.cpp
   include/hebiros/hebiros_publishers.cpp
+  include/hebiros/hebiros_clients.cpp
   include/hebiros/hebiros_actions.cpp
 )
 

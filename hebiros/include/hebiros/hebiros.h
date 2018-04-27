@@ -48,6 +48,7 @@
 #include "hebiros_subscribers_gazebo.h"
 #include "hebiros_subscribers_physical.h"
 #include "hebiros_publishers.h"
+#include "hebiros_clients.h"
 #include "hebiros_actions.h"
 #include "hebiros_group.h"
 #include "hebiros_group_gazebo.h"
@@ -76,7 +77,7 @@ class HebirosNode {
     static HebirosSubscribersPhysical subscribers_physical;
     static HebirosServicesGazebo services_gazebo;
     static HebirosServicesPhysical services_physical;
-    std::map<std::string, ros::ServiceClient> clients;
+    static HebirosClients clients;
     static HebirosActions actions;
 
     bool use_gazebo;

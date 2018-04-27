@@ -3,10 +3,11 @@
 #define _HEBIROS_GAZEBO_CONTROLLER_HH_
 
 #include "ros/ros.h"
+#include "hebiros_gazebo_group.h"
 #include "hebiros_gazebo_joint.h"
-#include <map>
 
 using namespace hebiros;
+
 
 class HebirosGazeboController {
 
@@ -20,48 +21,52 @@ class HebirosGazeboController {
       CONTROL_STRATEGY_4 = 4
     };
 
-    control_strategies DEFAULT_CONTROL_STRATEGY = control_strategies::CONTROL_STRATEGY_3;
+    static control_strategies DEFAULT_CONTROL_STRATEGY;
 
-    double MAX_PWM = 1.0;
-    double MIN_PWM = -1.0;
+    static double MAX_PWM;
+    static double MIN_PWM;
 
-    double LOW_PASS_ALPHA = 0.1;
+    static double LOW_PASS_ALPHA;
 
-    double DEFAULT_POSITION_KP = 0.5;
-    double DEFAULT_POSITION_KI = 0.0;
-    double DEFAULT_POSITION_KD = 0.0;
-    double DEFAULT_VELOCITY_KP = 0.05;
-    double DEFAULT_VELOCITY_KI = 0.0;
-    double DEFAULT_VELOCITY_KD = 0.0;
-    double DEFAULT_EFFORT_KP = 0.25;
-    double DEFAULT_EFFORT_KI = 0.0;
-    double DEFAULT_EFFORT_KD = 0.001;
+    static double DEFAULT_POSITION_KP;
+    static double DEFAULT_POSITION_KI;
+    static double DEFAULT_POSITION_KD;
+    static double DEFAULT_VELOCITY_KP;
+    static double DEFAULT_VELOCITY_KI;
+    static double DEFAULT_VELOCITY_KD;
+    static double DEFAULT_EFFORT_KP;
+    static double DEFAULT_EFFORT_KI;
+    static double DEFAULT_EFFORT_KD;
 
-    double GEAR_RATIO_X5_1 = 272.22;
-    double GEAR_RATIO_X5_4 = 762.22;
-    double GEAR_RATIO_X5_9 = 1742.22;
+    static double GEAR_RATIO_X5_1;
+    static double GEAR_RATIO_X5_4;
+    static double GEAR_RATIO_X5_9;
 
-    double DEFAULT_GEAR_RATIO = GEAR_RATIO_X5_1;
+    static double DEFAULT_GEAR_RATIO;
 
-    std::map<std::string, double> gear_ratios = {
-      {"X5_1", GEAR_RATIO_X5_1},
-      {"X5_4", GEAR_RATIO_X5_4},
-      {"X5_9", GEAR_RATIO_X5_9}};
+    static std::map<std::string, double> gear_ratios;
 
     HebirosGazeboController();
     ~HebirosGazeboController();
-    double ComputeForce(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+    static double ComputeForce(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
       double position, double velocity, double effort);
-    double ComputePositionPID(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+    static double ComputePositionPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
       double target_position, double position, ros::Duration iteration_time);
-    double ComputeVelocityPID(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+    static double ComputeVelocityPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
       double target_velocity, double velocity, ros::Duration iteration_time);
-    double ComputeEffortPID(std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
+    static double ComputeEffortPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
       double target_effort, double effort, ros::Duration iteration_time);
-    void SetSettings(std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
-    void ChangeSettings(std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
-    void SetDefaultGains(std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
-    double Clip(double x, double low, double high);
+    static void SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
+    static void ChangeSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
+    static void SetDefaultGains(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
+      std::shared_ptr<HebirosGazeboJoint> hebiros_joint);
+    static double Clip(double x, double low, double high);
 
 };
 

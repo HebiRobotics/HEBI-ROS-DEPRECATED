@@ -7,6 +7,7 @@ HebirosSubscribersGazebo HebirosNode::subscribers_gazebo;
 HebirosSubscribersPhysical HebirosNode::subscribers_physical;
 HebirosServicesGazebo HebirosNode::services_gazebo;
 HebirosServicesPhysical HebirosNode::services_physical;
+HebirosClients HebirosNode::clients;
 HebirosActions HebirosNode::actions;
 
 //Initialize the hebiros_node and advertise base level topics and services

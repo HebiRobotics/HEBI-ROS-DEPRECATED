@@ -41,9 +41,6 @@ class HebirosGazeboPlugin: public ModelPlugin {
     event::ConnectionPtr update_connection;
     std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
     std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
-    HebirosGazeboController controller;
-    bool check_acknowledgement;
-    bool acknowledgement;
 
     std::shared_ptr<ros::NodeHandle> n;
     ros::Subscriber command_sub;
@@ -52,14 +49,11 @@ class HebirosGazeboPlugin: public ModelPlugin {
     ros::ServiceServer command_lifetime_srv;
     ros::ServiceServer feedback_frequency_srv;
 
-    void AddJoint(std::string joint_name);
-    void UpdateJoint(std::string joint_name, physics::JointPtr joint);
+    void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, std::string joint_name);
+    void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group);
 
-    void SubCommand(const boost::shared_ptr<CommandMsg const> data);
     bool SrvAddGroup(AddGroupFromNamesSrv::Request &req,
       AddGroupFromNamesSrv::Response &res);
-    bool SrvAcknowledge(std_srvs::Empty::Request &req,
-      std_srvs::Empty::Response &res);
     bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
       SetCommandLifetimeSrv::Response &res);
     bool SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req,
