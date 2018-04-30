@@ -2,6 +2,8 @@
 #include <hebiros_gazebo_controller.h>
 
 
+namespace controller {
+
 enum class control_strategies {
   CONTROL_STRATEGY_OFF = 0,
   CONTROL_STRATEGY_DIRECT_PWM = 1,
@@ -12,31 +14,35 @@ enum class control_strategies {
 
 control_strategies DEFAULT_CONTROL_STRATEGY = control_strategies::CONTROL_STRATEGY_3;
 
-double MAX_PWM = 1.0;
-double MIN_PWM = -1.0;
+    double MAX_PWM = 1.0;
+    double MIN_PWM = -1.0;
 
-double LOW_PASS_ALPHA = 0.1;
+    double LOW_PASS_ALPHA = 0.1;
 
-double DEFAULT_POSITION_KP = 0.5;
-double DEFAULT_POSITION_KI = 0.0;
-double DEFAULT_POSITION_KD = 0.0;
-double DEFAULT_VELOCITY_KP = 0.05;
-double DEFAULT_VELOCITY_KI = 0.0;
-double DEFAULT_VELOCITY_KD = 0.0;
-double DEFAULT_EFFORT_KP = 0.25;
-double DEFAULT_EFFORT_KI = 0.0;
-double DEFAULT_EFFORT_KD = 0.001;
+    double DEFAULT_POSITION_KP = 0.5;
+    double DEFAULT_POSITION_KI = 0.0;
+    double DEFAULT_POSITION_KD = 0.0;
+    double DEFAULT_VELOCITY_KP = 0.05;
+    double DEFAULT_VELOCITY_KI = 0.0;
+    double DEFAULT_VELOCITY_KD = 0.0;
+    double DEFAULT_EFFORT_KP = 0.25;
+    double DEFAULT_EFFORT_KI = 0.0;
+    double DEFAULT_EFFORT_KD = 0.001;
 
-double GEAR_RATIO_X5_1 = 272.22;
-double GEAR_RATIO_X5_4 = 762.22;
-double GEAR_RATIO_X5_9 = 1742.22;
+    double GEAR_RATIO_X5_1 = 272.22;
+    double GEAR_RATIO_X5_4 = 762.22;
+    double GEAR_RATIO_X5_9 = 1742.22;
 
-double DEFAULT_GEAR_RATIO = GEAR_RATIO_X5_1;
+    double DEFAULT_GEAR_RATIO = 272.22;
 
 std::map<std::string, double> gear_ratios = {
   {"X5_1", GEAR_RATIO_X5_1},
   {"X5_4", GEAR_RATIO_X5_4},
   {"X5_9", GEAR_RATIO_X5_9}};
+}
+
+using namespace controller;
+
 
 HebirosGazeboController::HebirosGazeboController() {}
 
@@ -47,11 +53,8 @@ void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> he
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint) {
 
   hebiros_group->settings.name.push_back(hebiros_joint->name);
-
-  CommandMsg target = hebiros_group->command_target;
-  int i = hebiros_joint->command_index;
-
   hebiros_joint->low_pass_alpha = LOW_PASS_ALPHA;
+  int i = hebiros_joint->command_index;
 
   //Set gear ratio
   if (gear_ratios.find(hebiros_joint->model_name) != gear_ratios.end()) {
@@ -62,13 +65,8 @@ void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> he
   }
 
   //Set control strategy
-  if (i < target.settings.control_strategy.size()) {
-    hebiros_group->settings.control_strategy.push_back(target.settings.control_strategy[i]);
-  }
-  else {
-    hebiros_group->settings.control_strategy = {
-      static_cast<char>(DEFAULT_CONTROL_STRATEGY)};
-  }
+  hebiros_group->settings.control_strategy.push_back(
+    static_cast<char>(DEFAULT_CONTROL_STRATEGY));
 
   SetDefaultGains(hebiros_group, hebiros_joint);
 }

@@ -7,7 +7,7 @@
 #include "geometry_msgs/Vector3.h"
 
 
-class HebirosGazeboJoint {
+class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoint> {
 
   public:
 

@@ -24,6 +24,7 @@ class HebirosGazeboGroup : public std::enable_shared_from_this<HebirosGazeboGrou
     bool check_acknowledgement = false;
     bool acknowledgement = false;
     bool command_received = false;
+    bool group_added = false;
 
     ros::Time start_time;
     ros::Time prev_time;

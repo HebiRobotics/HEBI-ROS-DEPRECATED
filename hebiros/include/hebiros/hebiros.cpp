@@ -30,6 +30,7 @@ HebirosNode::HebirosNode (int argc, char **argv) {
   if (use_gazebo) {
     HebirosParameters::setBool("/use_sim_time", true);
     services_gazebo.registerNodeServices();
+    clients.registerNodeClients();
   }
   else {
     HebirosParameters::setBool("/use_sim_time", false);
