@@ -31,9 +31,6 @@
         <axis xyz="0 0 1"/>
         <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
         <dynamics damping="0.1" friction="0.1"/>
-        <physics>
-          <provide_feedback>true</provide_feedback>
-        </physics>
       </joint>
     </xacro:if>
     <xacro:if value="${model_name == 'X5_4'}">
