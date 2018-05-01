@@ -33,13 +33,13 @@ bool HebirosServices::addGroup(
 
         group->joints[joint_name] = j;
 
-        if (HebirosGroupGazebo::getGroup(req.group_name)) {
+        if (HebirosGroupGazebo::findGroup(req.group_name)) {
           std::shared_ptr<HebirosGroupGazebo> group_gazebo =
             HebirosGroupGazebo::getGroup(req.group_name);
           group_gazebo->joints[joint_name] = j;
         }
 
-        if (HebirosGroupPhysical::getGroup(req.group_name)) {
+        if (HebirosGroupPhysical::findGroup(req.group_name)) {
           std::shared_ptr<HebirosGroupPhysical> group_physical =
             HebirosGroupPhysical::getGroup(req.group_name);
           group_physical->joints[joint_name] = j;
@@ -50,7 +50,7 @@ bool HebirosServices::addGroup(
 
   group->joint_full_names = joint_full_names;
 
-  if (HebirosGroupGazebo::getGroup(req.group_name)) {
+  if (HebirosGroupGazebo::findGroup(req.group_name)) {
     std::shared_ptr<HebirosGroupGazebo> group_gazebo =
       HebirosGroupGazebo::getGroup(req.group_name);
     group_gazebo->size = group_gazebo->joints.size();
@@ -58,7 +58,7 @@ bool HebirosServices::addGroup(
     group_gazebo->joint_full_names = joint_full_names;
   }
 
-  if (HebirosGroupPhysical::getGroup(req.group_name)) {
+  if (HebirosGroupPhysical::findGroup(req.group_name)) {
     std::shared_ptr<HebirosGroupPhysical> group_physical =
       HebirosGroupPhysical::getGroup(req.group_name);
     group_physical->size = group_physical->joints.size();
