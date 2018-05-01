@@ -21,16 +21,6 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     "/hebiros_gazebo_plugin/add_group", boost::bind(
     &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
 
-  this->command_lifetime_srv =
-    this->n->advertiseService<SetCommandLifetimeSrv::Request,
-    SetCommandLifetimeSrv::Response>("/hebiros_gazebo_plugin/set_command_lifetime",
-    boost::bind(&HebirosGazeboPlugin::SrvSetCommandLifetime, this, _1, _2));
-
-  this->feedback_frequency_srv =
-    this->n->advertiseService<SetFeedbackFrequencySrv::Request,
-    SetFeedbackFrequencySrv::Response>("/hebiros_gazebo_plugin/set_feedback_frequency",
-    boost::bind(&HebirosGazeboPlugin::SrvSetFeedbackFrequency, this, _1, _2));
-
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
 
@@ -71,6 +61,7 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
 
       int i = hebiros_joint->feedback_index;
 
+      joint->SetProvideFeedback(true);
       double position = joint->GetAngle(0).Radian();
       double velocity = joint->GetVelocity(0);
       physics::JointWrench wrench = joint->GetForceTorque(0);
@@ -87,9 +78,8 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
         double force = HebirosGazeboController::ComputeForce(hebiros_group, hebiros_joint,
           position, velocity, effort);
 
-        if ((this->command_lifetime == 0) || (
-          //elapsed_time.toSec() <= hebiros_group->command_lifetime/1000.0)) {
-          elapsed_time.toSec() <= this->command_lifetime/1000.0)) {
+        if ((hebiros_group->command_lifetime == 0) || (
+          elapsed_time.toSec() <= hebiros_group->command_lifetime/1000.0)) {
 
           joint->SetForce(0, force);
         }
@@ -107,7 +97,7 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       }
 
       if (!hebiros_group->feedback_pub.getTopic().empty() &&
-        feedback_time.toSec() >= 1.0/this->feedback_frequency) {
+        feedback_time.toSec() >= 1.0/hebiros_group->feedback_frequency) {
 
         hebiros_group->feedback_pub.publish(hebiros_group->feedback);
         hebiros_group->prev_feedback_time = current_time;
@@ -122,6 +112,11 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
 //Service callback which adds a group with corresponding joints
 bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   AddGroupFromNamesSrv::Response &res) {
+
+  if (hebiros_groups.find(req.group_name) != hebiros_groups.end()) {
+    ROS_WARN("Group %s already exists", req.group_name.c_str());
+    return true;
+  }
 
   std::shared_ptr<HebirosGazeboGroup> hebiros_group =
     std::make_shared<HebirosGazeboGroup>(req.group_name, this->n);
@@ -157,24 +152,6 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
     "/hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
 
   hebiros_group->group_added = true;
-
-  return true;
-}
-
-//Service callback which sets the command lifetime for all joints
-bool HebirosGazeboPlugin::SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
-  SetCommandLifetimeSrv::Response &res) {
-
-  this->command_lifetime = req.command_lifetime;
-
-  return true;
-}
-
-//Service callback which sets the feedback frequency for all joints
-bool HebirosGazeboPlugin::SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req,
-  SetFeedbackFrequencySrv::Response &res) {
-
-  this->feedback_frequency = req.feedback_frequency;
 
   return true;
 }

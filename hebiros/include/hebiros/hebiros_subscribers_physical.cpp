@@ -413,12 +413,11 @@ void HebirosSubscribersPhysical::feedback(std::string group_name, const GroupFee
       group_fbk[i].actuator().hardwareTransmitTime().get());
   }
 
-  group->joint_state_msg = joint_state_msg;
   group->feedback_msg = feedback_msg;
+  group->joint_state_msg = joint_state_msg;
 
-  HebirosNode::publishers.feedback(group_name, feedback_msg);
-
-  HebirosNode::publishers.feedbackJointState(group_name, joint_state_msg);
+  HebirosNode::publishers_physical.feedback(feedback_msg, group_name);
+  HebirosNode::publishers_physical.feedbackJointState(joint_state_msg, group_name);
 }
 
 

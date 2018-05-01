@@ -14,10 +14,10 @@ class HebirosPublishers {
     static std::map<std::string, ros::Publisher> publishers;
 
     void registerGroupPublishers(std::string group_name);
-    void feedback(std::string group_name, hebiros::FeedbackMsg feedback_msg);
-    void feedbackJointState(std::string group_name, sensor_msgs::JointState joint_state_msg);
-    void feedbackJointStateUrdf(std::string group_name, sensor_msgs::JointState joint_state_msg);
-    void commandJointState(std::string group_name, sensor_msgs::JointState joint_state_msg);
+    void feedback(hebiros::FeedbackMsg feedback_msg, std::string group_name);
+    void feedbackJointState(sensor_msgs::JointState joint_state_msg, std::string group_name);
+    void feedbackJointStateUrdf(sensor_msgs::JointState joint_state_msg, std::string group_name);
+    void commandJointState(sensor_msgs::JointState joint_state_msg, std::string group_name);
 
 };
 

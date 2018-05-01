@@ -95,7 +95,7 @@ void HebirosActions::trajectory(const TrajectoryGoalConstPtr& goal, std::string 
       joint_state_msg.position[joint_index] = position_command(i);
       joint_state_msg.velocity[joint_index] = velocity_command(i);
     }
-    HebirosNode::publishers.commandJointState(group_name, joint_state_msg);
+    HebirosNode::publishers_physical.commandJointState(joint_state_msg, group_name);
 
     ros::spinOnce();
     loop_rate.sleep();

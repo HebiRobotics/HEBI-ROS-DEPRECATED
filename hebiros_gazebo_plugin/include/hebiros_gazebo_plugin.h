@@ -34,8 +34,6 @@ class HebirosGazeboPlugin: public ModelPlugin {
     void OnUpdate(const common::UpdateInfo & _info);
 
   private:
-    int command_lifetime = 100;
-    int feedback_frequency = 100;
 
     physics::ModelPtr model;
     event::ConnectionPtr update_connection;
@@ -46,18 +44,12 @@ class HebirosGazeboPlugin: public ModelPlugin {
     ros::Subscriber command_sub;
     ros::ServiceServer add_group_srv;
     ros::ServiceServer acknowledge_srv;
-    ros::ServiceServer command_lifetime_srv;
-    ros::ServiceServer feedback_frequency_srv;
 
     void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, std::string joint_name);
     void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group);
 
     bool SrvAddGroup(AddGroupFromNamesSrv::Request &req,
       AddGroupFromNamesSrv::Response &res);
-    bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
-      SetCommandLifetimeSrv::Response &res);
-    bool SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req,
-      SetFeedbackFrequencySrv::Response &res);
 
 };
 

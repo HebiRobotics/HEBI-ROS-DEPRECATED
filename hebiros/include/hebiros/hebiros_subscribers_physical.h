@@ -2,6 +2,8 @@
 #define HEBIROS_SUBSCRIBERS_PHYSICAL_H
 
 #include "ros/ros.h"
+#include "sensor_msgs/JointState.h"
+#include "hebiros/CommandMsg.h"
 
 #include "hebiros_subscribers.h"
 #include "group_feedback.hpp"

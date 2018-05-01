@@ -2,7 +2,8 @@
 
 
 std::shared_ptr<ros::NodeHandle> HebirosNode::n_ptr;
-HebirosPublishers HebirosNode::publishers;
+HebirosPublishersGazebo HebirosNode::publishers_gazebo;
+HebirosPublishersPhysical HebirosNode::publishers_physical;
 HebirosSubscribersGazebo HebirosNode::subscribers_gazebo;
 HebirosSubscribersPhysical HebirosNode::subscribers_physical;
 HebirosServicesGazebo HebirosNode::services_gazebo;
@@ -43,9 +44,9 @@ HebirosNode::HebirosNode (int argc, char **argv) {
 }
 
 void HebirosNode::cleanup() {
-  //for (auto group_pair : groups) {
-  //  unregister_group(group_pair.first);
-  //}
+  for (auto group_pair : HebirosGroupPhysical::groups_physical) {
+    group_pair.second->group_ptr->clearFeedbackHandlers();
+  }
 }
 
 

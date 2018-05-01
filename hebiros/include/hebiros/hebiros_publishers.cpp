@@ -26,19 +26,19 @@ void HebirosPublishers::registerGroupPublishers(std::string group_name) {
 }
 
 
-void HebirosPublishers::feedback(std::string group_name, FeedbackMsg feedback_msg) {
+void HebirosPublishers::feedback(FeedbackMsg feedback_msg, std::string group_name) {
   publishers["/hebiros/"+group_name+"/feedback"].publish(feedback_msg);
 }
 
-void HebirosPublishers::feedbackJointState(std::string group_name,
-  sensor_msgs::JointState joint_state_msg) {
+void HebirosPublishers::feedbackJointState(sensor_msgs::JointState joint_state_msg,
+  std::string group_name) {
   publishers["/hebiros/"+group_name+"/feedback/joint_state"].publish(joint_state_msg);
 
-  feedbackJointStateUrdf(group_name, joint_state_msg);
+  feedbackJointStateUrdf(joint_state_msg, group_name);
 }
 
-void HebirosPublishers::feedbackJointStateUrdf(std::string group_name,
-  sensor_msgs::JointState joint_state_msg) {
+void HebirosPublishers::feedbackJointStateUrdf(sensor_msgs::JointState joint_state_msg,
+  std::string group_name) {
 
   std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(group_name);
 
@@ -51,8 +51,8 @@ void HebirosPublishers::feedbackJointStateUrdf(std::string group_name,
   }
 }
 
-void HebirosPublishers::commandJointState(std::string group_name,
-  sensor_msgs::JointState joint_state_msg) {
+void HebirosPublishers::commandJointState(sensor_msgs::JointState joint_state_msg,
+  std::string group_name) {
   publishers["/hebiros/"+group_name+"/command/joint_state"].publish(joint_state_msg);
 }
 

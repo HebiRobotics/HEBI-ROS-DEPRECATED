@@ -14,6 +14,8 @@ class HebirosGroupPhysical : public HebirosGroup {
 
   public:
 
+    static std::map<std::string, std::shared_ptr<HebirosGroupPhysical>> groups_physical;
+
     std::shared_ptr<Group> group_ptr;
     GroupInfo* group_info_ptr;
 
@@ -21,10 +23,6 @@ class HebirosGroupPhysical : public HebirosGroup {
     static std::shared_ptr<HebirosGroupPhysical> getGroup(std::string name);
     static void removeGroup(std::string name);
     static bool findGroup(std::string name);
-
-  private:
-
-    static std::map<std::string, std::shared_ptr<HebirosGroupPhysical>> groups_physical;
 
 };
 

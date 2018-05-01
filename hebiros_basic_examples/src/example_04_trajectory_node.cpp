@@ -52,7 +52,7 @@ void trajectory_feedback(const TrajectoryFeedbackConstPtr& feedback)
 int main(int argc, char **argv) {
 
   //Initialize ROS node
-  ros::init(argc, argv, "example_06_trajectory_node");
+  ros::init(argc, argv, "example_04_trajectory_node");
   ros::NodeHandle n;
   ros::Rate loop_rate(200);
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
   //Construct a group using 3 known modules
   add_group_srv.request.group_name = group_name;
   add_group_srv.request.names = {"base", "shoulder", "elbow"};
-  add_group_srv.request.families = {"TASCK3DOF"};
+  add_group_srv.request.families = {"HEBI"};
   //Call the add_group_from_urdf service to create a group until it succeeds
   //Specific topics and services will now be available under this group's namespace
   while(!add_group_client.call(add_group_srv)) {}
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   double nan = std::numeric_limits<float>::quiet_NaN();
   //Set the times to reach each waypoint in seconds
   std::vector<double> times = {0, 5, 10, 15, 20};
-  std::vector<std::string> names = {"TASCK3DOF/base", "TASCK3DOF/shoulder", "TASCK3DOF/elbow"};
+  std::vector<std::string> names = {"HEBI/base", "HEBI/shoulder", "HEBI/elbow"};
   //Set positions, velocities, and accelerations for each waypoint and each joint
   //The following vectors have one joint per row and one waypoint per column
   std::vector<std::vector<double>> positions = {{feedback.position[0], 0, M_PI_2, 0,      0},

@@ -48,6 +48,8 @@
 #include "hebiros_subscribers_gazebo.h"
 #include "hebiros_subscribers_physical.h"
 #include "hebiros_publishers.h"
+#include "hebiros_publishers_gazebo.h"
+#include "hebiros_publishers_physical.h"
 #include "hebiros_clients.h"
 #include "hebiros_actions.h"
 #include "hebiros_group.h"
@@ -72,7 +74,8 @@ class HebirosNode {
 
     ros::NodeHandle n;
     static std::shared_ptr<ros::NodeHandle> n_ptr;
-    static HebirosPublishers publishers;
+    static HebirosPublishersGazebo publishers_gazebo;
+    static HebirosPublishersPhysical publishers_physical;
     static HebirosSubscribersGazebo subscribers_gazebo;
     static HebirosSubscribersPhysical subscribers_physical;
     static HebirosServicesGazebo services_gazebo;

@@ -2,9 +2,6 @@
 #define HEBIROS_SUBSCRIBERS_H
 
 #include "ros/ros.h"
-#include "sensor_msgs/JointState.h"
-
-#include "hebiros/CommandMsg.h"
 
 
 class HebirosSubscribers {

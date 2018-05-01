@@ -73,6 +73,9 @@ bool HebirosServices::addGroup(
 bool HebirosServices::addGroupFromURDF(
   AddGroupFromURDFSrv::Request &req, AddGroupFromURDFSrv::Response &res) {
 
+  ROS_INFO("Loaded URDF from robot_description");
+
+  return true;
 }
 
 bool HebirosServices::split(const std::string &orig, std::string &name, std::string &family) {

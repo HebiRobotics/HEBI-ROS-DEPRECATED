@@ -18,6 +18,16 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
     n->advertiseService<std_srvs::Empty::Request, std_srvs::Empty::Response>(
     "/hebiros_gazebo_plugin/acknowledge/"+name, boost::bind(
     &HebirosGazeboGroup::SrvAcknowledge, this, _1, _2));
+
+  this->command_lifetime_srv =
+    n->advertiseService<SetCommandLifetimeSrv::Request, SetCommandLifetimeSrv::Response>(
+    "/hebiros_gazebo_plugin/set_command_lifetime/"+name, boost::bind(
+    &HebirosGazeboGroup::SrvSetCommandLifetime, this, _1, _2));
+
+  this->feedback_frequency_srv =
+    n->advertiseService<SetFeedbackFrequencySrv::Request, SetFeedbackFrequencySrv::Response>(
+    "/hebiros_gazebo_plugin/set_feedback_frequency/"+name, boost::bind(
+    &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
 }
 
 HebirosGazeboGroup::~HebirosGazeboGroup() {}
@@ -67,4 +77,23 @@ bool HebirosGazeboGroup::SrvAcknowledge(std_srvs::Empty::Request &req,
     return false;
   }
 }
+
+bool HebirosGazeboGroup::SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
+  SetCommandLifetimeSrv::Response &res) {
+
+  command_lifetime = req.command_lifetime;
+  return true;
+}
+
+bool HebirosGazeboGroup::SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req,
+  SetFeedbackFrequencySrv::Response &res) {
+
+  feedback_frequency = req.feedback_frequency;
+  return true;
+}
+
+
+
+
+
 

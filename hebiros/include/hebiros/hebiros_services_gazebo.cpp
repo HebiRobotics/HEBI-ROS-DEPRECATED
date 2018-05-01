@@ -65,6 +65,10 @@ bool HebirosServicesGazebo::addGroup(
   }
 
   registerGroupServices(req.group_name);
+  HebirosNode::publishers_gazebo.registerGroupPublishers(req.group_name);
+  HebirosNode::subscribers_gazebo.registerGroupSubscribers(req.group_name);
+  HebirosNode::actions.registerGroupActions(req.group_name);
+  HebirosNode::clients.registerGroupClients(req.group_name);
   HebirosNode::clients.addGroup(req);
 
   return true;
@@ -88,6 +92,9 @@ bool HebirosServicesGazebo::addGroupFromURDF(
     ROS_WARN("Could not load robot_description");
     return false;
   }
+  else {
+    HebirosServices::addGroupFromURDF(req, res);
+  }
 
   std::set<std::string> joint_names;
   std::set<std::string> family_names;
@@ -102,7 +109,7 @@ bool HebirosServicesGazebo::addGroupFromURDF(
   names_req.families.insert(names_req.families.end(), family_names.begin(), family_names.end());
   names_req.names.insert(names_req.names.end(), joint_names.begin(), joint_names.end());
 
-  return HebirosNode::services_gazebo.addGroupFromNames(names_req, names_res);
+  return HebirosNode::services_gazebo.addGroup(names_req, names_res, joint_full_names);
 }
 
 bool HebirosServicesGazebo::size(
@@ -117,6 +124,10 @@ bool HebirosServicesGazebo::setFeedbackFrequency(
   SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res,
   std::string group_name) {
 
+  HebirosNode::clients.setFeedbackFrequency(req, group_name);
+
+  HebirosServices::setFeedbackFrequency(req, res, group_name);
+
   return true;
 }
 
@@ -124,12 +135,22 @@ bool HebirosServicesGazebo::setCommandLifetime(
   SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
   std::string group_name) {
 
+  HebirosNode::clients.setCommandLifetime(req, group_name);
+
+  HebirosServices::setCommandLifetime(req, res, group_name);
+
   return true;
 }
 
 bool HebirosServicesGazebo::sendCommandWithAcknowledgement(
   SendCommandWithAcknowledgementSrv::Request &req, 
   SendCommandWithAcknowledgementSrv::Response &res, std::string group_name) {
+    
+  std_srvs::Empty empty_srv;
+
+  while(!HebirosNode::clients.acknowledge(empty_srv.request, group_name)) {
+    HebirosNode::publishers_gazebo.command(req.command, group_name);
+  }
 
   return true;
 }

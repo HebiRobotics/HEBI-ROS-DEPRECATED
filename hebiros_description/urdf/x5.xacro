@@ -30,7 +30,10 @@
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
         <axis xyz="0 0 1"/>
         <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-        <dynamics damping="0.5" friction="0.5"/>
+        <dynamics damping="0.1" friction="0.1"/>
+        <physics>
+          <provide_feedback>true</provide_feedback>
+        </physics>
       </joint>
     </xacro:if>
     <xacro:if value="${model_name == 'X5_4'}">
@@ -40,7 +43,7 @@
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
         <axis xyz="0 0 1"/>
         <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-        <dynamics damping="0.5" friction="0.5"/>
+        <dynamics damping="0.1" friction="0.1"/>
       </joint>
     </xacro:if>
     <xacro:if value="${model_name == 'X5_9'}">
@@ -50,19 +53,9 @@
         <origin xyz="0 0 0.031" rpy="0 0 0"/>
         <axis xyz="0 0 1"/>
         <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
-        <dynamics damping="0.5" friction="0.5"/>
+        <dynamics damping="0.1" friction="0.1"/>
       </joint>
     </xacro:if>
-    <transmission name="${joint}/transmission">
-    <type>transmission_interface/SimpleTransmission</type>
-      <joint name="${joint}">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-      </joint>
-      <actuator name="${joint}/actuator">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        <mechanicalReduction>1</mechanicalReduction>
-      </actuator>
-    </transmission>
     <gazebo reference="${joint}/INPUT_INTERFACE">
       <selfCollide>true</selfCollide>
       <gravity>true</gravity>

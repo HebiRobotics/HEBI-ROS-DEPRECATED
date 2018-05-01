@@ -97,7 +97,7 @@ bool HebirosServicesPhysical::addGroup(
   group_physical->group_info_ptr = new GroupInfo(group_physical->size);
 
   registerGroupServices(req.group_name);
-  HebirosNode::publishers.registerGroupPublishers(req.group_name);
+  HebirosNode::publishers_physical.registerGroupPublishers(req.group_name);
   HebirosNode::subscribers_physical.registerGroupSubscribers(req.group_name);
   HebirosNode::actions.registerGroupActions(req.group_name);
 
@@ -121,6 +121,9 @@ bool HebirosServicesPhysical::addGroupFromURDF(
   {
     ROS_WARN("Could not load robot_description");
     return false;
+  }
+  else {
+    HebirosServices::addGroupFromURDF(req, res);
   }
 
   std::set<std::string> joint_names;
