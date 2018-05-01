@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "hebiros/FeedbackMsg.h"
-#include "hebiros/AddGroupFromUrdfSrv.h"
+#include "hebiros/AddGroupFromURDFSrv.h"
 
 using namespace hebiros;
 
@@ -15,10 +15,10 @@ int main(int argc, char **argv) {
   std::string group_name = "x_demo";
 
   //Create a client which uses the service to create a group
-  ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromUrdfSrv>(
+  ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromURDFSrv>(
     "/hebiros/add_group_from_urdf");
 
-  AddGroupFromUrdfSrv add_group_srv;
+  AddGroupFromURDFSrv add_group_srv;
 
   //Construct a group using a urdf
   add_group_srv.request.group_name = group_name;
