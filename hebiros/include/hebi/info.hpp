@@ -43,6 +43,17 @@ class Info final
       Strategy4,
     };
 
+    enum class CalibrationState {
+      /// The module has been calibrated; this is the normal state
+      Normal,
+      /// The current has not been calibrated
+      UncalibratedCurrent,
+      /// The factory zero position has not been set
+      UncalibratedPosition,
+      /// The effort (e.g., spring nonlinearity) has not been calibrated
+      UncalibratedEffort,
+    };
+
   // Note: this is 'protected' instead of 'private' for easier use with Doxygen
   protected:
     /// \brief A message field representable by a single-precision floating point value.
@@ -77,6 +88,58 @@ class Info final
 
         HEBI_DISABLE_COPY_MOVE(FloatField)
     };
+    /// \brief A message field for an angle measurement which does not lose
+    /// precision at very high angles.
+    ///
+    /// This field is represented as an int64_t for the number of revolutions
+    /// and a float for the radian offset from that number of revolutions.
+    class HighResAngleField final
+    {
+      public:
+        #ifndef DOXYGEN_OMIT_INTERNAL
+        HighResAngleField(HebiInfoPtr internal, HebiInfoHighResAngleField field);
+        #endif // DOXYGEN_OMIT_INTERNAL
+        /// \brief Allows casting to a bool to check if the field has a value
+        /// without directly calling @c has().
+        ///
+        /// This can be used as in the following (assuming 'parent' is a parent message,
+        /// and this field is called 'myField')
+        /// \code{.cpp}
+        /// Info::HighResAngleField& f = parent.myField();
+        /// if (f)
+        ///   std::cout << "Field has value: " << f.get() << std::endl;
+        /// else
+        ///   std::cout << "Field has no value!" << std::endl;
+        /// \endcode
+        explicit operator bool() const;
+        /// \brief True if (and only if) the field has a value.
+        bool has() const;
+        /// \brief If the field has a value, returns that value as a double;
+        /// otherwise, returns a default.
+        ///
+        /// Note that some precision might be lost converting to a double at
+        /// very high number of revolutions.
+        double get() const;
+        /// \brief If the field has a value, returns that value in the int64
+        /// and float parameters passed in; otherwise, returns a default.
+        ///
+        /// Note that this maintains the full precision of the underlying angle
+        /// measurement, even for very large numbers of revolutions.
+        ///
+        /// \param revolutions The number of full revolutions
+        ///
+        /// \param radian_offset The offset from the given number of full
+        /// revolutions.  Note that this is usually between 0 and @c 2*M_PI, but
+        /// callers should not assume this.
+        void get(int64_t* revolutions, float* radian_offset) const;
+
+      private:
+        HebiInfoPtr const internal_;
+        HebiInfoHighResAngleField const field_;
+
+        HEBI_DISABLE_COPY_MOVE(HighResAngleField)
+    };
+
     /// \brief A message field representable by a bool value.
     class BoolField final
     {
@@ -245,6 +308,8 @@ class Info final
                 velocity_gains_(internal, HebiInfoFloatVelocityKp, HebiInfoBoolVelocityDOnError),
                 effort_gains_(internal, HebiInfoFloatEffortKp, HebiInfoBoolEffortDOnError),
                 spring_constant_(internal, HebiInfoFloatSpringConstant),
+                position_limit_min_(internal, HebiInfoHighResAnglePositionLimitMin),
+                position_limit_max_(internal, HebiInfoHighResAnglePositionLimitMax),
                 control_strategy_(internal, HebiInfoEnumControlStrategy)
             {
             }
@@ -266,6 +331,10 @@ class Info final
         
             /// The spring constant of the module.
             const FloatField& springConstant() const { return spring_constant_; }
+            /// The firmware safety limit for the minimum allowed position.
+            const HighResAngleField& positionLimitMin() const { return position_limit_min_; }
+            /// The firmware safety limit for the maximum allowed position.
+            const HighResAngleField& positionLimitMax() const { return position_limit_max_; }
             /// How the position, velocity, and effort PID loops are connected in order to control motor PWM.
             const EnumField<ControlStrategy>& controlStrategy() const { return control_strategy_; }
         
@@ -277,6 +346,8 @@ class Info final
             InfoGains effort_gains_;
         
             FloatField spring_constant_;
+            HighResAngleField position_limit_min_;
+            HighResAngleField position_limit_max_;
             EnumField<ControlStrategy> control_strategy_;
         
             HEBI_DISABLE_COPY_MOVE(Actuator)
@@ -323,6 +394,34 @@ class Info final
         HEBI_DISABLE_COPY_MOVE(Settings)
     };
 
+    /// Actuator-specific information.
+    class Actuator final
+    {
+      public:
+        #ifndef DOXYGEN_OMIT_INTERNAL
+        Actuator(HebiInfoPtr internal)
+          : internal_(internal),
+            calibration_state_(internal, HebiInfoEnumCalibrationState)
+        {
+        }
+        #endif // DOXYGEN_OMIT_INTERNAL
+    
+        // With all submessage and field getters: Note that the returned reference
+        // should not be used after the lifetime of this parent.
+    
+        // Subfields ----------------
+    
+        /// The calibration state of the module
+        const EnumField<CalibrationState>& calibrationState() const { return calibration_state_; }
+    
+      private:
+        HebiInfoPtr const internal_;
+    
+        EnumField<CalibrationState> calibration_state_;
+    
+        HEBI_DISABLE_COPY_MOVE(Actuator)
+    };
+
   private:
     /**
      * C-style object; managed by parent.
@@ -354,6 +453,8 @@ class Info final
 
     /// Module settings that are typically changed at a slower rate.
     const Settings& settings() const { return settings_; }
+    /// Actuator-specific information.
+    const Actuator& actuator() const { return actuator_; }
 
     // Subfields -------------------------------------------------------------
 
@@ -365,6 +466,7 @@ class Info final
     
   private:
     Settings settings_;
+    Actuator actuator_;
 
     LedField led_;
   

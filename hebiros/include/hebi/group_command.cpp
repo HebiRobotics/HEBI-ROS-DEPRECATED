@@ -53,14 +53,14 @@ void GroupCommand::setVelocity(const Eigen::VectorXd& velocity)
   if (velocity.size() != number_of_modules_)
     return;
   for (size_t i = 0; i < number_of_modules_; ++i)
-    commands_[i].actuator().velocity().set(velocity[i]);
+    commands_[i].actuator().velocity().set(static_cast<float>(velocity[i]));
 }
 void GroupCommand::setEffort(const Eigen::VectorXd& effort)
 {
   if (effort.size() != number_of_modules_)
     return;
   for (size_t i = 0; i < number_of_modules_; ++i)
-    commands_[i].actuator().effort().set(effort[i]);
+    commands_[i].actuator().effort().set(static_cast<float>(effort[i]));
 }
 
 void GroupCommand::setSpringConstant(const Eigen::VectorXd& springConstant)
@@ -68,7 +68,7 @@ void GroupCommand::setSpringConstant(const Eigen::VectorXd& springConstant)
   if (springConstant.size() != number_of_modules_)
     return;
   for (size_t i = 0; i < number_of_modules_; ++i)
-    commands_[i].settings().actuator().springConstant().set(springConstant[i]);
+    commands_[i].settings().actuator().springConstant().set(static_cast<float>(springConstant[i]));
 }
 
 Eigen::VectorXd GroupCommand::getPosition() const
