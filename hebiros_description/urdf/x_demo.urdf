@@ -15,7 +15,7 @@
   <!-- just for visualization: base post -->
   <link name="base">
     <visual>
-      <origin rpy="0 0 0" xyz=".125 0 -.0254"/>
+      <origin rpy="0 0 0" xyz="-.125 0 -.0254"/>
       <geometry>
         <box size="0.25 0.5 0.0508"/>
       </geometry>
@@ -24,7 +24,7 @@
       </material>
     </visual>
     <collision>
-      <origin rpy="0 0 0" xyz=".125 0 -.0254"/>
+      <origin rpy="0 0 0" xyz="-.125 0 -.0254"/>
       <geometry>
         <box size="0.25 0.5 0.0508"/>
       </geometry>
@@ -42,18 +42,18 @@
   </joint>
   <link name="HEBI/base/INPUT_INTERFACE">
     <visual>
-      <origin rpy="3.14157 0 0" xyz="0 0 0.0155"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x5.stl"/>
+        <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="red">
         <color rgba=".82 0.06 0.06 1"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="3.14157 0 0" xyz="0 0 0.0155"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x5.stl"/>
+        <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -62,12 +62,12 @@
       <inertia ixx="0.00015" ixy="0.0000341" ixz="0.0000118" iyy="0.000255" iyz="0.00000229" izz="0.000350"/>
     </inertial>
   </link>
-  <joint name="HEBI/base/X5_4" type="revolute">
+  <joint name="HEBI/base/X5_4" type="continuous">
     <parent link="HEBI/base/INPUT_INTERFACE"/>
     <child link="shoulder_bracket/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
-    <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+    <limit effort="7.0" velocity="32"/>
     <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <gazebo reference="HEBI/base/INPUT_INTERFACE">
@@ -91,48 +91,64 @@
   </gazebo>
   <link name="shoulder_bracket/INPUT_INTERFACE">
     <visual>
-      <origin rpy="1.57075 0 1.57075" xyz="0 0 0"/>
+      <origin rpy="1.57079632679 0 -1.57079632679" xyz="0 0 0.005"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_wrist.stl"/>
+        <mesh filename="package://hebiros_description/meshes/PM-2149-01.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="silver">
-        <color rgba="0.6 0.6 0.6 1"/>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <visual>
+      <origin rpy="1.57079632679 0 0" xyz="0 .03 .04"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/PM-2150-01R.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="1.57075 0 1.57075" xyz="0 0 0"/>
+      <origin rpy="1.57079632679 0 -1.57079632679" xyz="0 0 0.005"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_wrist.stl"/>
+        <mesh filename="package://hebiros_description/meshes/PM-2149-01.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
+    <collision>
+      <origin rpy="1.57079632679 0 0" xyz="0 .03 .04"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/PM-2150-01R.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+    <!-- NOTE: inertia is just modelled as small sphere, and could be improved. -->
     <inertial>
-      <origin rpy="1.57075 0 1.57075" xyz="0 0 0"/>
-      <mass value="0.1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      <origin rpy="0 0 0" xyz="0 0.01125 .0275"/>
+      <mass value="0.215"/>
+      <inertia ixx="0.0003096" ixy="0.0" ixz="0.0" iyy="0.0003096" iyz="0.0" izz="0.0003096"/>
     </inertial>
   </link>
   <joint name="shoulder_bracket/OUTPUT_INTERFACE" type="fixed">
     <parent link="shoulder_bracket/INPUT_INTERFACE"/>
     <child link="HEBI/shoulder/INPUT_INTERFACE"/>
-    <origin rpy="-1.57075 0 0" xyz="0 .04235 .04015"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 .0225 .055"/>
   </joint>
   <gazebo reference="shoulder_bracket/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>
   </gazebo>
   <link name="HEBI/shoulder/INPUT_INTERFACE">
     <visual>
-      <origin rpy="3.14157 0 0" xyz="0 0 0.0155"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x5.stl"/>
+        <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="red">
         <color rgba=".82 0.06 0.06 1"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="3.14157 0 0" xyz="0 0 0.0155"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x5.stl"/>
+        <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -141,12 +157,12 @@
       <inertia ixx="0.00015" ixy="0.0000341" ixz="0.0000118" iyy="0.000255" iyz="0.00000229" izz="0.000350"/>
     </inertial>
   </link>
-  <joint name="HEBI/shoulder/X5_4" type="revolute">
+  <joint name="HEBI/shoulder/X5_4" type="continuous">
     <parent link="HEBI/shoulder/INPUT_INTERFACE"/>
     <child link="shoulder_elbow/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
-    <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+    <limit effort="7.0" velocity="32"/>
     <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <gazebo reference="HEBI/shoulder/INPUT_INTERFACE">
@@ -170,88 +186,79 @@
   </gazebo>
   <link name="shoulder_elbow/INPUT_INTERFACE">
     <visual>
-      <origin rpy="0 0 3.14157" xyz="-.04 .03 .0075"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_output_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
       </material>
     </visual>
     <visual>
-      <origin rpy="0 1.57075 0" xyz="-0.1904 0 .016075"/>
+      <origin rpy="0 1.57075 0" xyz="0.165 0 0.02"/>
       <geometry>
-        <cylinder length="0.3046" radius=".015875"/>
+        <cylinder length="0.3046" radius=".016"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>
       </material>
     </visual>
     <visual>
-      <origin rpy="1.57075 0 -1.57075" xyz="-0.3554 -.075 -.0125"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.33 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_mounting_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="0 0 3.14157" xyz="-.04 .03 .0075"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_output_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="0 1.57075 0" xyz="-0.1904 0 .016075"/>
+      <origin rpy="0 1.57075 0" xyz="0.165 0 0.02"/>
       <geometry>
-        <cylinder length="0.33" radius=".015875"/>
+        <cylinder length="0.3046" radius=".016"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="1.57075 0 -1.57075" xyz="-0.3554 -.075 -.0125"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.33 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_mounting_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
     </collision>
+    <!-- Approximate inertia as thin rod about x axis -->
     <inertial>
-      <origin rpy="0 0 3.14157" xyz="-.04 .03 .0075"/>
-      <mass value="0.01"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-    <inertial>
-      <origin rpy="0 1.57075 0" xyz="-0.1904 0 .016075"/>
-      <mass value="0.38"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-    <inertial>
-      <origin rpy="1.57075 0 -1.57075" xyz="-0.3554 -.075 -.0125"/>
-      <mass value="0.01"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      <origin rpy="0 0 0" xyz="0.165 0 0.02"/>
+      <mass value="0.404"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0036663" iyz="0.0" izz="0.0036663"/>
     </inertial>
   </link>
   <joint name="shoulder_elbow/OUTPUT_JOINT" type="fixed">
     <parent link="shoulder_elbow/INPUT_INTERFACE"/>
     <child link="HEBI/elbow/INPUT_INTERFACE"/>
-    <origin rpy="3.14157 0 0" xyz="-0.38 0 0"/>
+    <origin rpy="3.14159265359 0 0" xyz="0.33 -2.44929359829e-18 0.0"/>
   </joint>
   <gazebo reference="shoulder_elbow/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>
   </gazebo>
   <link name="HEBI/elbow/INPUT_INTERFACE">
     <visual>
-      <origin rpy="3.14157 0 0" xyz="0 0 0.0155"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x5.stl"/>
+        <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="red">
         <color rgba=".82 0.06 0.06 1"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="3.14157 0 0" xyz="0 0 0.0155"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x5.stl"/>
+        <mesh filename="package://hebiros_description/meshes/x5.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -260,12 +267,12 @@
       <inertia ixx="0.00015" ixy="0.0000341" ixz="0.0000118" iyy="0.000255" iyz="0.00000229" izz="0.000350"/>
     </inertial>
   </link>
-  <joint name="HEBI/elbow/X5_4" type="revolute">
+  <joint name="HEBI/elbow/X5_4" type="continuous">
     <parent link="HEBI/elbow/INPUT_INTERFACE"/>
     <child link="elbow_end/INPUT_INTERFACE"/>
     <origin rpy="0 0 0" xyz="0 0 0.031"/>
     <axis xyz="0 0 1"/>
-    <limit effort="9.0" lower="-10.0" upper="10.0" velocity="2.208932"/>
+    <limit effort="7.0" velocity="32"/>
     <dynamics damping="0.5" friction="0.5"/>
   </joint>
   <gazebo reference="HEBI/elbow/INPUT_INTERFACE">
@@ -289,70 +296,61 @@
   </gazebo>
   <link name="elbow_end/INPUT_INTERFACE">
     <visual>
-      <origin rpy="0 0 3.14157" xyz="-.04 .03 .0075"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_output_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
       </material>
     </visual>
     <visual>
-      <origin rpy="0 1.57075 0" xyz="-0.1879 0 .016075"/>
+      <origin rpy="0 1.57075 0" xyz="0.1625 0 0.02"/>
       <geometry>
-        <cylinder length="0.2996" radius=".015875"/>
+        <cylinder length="0.2996" radius=".016"/>
       </geometry>
       <material name="silver">
         <color rgba="0.6 0.6 0.6 1"/>
       </material>
     </visual>
     <visual>
-      <origin rpy="1.57075 0 -1.57075" xyz="-0.3504 -.075 -.0125"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.325 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_mounting_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1"/>
       </material>
     </visual>
     <collision>
-      <origin rpy="0 0 3.14157" xyz="-.04 .03 .0075"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_output_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2038-02.stl"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="0 1.57075 0" xyz="-0.1879 0 .016075"/>
+      <origin rpy="0 1.57075 0" xyz="0.1625 0 0.02"/>
       <geometry>
-        <cylinder length="0.325" radius=".015875"/>
+        <cylinder length="0.2996" radius=".016"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="1.57075 0 -1.57075" xyz="-0.3504 -.075 -.0125"/>
+      <origin rpy="-3.14159265359 0 0" xyz="0.325 -2.44929359829e-18 0.0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/x_mounting_bracket.stl"/>
+        <mesh filename="package://hebiros_description/meshes/A-2039-02.stl"/>
       </geometry>
     </collision>
+    <!-- Approximate inertia as thin rod about x axis -->
     <inertial>
-      <origin rpy="0 0 3.14157" xyz="-.04 .03 .0075"/>
-      <mass value="0.01"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-    <inertial>
-      <origin rpy="0 1.57075 0" xyz="-0.1879 0 .016075"/>
-      <mass value="0.375"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-    <inertial>
-      <origin rpy="1.57075 0 -1.57075" xyz="-0.3504 -.075 -.0125"/>
-      <mass value="0.01"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      <origin rpy="0 0 0" xyz="0.1625 0 0.02"/>
+      <mass value="0.402"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0035384375" iyz="0.0" izz="0.0035384375"/>
     </inertial>
   </link>
   <joint name="elbow_end/OUTPUT_JOINT" type="fixed">
     <parent link="elbow_end/INPUT_INTERFACE"/>
     <child link="end_effector/INPUT_INTERFACE"/>
-    <origin rpy="3.14157 0 0" xyz="-0.375 0 0"/>
+    <origin rpy="3.14159265359 0 0" xyz="0.325 -2.44929359829e-18 0.0"/>
   </joint>
   <gazebo reference="elbow_end/INPUT_INTERFACE">
     <selfCollide>true</selfCollide>

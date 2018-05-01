@@ -17,5 +17,10 @@
       <color rgba="0 0 0 1"/>
     </material>
   </xacro:macro>
+  <xacro:macro name="beige_material">
+    <material name="beige">
+      <color rgba="0.96 0.945 0.871 1"/>
+    </material>
+  </xacro:macro>
 </robot>
 
