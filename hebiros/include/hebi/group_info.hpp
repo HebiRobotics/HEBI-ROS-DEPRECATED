@@ -24,14 +24,9 @@ class GroupInfo final
 
   private:
     /**
-     * True if this object is responsible for creating and destroying the
-     * underlying C pointer; false otherwise.
-     */
-    const bool manage_pointer_lifetime_;
-    /**
      * The number of modules in this group info.
      */
-    const int number_of_modules_;
+    const size_t number_of_modules_;
     /**
      * The list of Info subobjects
      */
@@ -41,28 +36,28 @@ class GroupInfo final
     /**
      * \brief Create a group info with the specified number of modules.
      */
-    GroupInfo(int number_of_modules);
+    GroupInfo(size_t number_of_modules);
 
     /**
      * \brief Destructor cleans up group info object as necessary.
      */
-    virtual ~GroupInfo() noexcept; /* annotating specified destructor as noexcept is best-practice */
+    ~GroupInfo() noexcept; /* annotating specified destructor as noexcept is best-practice */
 
     /**
      * \brief Returns the number of module infos in this group info.
      */
-    int size() const;
+    size_t size() const;
 
     /**
      * \brief Access the info for an individual module.
      */
-    const Info& operator[](int index) const;
+    const Info& operator[](size_t index) const;
     
     /**
      * \brief Export the gains from this GroupInfo object into a file, creating it as necessary.
      * \param file The filename (or path + filename) to the file to write to.
      */
-    bool writeGains(const std::string& file);
+    bool writeGains(const std::string& file) const;
 
     /**
      * \brief Convenience function for returning spring constant values.

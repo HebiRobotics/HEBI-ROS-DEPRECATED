@@ -17,7 +17,7 @@ void HebirosSubscribersPhysical::registerGroupSubscribers(std::string group_name
     boost::bind(&HebirosSubscribersPhysical::jointCommand, this, _1, group_name));
 
   std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
-  group->group_ptr->requestInfo(group->group_info_ptr);
+  group->group_ptr->requestInfo(*group->group_info_ptr);
 
   group->group_ptr->addFeedbackHandler([this, group_name](const GroupFeedback& group_fbk) {
     this->feedback(group_name, group_fbk);
@@ -136,59 +136,59 @@ void HebirosSubscribersPhysical::addPositionGainsCommand(GroupCommand* group_com
 
       if (i < data.kp.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionKp().set(data.kp[i]);
+          settings().actuator().positionGains().kP().set(data.kp[i]);
       }
       if (i < data.ki.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionKi().set(data.ki[i]);
+          settings().actuator().positionGains().kI().set(data.ki[i]);
       }
       if (i < data.kd.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionKd().set(data.kd[i]);
+          settings().actuator().positionGains().kD().set(data.kd[i]);
       }
       if (i < data.feed_forward.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionFeedForward().set(data.feed_forward[i]);
+          settings().actuator().positionGains().feedForward().set(data.feed_forward[i]);
       }
       if (i < data.dead_zone.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionDeadZone().set(data.dead_zone[i]);
+          settings().actuator().positionGains().deadZone().set(data.dead_zone[i]);
       }
       if (i < data.i_clamp.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionIClamp().set(data.i_clamp[i]);
+          settings().actuator().positionGains().iClamp().set(data.i_clamp[i]);
       }
       if (i < data.punch.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionPunch().set(data.punch[i]);
+          settings().actuator().positionGains().punch().set(data.punch[i]);
       }
       if (i < data.min_target.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionMinTarget().set(data.min_target[i]);
+          settings().actuator().positionGains().minTarget().set(data.min_target[i]);
       }
       if (i < data.max_target.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionMaxTarget().set(data.max_target[i]);
+          settings().actuator().positionGains().maxTarget().set(data.max_target[i]);
       }
       if (i < data.target_lowpass.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionTargetLowpass().set(data.target_lowpass[i]);
+          settings().actuator().positionGains().targetLowpass().set(data.target_lowpass[i]);
       }
       if (i < data.min_output.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionMinOutput().set(data.min_output[i]);
+          settings().actuator().positionGains().minOutput().set(data.min_output[i]);
       }
       if (i < data.max_output.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionMaxOutput().set(data.max_output[i]);
+          settings().actuator().positionGains().maxOutput().set(data.max_output[i]);
       }
       if (i < data.output_lowpass.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionOutputLowpass().set(data.output_lowpass[i]);
+          settings().actuator().positionGains().outputLowpass().set(data.output_lowpass[i]);
       }
       if (i < data.d_on_error.size()) {
         (*group_command)[joint_index].
-          settings().actuator().positionGains().positionDOnError().set(data.d_on_error[i]);
+          settings().actuator().positionGains().dOnError().set(data.d_on_error[i]);
       }
     }
     else {
@@ -209,59 +209,59 @@ void HebirosSubscribersPhysical::addVelocityGainsCommand(GroupCommand* group_com
 
       if (i < data.kp.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityKp().set(data.kp[i]);
+          settings().actuator().velocityGains().kP().set(data.kp[i]);
       }
       if (i < data.ki.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityKi().set(data.ki[i]);
+          settings().actuator().velocityGains().kI().set(data.ki[i]);
       }
       if (i < data.kd.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityKd().set(data.kd[i]);
+          settings().actuator().velocityGains().kD().set(data.kd[i]);
       }
       if (i < data.feed_forward.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityFeedForward().set(data.feed_forward[i]);
+          settings().actuator().velocityGains().feedForward().set(data.feed_forward[i]);
       }
       if (i < data.dead_zone.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityDeadZone().set(data.dead_zone[i]);
+          settings().actuator().velocityGains().deadZone().set(data.dead_zone[i]);
       }
       if (i < data.i_clamp.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityIClamp().set(data.i_clamp[i]);
+          settings().actuator().velocityGains().iClamp().set(data.i_clamp[i]);
       }
       if (i < data.punch.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityPunch().set(data.punch[i]);
+          settings().actuator().velocityGains().punch().set(data.punch[i]);
       }
       if (i < data.min_target.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityMinTarget().set(data.min_target[i]);
+          settings().actuator().velocityGains().minTarget().set(data.min_target[i]);
       }
       if (i < data.max_target.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityMaxTarget().set(data.max_target[i]);
+          settings().actuator().velocityGains().maxTarget().set(data.max_target[i]);
       }
       if (i < data.target_lowpass.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityTargetLowpass().set(data.target_lowpass[i]);
+          settings().actuator().velocityGains().targetLowpass().set(data.target_lowpass[i]);
       }
       if (i < data.min_output.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityMinOutput().set(data.min_output[i]);
+          settings().actuator().velocityGains().minOutput().set(data.min_output[i]);
       }
       if (i < data.max_output.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityMaxOutput().set(data.max_output[i]);
+          settings().actuator().velocityGains().maxOutput().set(data.max_output[i]);
       }
       if (i < data.output_lowpass.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityOutputLowpass().set(data.output_lowpass[i]);
+          settings().actuator().velocityGains().outputLowpass().set(data.output_lowpass[i]);
       }
       if (i < data.d_on_error.size()) {
         (*group_command)[joint_index].
-          settings().actuator().velocityGains().velocityDOnError().set(data.d_on_error[i]);
+          settings().actuator().velocityGains().dOnError().set(data.d_on_error[i]);
       }
     }
     else {
@@ -282,59 +282,59 @@ void HebirosSubscribersPhysical::addEffortGainsCommand(GroupCommand* group_comma
 
       if (i < data.kp.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortKp().set(data.kp[i]);
+          settings().actuator().effortGains().kP().set(data.kp[i]);
       }
       if (i < data.ki.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortKi().set(data.ki[i]);
+          settings().actuator().effortGains().kI().set(data.ki[i]);
       }
       if (i < data.kd.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortKd().set(data.kd[i]);
+          settings().actuator().effortGains().kD().set(data.kd[i]);
       }
       if (i < data.feed_forward.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortFeedForward().set(data.feed_forward[i]);
+          settings().actuator().effortGains().feedForward().set(data.feed_forward[i]);
       }
       if (i < data.dead_zone.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortDeadZone().set(data.dead_zone[i]);
+          settings().actuator().effortGains().deadZone().set(data.dead_zone[i]);
       }
       if (i < data.i_clamp.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortIClamp().set(data.i_clamp[i]);
+          settings().actuator().effortGains().iClamp().set(data.i_clamp[i]);
       }
       if (i < data.punch.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortPunch().set(data.punch[i]);
+          settings().actuator().effortGains().punch().set(data.punch[i]);
       }
       if (i < data.min_target.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortMinTarget().set(data.min_target[i]);
+          settings().actuator().effortGains().minTarget().set(data.min_target[i]);
       }
       if (i < data.max_target.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortMaxTarget().set(data.max_target[i]);
+          settings().actuator().effortGains().maxTarget().set(data.max_target[i]);
       }
       if (i < data.target_lowpass.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortTargetLowpass().set(data.target_lowpass[i]);
+          settings().actuator().effortGains().targetLowpass().set(data.target_lowpass[i]);
       }
       if (i < data.min_output.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortMinOutput().set(data.min_output[i]);
+          settings().actuator().effortGains().minOutput().set(data.min_output[i]);
       }
       if (i < data.max_output.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortMaxOutput().set(data.max_output[i]);
+          settings().actuator().effortGains().maxOutput().set(data.max_output[i]);
       }
       if (i < data.output_lowpass.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortOutputLowpass().set(data.output_lowpass[i]);
+          settings().actuator().effortGains().outputLowpass().set(data.output_lowpass[i]);
       }
       if (i < data.d_on_error.size()) {
         (*group_command)[joint_index].
-          settings().actuator().effortGains().effortDOnError().set(data.d_on_error[i]);
+          settings().actuator().effortGains().dOnError().set(data.d_on_error[i]);
       }
     }
     else {

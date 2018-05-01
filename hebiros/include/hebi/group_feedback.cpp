@@ -2,12 +2,12 @@
 
 namespace hebi {
 
-GroupFeedback::GroupFeedback(int number_of_modules)
+GroupFeedback::GroupFeedback(size_t number_of_modules)
  : internal_(hebiGroupFeedbackCreate(number_of_modules)),
    manage_pointer_lifetime_(true),
    number_of_modules_(number_of_modules)
 {
-  for (int i = 0; i < number_of_modules_; i++)
+  for (size_t i = 0; i < number_of_modules_; i++)
     feedbacks_.emplace_back(hebiGroupFeedbackGetModuleFeedback(internal_, i));
 }
 
@@ -16,7 +16,7 @@ GroupFeedback::GroupFeedback(HebiGroupFeedbackPtr group_feedback)
    manage_pointer_lifetime_(false),
    number_of_modules_(hebiGroupFeedbackGetSize(group_feedback))
 {
-  for (int i = 0; i < number_of_modules_; i++)
+  for (size_t i = 0; i < number_of_modules_; i++)
     feedbacks_.emplace_back(hebiGroupFeedbackGetModuleFeedback(internal_, i));
 }
 
@@ -26,12 +26,12 @@ GroupFeedback::~GroupFeedback() noexcept
     hebiGroupFeedbackRelease(internal_);
 }
 
-int GroupFeedback::size() const
+size_t GroupFeedback::size() const
 {
   return number_of_modules_;
 }
 
-const Feedback& GroupFeedback::operator[](int index) const
+const Feedback& GroupFeedback::operator[](size_t index) const
 {
   return feedbacks_[index];
 }
@@ -39,7 +39,7 @@ const Feedback& GroupFeedback::operator[](int index) const
 Eigen::VectorXd GroupFeedback::getBoardTemperature() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].boardTemperature();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -49,7 +49,7 @@ Eigen::VectorXd GroupFeedback::getBoardTemperature() const
 Eigen::VectorXd GroupFeedback::getProcessorTemperature() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].processorTemperature();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -59,7 +59,7 @@ Eigen::VectorXd GroupFeedback::getProcessorTemperature() const
 Eigen::VectorXd GroupFeedback::getVoltage() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].voltage();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -70,7 +70,7 @@ Eigen::VectorXd GroupFeedback::getVoltage() const
 Eigen::VectorXd GroupFeedback::getDeflection() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().deflection();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -80,7 +80,7 @@ Eigen::VectorXd GroupFeedback::getDeflection() const
 Eigen::VectorXd GroupFeedback::getDeflectionVelocity() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().deflectionVelocity();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -90,7 +90,7 @@ Eigen::VectorXd GroupFeedback::getDeflectionVelocity() const
 Eigen::VectorXd GroupFeedback::getMotorVelocity() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().motorVelocity();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -100,7 +100,7 @@ Eigen::VectorXd GroupFeedback::getMotorVelocity() const
 Eigen::VectorXd GroupFeedback::getMotorCurrent() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().motorCurrent();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -110,7 +110,7 @@ Eigen::VectorXd GroupFeedback::getMotorCurrent() const
 Eigen::VectorXd GroupFeedback::getMotorSensorTemperature() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().motorSensorTemperature();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -120,7 +120,7 @@ Eigen::VectorXd GroupFeedback::getMotorSensorTemperature() const
 Eigen::VectorXd GroupFeedback::getMotorWindingCurrent() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().motorWindingCurrent();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -131,7 +131,7 @@ Eigen::VectorXd GroupFeedback::getMotorWindingCurrent() const
 Eigen::VectorXd GroupFeedback::getMotorWindingTemperature() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().motorWindingTemperature();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -141,7 +141,7 @@ Eigen::VectorXd GroupFeedback::getMotorWindingTemperature() const
 Eigen::VectorXd GroupFeedback::getMotorHousingTemperature() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().motorHousingTemperature();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -152,7 +152,7 @@ Eigen::VectorXd GroupFeedback::getMotorHousingTemperature() const
 Eigen::VectorXd GroupFeedback::getPosition() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().position();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -162,7 +162,7 @@ Eigen::VectorXd GroupFeedback::getPosition() const
 Eigen::VectorXd GroupFeedback::getVelocity() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().velocity();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -172,7 +172,7 @@ Eigen::VectorXd GroupFeedback::getVelocity() const
 Eigen::VectorXd GroupFeedback::getEffort() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().effort();
     res[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -183,7 +183,7 @@ Eigen::VectorXd GroupFeedback::getEffort() const
 Eigen::VectorXd GroupFeedback::getPositionCommand() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().positionCommand();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -193,7 +193,7 @@ Eigen::VectorXd GroupFeedback::getPositionCommand() const
 Eigen::VectorXd GroupFeedback::getVelocityCommand() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().velocityCommand();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -203,7 +203,7 @@ Eigen::VectorXd GroupFeedback::getVelocityCommand() const
 Eigen::VectorXd GroupFeedback::getEffortCommand() const
 {
   Eigen::VectorXd res(number_of_modules_);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().effortCommand();
     res[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -214,7 +214,7 @@ Eigen::VectorXd GroupFeedback::getEffortCommand() const
 Eigen::MatrixX3d GroupFeedback::getAccelerometer() const
 {
   Eigen::MatrixX3d res(number_of_modules_, 3);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].imu().accelerometer();
     if (fbk)
@@ -236,7 +236,7 @@ Eigen::MatrixX3d GroupFeedback::getAccelerometer() const
 Eigen::MatrixX3d GroupFeedback::getGyro() const
 {
   Eigen::MatrixX3d res(number_of_modules_, 3);
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].imu().gyro();
     if (fbk)
@@ -263,7 +263,7 @@ void GroupFeedback::getBoardTemperature(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].boardTemperature();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -276,7 +276,7 @@ void GroupFeedback::getProcessorTemperature(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].processorTemperature();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -289,7 +289,7 @@ void GroupFeedback::getVoltage(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].voltage();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -303,7 +303,7 @@ void GroupFeedback::getDeflection(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().deflection();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -316,7 +316,7 @@ void GroupFeedback::getDeflectionVelocity(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().deflectionVelocity();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -329,7 +329,7 @@ void GroupFeedback::getMotorVelocity(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().motorVelocity();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -342,7 +342,7 @@ void GroupFeedback::getMotorCurrent(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().motorCurrent();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -355,7 +355,7 @@ void GroupFeedback::getMotorSensorTemperature(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().motorSensorTemperature();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -368,7 +368,7 @@ void GroupFeedback::getMotorWindingCurrent(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().motorWindingCurrent();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -382,7 +382,7 @@ void GroupFeedback::getMotorWindingTemperature(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().motorWindingTemperature();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -395,7 +395,7 @@ void GroupFeedback::getMotorHousingTemperature(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().motorHousingTemperature();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -409,7 +409,7 @@ void GroupFeedback::getPosition(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().position();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -422,7 +422,7 @@ void GroupFeedback::getVelocity(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().velocity();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -435,7 +435,7 @@ void GroupFeedback::getEffort(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].actuator().effort();
     out[i] = (fbk) ? fbk.get() : std::numeric_limits<float>::quiet_NaN();
@@ -449,7 +449,7 @@ void GroupFeedback::getPositionCommand(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().positionCommand();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -462,7 +462,7 @@ void GroupFeedback::getVelocityCommand(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().velocityCommand();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -475,7 +475,7 @@ void GroupFeedback::getEffortCommand(Eigen::VectorXd& out) const
     out.resize(number_of_modules_);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& cmd = feedbacks_[i].actuator().effortCommand();
     out[i] = (cmd) ? cmd.get() : std::numeric_limits<float>::quiet_NaN();
@@ -489,7 +489,7 @@ void GroupFeedback::getAccelerometer(Eigen::MatrixX3d& out) const
     out.resize(number_of_modules_, 3);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].imu().accelerometer();
     if (fbk)
@@ -514,7 +514,7 @@ void GroupFeedback::getGyro(Eigen::MatrixX3d& out) const
     out.resize(number_of_modules_, 3);
   }
 
-  for (int i = 0; i < number_of_modules_; ++i)
+  for (size_t i = 0; i < number_of_modules_; ++i)
   {
     auto& fbk = feedbacks_[i].imu().gyro();
     if (fbk)

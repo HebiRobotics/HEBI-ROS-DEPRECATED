@@ -2,7 +2,6 @@
 
 #include "hebiros.h"
 
-
 std::map<std::string, ros::ServiceServer> HebirosServices::services;
 
 bool HebirosServices::entryList(

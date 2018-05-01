@@ -51,13 +51,15 @@ bool HebirosServicesPhysical::entryList(
   entry_list_msg.size = entry_list->size();
 
   ROS_INFO("Entry list:");
-  for (int i = 0; i < entry_list->size(); ++i) {
-    auto entry = entry_list->getEntry(i);
+  for (auto entry : *entry_list) {
     entry_msg.name = entry.name_;
     entry_msg.family = entry.family_;
+    // TODO: add entry.mac_address_ here! (it is now properly filled in)
     entry_msg.mac_address = 0;
 
-    ROS_INFO("/%s/%s", entry_msg.family.c_str(), entry_msg.name.c_str());
+    ROS_INFO("/%s/%s/%2x:%2x:%2x:%2x:%2x:%2x", entry_msg.family.c_str(), entry_msg.name.c_str(),
+      entry.mac_address_[0], entry.mac_address_[1], entry.mac_address_[2],
+      entry.mac_address_[3], entry.mac_address_[4], entry.mac_address_[5]);
     entry_list_msg.entries.push_back(entry_msg);
   }
 

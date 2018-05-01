@@ -1,4 +1,7 @@
 #include "group.hpp"
+#include "group_command.hpp"
+#include "group_feedback.hpp"
+#include "group_info.hpp"
 #include "log_file.hpp"
 
 namespace hebi {
@@ -30,12 +33,18 @@ void Group::callAttachedHandlers(HebiGroupFeedbackPtr group_feedback)
   }
 }
 
-Group::Group(HebiGroupPtr group)
+Group::Group(HebiGroupPtr group,
+             float initial_feedback_frequency,
+             int32_t initial_command_lifetime)
   : internal_(group), number_of_modules_(hebiGroupGetSize(internal_))
 {
+  if (initial_feedback_frequency != 0)
+    setFeedbackFrequencyHz(initial_feedback_frequency);
+  if (initial_command_lifetime != 0)
+    setCommandLifetimeMs(initial_command_lifetime);
 }
 
-std::shared_ptr<Group> Group::createImitation(unsigned int size)
+std::shared_ptr<Group> Group::createImitation(size_t size)
 {
   return std::make_shared<Group>(hebiGroupCreateImitation(size));
 }
@@ -52,7 +61,7 @@ int Group::size()
   return number_of_modules_;
 }
 
-bool Group::setCommandLifetimeMs(int ms)
+bool Group::setCommandLifetimeMs(int32_t ms)
 {
   return (hebiGroupSetCommandLifetime(internal_, ms) == HebiStatusSuccess);
 }
@@ -62,7 +71,7 @@ bool Group::sendCommand(const GroupCommand& group_command)
   return (hebiGroupSendCommand(internal_, group_command.internal_) == HebiStatusSuccess);
 }
 
-bool Group::sendCommandWithAcknowledgement(const GroupCommand& group_command, int timeout_ms)
+bool Group::sendCommandWithAcknowledgement(const GroupCommand& group_command, int32_t timeout_ms)
 {
   return (hebiGroupSendCommandWithAcknowledgement(internal_, group_command.internal_, timeout_ms) == HebiStatusSuccess);
 }
@@ -72,24 +81,56 @@ bool Group::sendFeedbackRequest()
   return (hebiGroupSendFeedbackRequest(internal_) == HebiStatusSuccess);
 }
 
-bool Group::getNextFeedback(GroupFeedback* feedback, int timeout_ms)
+bool Group::getNextFeedback(GroupFeedback& feedback, int32_t timeout_ms)
 {
-  return (hebiGroupGetNextFeedback(internal_, feedback->internal_, timeout_ms) == HebiStatusSuccess);
+  return (hebiGroupGetNextFeedback(internal_, feedback.internal_, timeout_ms) == HebiStatusSuccess);
 }
 
-bool Group::requestInfo(GroupInfo* info, int timeout_ms)
+bool Group::requestInfo(GroupInfo& info, int32_t timeout_ms)
 {
-  return (hebiGroupRequestInfo(internal_, info->internal_, timeout_ms) == HebiStatusSuccess);
+  return (hebiGroupRequestInfo(internal_, info.internal_, timeout_ms) == HebiStatusSuccess);
 }
 
-bool Group::startLog(std::string dir)
+std::string Group::startLog(const std::string& dir)
 {
-  return (hebiGroupStartLog(internal_, dir.c_str(), nullptr) == HebiStatusSuccess);
+  HebiStringPtr str;
+  if (hebiGroupStartLog(internal_, dir.c_str(), nullptr, &str) == HebiStatusSuccess)
+  {
+    assert(str);
+    size_t len;
+
+    hebiStringGetString(str, nullptr, &len);
+    char* buffer = new char[len];
+    hebiStringGetString(str, buffer, &len);
+    std::string ret(buffer, --len);
+
+    delete[] buffer;
+    hebiStringRelease(str);
+
+    return ret;
+  }
+  return "";
 }
 
-bool Group::startLog(std::string dir, std::string file)
+std::string Group::startLog(const std::string& dir, const std::string& file)
 {
-  return (hebiGroupStartLog(internal_, dir.c_str(), file.c_str()) == HebiStatusSuccess);
+  HebiStringPtr str;
+  if (hebiGroupStartLog(internal_, dir.c_str(), file.c_str(), &str) == HebiStatusSuccess)
+  {
+    assert(str);
+    size_t len;
+
+    hebiStringGetString(str, nullptr, &len);
+    char* buffer = new char[len];
+    hebiStringGetString(str, buffer, &len);
+    std::string ret(buffer, --len);
+
+    delete[] buffer;
+    hebiStringRelease(str);
+
+    return ret;
+  }
+  return "";
 }
 
 std::shared_ptr<LogFile> Group::stopLog()

@@ -169,7 +169,7 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebi/group_info.cpp
   include/hebi/group.cpp
   include/hebi/info.cpp
-  include/hebi/kinematics.cpp
+  include/hebi/robot_model.cpp
   include/hebi/log_file.cpp
   include/hebi/lookup.cpp
   include/hebi/mac_address.cpp

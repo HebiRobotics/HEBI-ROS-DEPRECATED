@@ -34,7 +34,7 @@
 #include "group_feedback.hpp"
 #include "group_info.hpp"
 #include "info.hpp"
-#include "kinematics.hpp"
+#include "robot_model.hpp"
 #include "log_file.hpp"
 #include "lookup.hpp"
 #include "mac_address.hpp"
