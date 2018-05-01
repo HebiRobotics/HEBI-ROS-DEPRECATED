@@ -380,6 +380,13 @@ void HebirosSubscribersPhysical::feedback(std::string group_name, const GroupFee
     gyro_msg.y = group_fbk[i].imu().gyro().get().getY();
     gyro_msg.z = group_fbk[i].imu().gyro().get().getZ();
     feedback_msg.gyro.push_back(gyro_msg);
+    geometry_msgs::Quaternion orient_msg;
+    const auto& orient = group_fbk[i].imu().orientation().get();
+    orient_msg.w = orient.getW();
+    orient_msg.x = orient.getX();
+    orient_msg.y = orient.getY();
+    orient_msg.z = orient.getZ();
+    feedback_msg.orientation.push_back(orient_msg);
     feedback_msg.deflection.push_back(group_fbk[i].actuator().deflection().get());
     feedback_msg.deflection_velocity.push_back(group_fbk[i].actuator().deflectionVelocity().get());
     feedback_msg.motor_velocity.push_back(group_fbk[i].actuator().motorVelocity().get());
