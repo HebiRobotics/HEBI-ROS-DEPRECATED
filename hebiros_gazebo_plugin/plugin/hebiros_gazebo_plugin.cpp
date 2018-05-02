@@ -65,7 +65,8 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       double position = joint->GetAngle(0).Radian();
       double velocity = joint->GetVelocity(0);
       physics::JointWrench wrench = joint->GetForceTorque(0);
-      double effort = wrench.body1Force.z;
+      auto trans = joint->GetChild()->GetInitialRelativePose().rot;
+      double effort = (-1 * (trans * wrench.body1Torque)).z;
 
       hebiros_group->feedback.position[i] = position;
       hebiros_group->feedback.velocity[i] = velocity;
