@@ -13,6 +13,9 @@ void HebirosServicesPhysical::registerNodeServices() {
 
   services["/hebiros/add_group_from_urdf"] = HebirosNode::n_ptr->advertiseService(
     "/hebiros/add_group_from_urdf", &HebirosServicesPhysical::addGroupFromURDF, this);
+
+  services["/hebiros/add_model_from_urdf"] = HebirosNode::n_ptr->advertiseService(
+    "/hebiros/add_model_from_urdf", &HebirosServicesPhysical::addModelFromURDF, this);
 }
 
 void HebirosServicesPhysical::registerGroupServices(std::string group_name) {
@@ -142,6 +145,14 @@ bool HebirosServicesPhysical::addGroupFromURDF(
   names_req.names.insert(names_req.names.end(), joint_names.begin(), joint_names.end());
 
   return HebirosNode::services_physical.addGroup(names_req, names_res, joint_full_names);
+}
+
+bool HebirosServicesPhysical::addModelFromURDF(
+  AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
+
+  HebirosServices::addModelFromURDF(req, res);
+
+  return true;
 }
 
 bool HebirosServicesPhysical::size(

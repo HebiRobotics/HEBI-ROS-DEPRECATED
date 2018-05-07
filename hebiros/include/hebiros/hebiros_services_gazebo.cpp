@@ -13,6 +13,9 @@ void HebirosServicesGazebo::registerNodeServices() {
 
   services["/hebiros/add_group_from_urdf"] = HebirosNode::n_ptr->advertiseService(
     "/hebiros/add_group_from_urdf", &HebirosServicesGazebo::addGroupFromURDF, this);
+
+  services["/hebiros/add_model_from_urdf"] = HebirosNode::n_ptr->advertiseService(
+    "/hebiros/add_model_from_urdf", &HebirosServicesGazebo::addModelFromURDF, this);
 }
 
 void HebirosServicesGazebo::registerGroupServices(std::string group_name) {
@@ -110,6 +113,14 @@ bool HebirosServicesGazebo::addGroupFromURDF(
   names_req.names.insert(names_req.names.end(), joint_names.begin(), joint_names.end());
 
   return HebirosNode::services_gazebo.addGroup(names_req, names_res, joint_full_names);
+}
+
+bool HebirosServicesGazebo::addModelFromURDF(
+  AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
+
+  HebirosServices::addModelFromURDF(req, res);
+
+  return true;
 }
 
 bool HebirosServicesGazebo::size(
