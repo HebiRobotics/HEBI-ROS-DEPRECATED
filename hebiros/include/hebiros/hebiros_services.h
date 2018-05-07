@@ -7,6 +7,7 @@
 #include "hebiros/EntryListSrv.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/AddGroupFromURDFSrv.h"
+#include "hebiros/AddModelFromURDFSrv.h"
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
@@ -38,6 +39,9 @@ class HebirosServices {
     bool addGroupFromURDF(
       AddGroupFromURDFSrv::Request &req, AddGroupFromURDFSrv::Response &res);
 
+    bool addModelFromURDF(
+      AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res);
+
     bool size(
       SizeSrv::Request &req, SizeSrv::Response &res, std::string group_name);
 
@@ -52,6 +56,7 @@ class HebirosServices {
     bool sendCommandWithAcknowledgement(
       SendCommandWithAcknowledgementSrv::Request &req, 
       SendCommandWithAcknowledgementSrv::Response &res, std::string group_name);
+      
 
     bool split(const std::string &orig, std::string &name, std::string &family);
 

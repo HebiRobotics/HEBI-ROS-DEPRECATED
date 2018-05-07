@@ -72,6 +72,7 @@ add_service_files(
   EntryListSrv.srv
   AddGroupFromNamesSrv.srv
   AddGroupFromURDFSrv.srv
+  AddModelFromURDFSrv.srv
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
@@ -191,6 +192,7 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebiros/hebiros_publishers_physical.cpp
   include/hebiros/hebiros_clients.cpp
   include/hebiros/hebiros_actions.cpp
+  include/hebiros/hebiros_model.cpp
 )
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)

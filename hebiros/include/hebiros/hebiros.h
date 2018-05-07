@@ -20,6 +20,7 @@
 #include "hebiros/EntryListSrv.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/AddGroupFromURDFSrv.h"
+#include "hebiros/AddModelFromURDFSrv.h"
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
@@ -56,6 +57,7 @@
 #include "hebiros_group_gazebo.h"
 #include "hebiros_group_physical.h"
 #include "hebiros_parameters.h"
+#include "hebiros_model.h"
 
 #include <iostream>
 #include <chrono>

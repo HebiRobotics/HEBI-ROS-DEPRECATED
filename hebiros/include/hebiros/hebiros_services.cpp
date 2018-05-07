@@ -111,6 +111,15 @@ void HebirosServices::addJointChildren(std::set<std::string>& names,
   }
 }
 
+bool HebirosServices::addModelFromURDF(
+      AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
+
+  //TODO: add to hebiros_models
+  HebirosModel hebiros_model(req.model_name);
+
+  return true;
+}
+
 bool HebirosServices::size(
   SizeSrv::Request &req, SizeSrv::Response &res, std::string group_name) {
 

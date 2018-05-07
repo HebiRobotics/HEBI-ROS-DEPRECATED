@@ -27,6 +27,9 @@ class HebirosServicesGazebo : public HebirosServices {
     bool addGroupFromURDF(
       AddGroupFromURDFSrv::Request &req, AddGroupFromURDFSrv::Response &res);
 
+    bool addModelFromURDF(
+      AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res);
+
     bool size(
       SizeSrv::Request &req, SizeSrv::Response &res, std::string group_name);
 
