@@ -1,0 +1,33 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="2_dof_arm">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:include filename="./x_library.xacro"/>
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <!-- world link -->
+  <link name="world" />
+  <joint name="world_joint"  type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="world"/>
+    <child link="HEBI/joint1/INPUT_INTERFACE"/>
+  </joint>
+
+  <!-- component links -->
+  <xacro:x5 joint="HEBI/joint1" child="joint1_joint2" model="X5_4"/>
+  <xacro:x_tube_link name="joint1_joint2" child="HEBI/joint2" extension="0.3" twist="0"/>
+  <xacro:x5 joint="HEBI/joint2" child="joint2_end" model="X5_4"/>
+  <xacro:x_tube_link name="joint2_end" child="end_effector" extension="0.3" twist="${PI}"/>
+
+  <!-- end link -->
+  <link name="end_effector/INPUT_INTERFACE">
+  </link>
+
+
+  <gazebo>
+    <plugin filename="libhebiros_gazebo_plugin.so" name="hebiros_gazebo_plugin">
+    </plugin>
+  </gazebo>
+
+</robot>

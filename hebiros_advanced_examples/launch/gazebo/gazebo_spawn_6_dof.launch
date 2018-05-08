@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find hebiros_description)/urdf/6_dof_arm.urdf -urdf -z 1 -model 6_dof_arm" output="screen"/>
+
+</launch>

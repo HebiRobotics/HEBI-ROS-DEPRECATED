@@ -60,6 +60,7 @@
     </joint>
     <gazebo reference="${name}/INPUT_INTERFACE">
       <selfCollide>true</selfCollide>
+      <material>Gazebo/FlatBlack</material>
     </gazebo> 
   </xacro:macro>
 </robot>

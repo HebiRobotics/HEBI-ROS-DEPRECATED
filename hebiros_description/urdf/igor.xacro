@@ -1,0 +1,115 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="igor">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:include filename="./x_library.xacro"/>
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <!-- world link -->
+  <!--link name="world" />
+  <joint name="world_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="chassis"/>
+  </joint-->
+
+  <!-- chassis -->
+  <link name="chassis">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.05 0.3 0.22" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.05 0.3 0.22" />
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+  <joint name="chassis_leftarm" type="fixed">
+    <parent link="chassis"/>
+    <child link="leftarm/base/INPUT_INTERFACE"/>
+    <origin xyz="0 0.1 0.11" rpy="0 0 0"/>
+  </joint>
+  <joint name="chassis_rightarm" type="fixed">
+    <parent link="chassis"/>
+    <child link="rightarm/base/INPUT_INTERFACE"/>
+    <origin xyz="0 -0.1 0.11" rpy="0 0 0"/>
+  </joint>
+  <joint name="chassis_leftleg" type="fixed">
+    <parent link="chassis"/>
+    <child link="leftleg/base/INPUT_INTERFACE"/>
+    <origin xyz="0 0.15 -0.06" rpy="${-PI/2} 0 0"/>
+  </joint>
+  <joint name="chassis_rightleg" type="fixed">
+    <parent link="chassis"/>
+    <child link="rightleg/base/INPUT_INTERFACE"/>
+    <origin xyz="0 -0.15 -0.06" rpy="${PI/2} 0 0"/>
+  </joint>
+  <gazebo reference="chassis">
+    <selfCollide>true</selfCollide>
+    <material>Gazebo/Grey</material>
+  </gazebo> 
+
+  <!-- component links -->
+
+  <!-- left arm -->
+  <xacro:x5 joint="leftarm/base" child="leftarm_base_shoulder" model="X5_4"/>
+  <xacro:x5_heavy_left_inside_bracket name="leftarm_base_shoulder" child="leftarm/shoulder"/>
+  <xacro:x5 joint="leftarm/shoulder" child="leftarm_shoulder_elbow" model="X5_4"/>
+  <xacro:x_tube_link name="leftarm_shoulder_elbow" child="leftarm/elbow"
+    extension="0.33" twist="0"/>
+  <xacro:x5 joint="leftarm/elbow" child="leftarm_elbow_hand" model="X5_4"/>
+  <xacro:x_tube_link name="leftarm_elbow_hand" child="leftarm/hand" extension="0.33" twist="${PI}"/>
+  <xacro:x5 joint="leftarm/hand" child="leftarm_end_effector" model="X5_4"/>
+
+  <!-- right arm -->
+  <xacro:x5 joint="rightarm/base" child="rightarm_base_shoulder" model="X5_4"/>
+  <xacro:x5_heavy_right_inside_bracket name="rightarm_base_shoulder" child="rightarm/shoulder"/>
+  <xacro:x5 joint="rightarm/shoulder" child="rightarm_shoulder_elbow" model="X5_4"/>
+  <xacro:x_tube_link name="rightarm_shoulder_elbow" child="rightarm/elbow"
+    extension="0.33" twist="0"/>
+  <xacro:x5 joint="rightarm/elbow" child="rightarm_elbow_hand" model="X5_4"/>
+  <xacro:x_tube_link name="rightarm_elbow_hand" child="rightarm/hand" extension="0.33" twist="${PI}"/>
+  <xacro:x5 joint="rightarm/hand" child="rightarm_end_effector" model="X5_4"/>
+
+  <!-- left leg -->
+  <xacro:x5 joint="leftleg/base" child="leftleg_base_knee" model="X5_4"/>
+  <xacro:x_tube_link name="leftleg_base_knee" child="leftleg/knee"
+    extension="0.38" twist="${PI}"/>
+  <xacro:x5 joint="leftleg/knee" child="leftleg_knee_foot" model="X5_4"/>
+  <xacro:x_tube_link name="leftleg_knee_foot" child="leftleg/foot" extension="0.38" twist="${PI}"/>
+  <xacro:x5 joint="leftleg/foot" child="leftleg_end_effector" model="X5_4"/>
+
+  <!-- right leg -->
+  <xacro:x5 joint="rightleg/base" child="rightleg_base_knee" model="X5_4"/>
+  <xacro:x_tube_link name="rightleg_base_knee" child="rightleg/knee"
+    extension="0.38" twist="${PI}"/>
+  <xacro:x5 joint="rightleg/knee" child="rightleg_knee_foot" model="X5_4"/>
+  <xacro:x_tube_link name="rightleg_knee_foot" child="rightleg/foot" extension="0.38" twist="${PI}"/>
+  <xacro:x5 joint="rightleg/foot" child="rightleg_end_effector" model="X5_4"/>
+
+  <!-- end links -->
+  <link name="leftarm_end_effector/INPUT_INTERFACE">
+  </link>
+  <link name="rightarm_end_effector/INPUT_INTERFACE">
+  </link>
+  <link name="leftleg_end_effector/INPUT_INTERFACE">
+  </link>
+  <link name="rightleg_end_effector/INPUT_INTERFACE">
+  </link>
+
+  <gazebo>
+    <plugin filename="libhebiros_gazebo_plugin.so" name="hebiros_gazebo_plugin">
+    </plugin>
+  </gazebo>
+
+</robot>

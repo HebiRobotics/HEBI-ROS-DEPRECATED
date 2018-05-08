@@ -1,0 +1,36 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="scara_style_4_dof_arm">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:include filename="./x_library.xacro"/>
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <!-- world link -->
+  <link name="world" />
+  <joint name="world_joint"  type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="world"/>
+    <child link="HEBI/joint1/INPUT_INTERFACE"/>
+  </joint>
+
+  <!-- component links -->
+  <xacro:x5 joint="HEBI/joint1" child="joint1_joint2" model="X5_4"/>
+  <xacro:x5_heavy_right_outside_bracket name="joint1_joint2" child="HEBI/joint2"/>
+  <xacro:x5 joint="HEBI/joint2" child="joint2_joint3" model="X5_4"/>
+  <xacro:x_tube_link name="joint2_joint3" child="HEBI/joint3" extension="0.3" twist="${PI/2}"/>
+  <xacro:x5 joint="HEBI/joint3" child="joint3_joint4" model="X5_4"/>
+  <xacro:x_tube_link name="joint3_joint4" child="HEBI/joint4" extension="0.3" twist="0"/>
+  <xacro:x5 joint="HEBI/joint4" child="end_effector" model="X5_4"/>
+
+  <!-- end link -->
+  <link name="end_effector/INPUT_INTERFACE">
+  </link>
+
+
+  <gazebo>
+    <plugin filename="libhebiros_gazebo_plugin.so" name="hebiros_gazebo_plugin">
+    </plugin>
+  </gazebo>
+
+</robot>
