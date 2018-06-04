@@ -118,9 +118,7 @@ bool HebirosServicesGazebo::addGroupFromURDF(
 bool HebirosServicesGazebo::addModelFromURDF(
   AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
 
-  HebirosServices::addModelFromURDF(req, res);
-
-  return true;
+  return HebirosServices::addModelFromURDF(req, res);
 }
 
 bool HebirosServicesGazebo::size(
