@@ -150,9 +150,7 @@ bool HebirosServicesPhysical::addGroupFromURDF(
 bool HebirosServicesPhysical::addModelFromURDF(
   AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
 
-  HebirosServices::addModelFromURDF(req, res);
-
-  return true;
+  return HebirosServices::addModelFromURDF(req, res);
 }
 
 bool HebirosServicesPhysical::size(

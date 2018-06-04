@@ -114,10 +114,7 @@ void HebirosServices::addJointChildren(std::set<std::string>& names,
 bool HebirosServices::addModelFromURDF(
       AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
 
-  //TODO: add to hebiros_models
-  HebirosModel hebiros_model(req.model_name);
-
-  return true;
+  return HebirosModel::load(req.model_name);
 }
 
 bool HebirosServices::size(
