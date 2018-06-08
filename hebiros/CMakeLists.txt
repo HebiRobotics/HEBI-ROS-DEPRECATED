@@ -71,7 +71,8 @@ add_service_files(
   FILES
   EntryListSrv.srv
   AddGroupFromNamesSrv.srv
-  AddGroupFromUrdfSrv.srv
+  AddGroupFromURDFSrv.srv
+  AddModelFromURDFSrv.srv
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
@@ -176,11 +177,22 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebi/trajectory.cpp
 
   include/hebiros/hebiros.cpp
-  include/hebiros/hebiros_actions.cpp
+  include/hebiros/hebiros_parameters.cpp
   include/hebiros/hebiros_group.cpp
+  include/hebiros/hebiros_group_gazebo.cpp
+  include/hebiros/hebiros_group_physical.cpp
   include/hebiros/hebiros_services.cpp
+  include/hebiros/hebiros_services_gazebo.cpp
+  include/hebiros/hebiros_services_physical.cpp
   include/hebiros/hebiros_subscribers.cpp
-  include/hebiros/hebiros_utility.cpp
+  include/hebiros/hebiros_subscribers_gazebo.cpp
+  include/hebiros/hebiros_subscribers_physical.cpp
+  include/hebiros/hebiros_publishers.cpp
+  include/hebiros/hebiros_publishers_gazebo.cpp
+  include/hebiros/hebiros_publishers_physical.cpp
+  include/hebiros/hebiros_clients.cpp
+  include/hebiros/hebiros_actions.cpp
+  include/hebiros/hebiros_model.cpp
 )
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)

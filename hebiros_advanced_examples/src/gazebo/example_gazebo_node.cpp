@@ -4,7 +4,7 @@
 
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
-#include "hebiros/AddGroupFromUrdfSrv.h"
+#include "hebiros/AddGroupFromURDFSrv.h"
 
 using namespace hebiros;
 
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 
   //Create a client which uses the service to create a group
   //The urdf for x_demo must have already been set in the robot_description parameter
-  ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromUrdfSrv>(
+  ros::ServiceClient add_group_client = n.serviceClient<AddGroupFromURDFSrv>(
     "/hebiros/add_group_from_urdf");
 
   //Create a subscriber to receive feedback from a group
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   ros::Publisher command_publisher = n.advertise<sensor_msgs::JointState>(
     "/hebiros/"+group_name+"/command/joint_state", 100);
 
-  AddGroupFromUrdfSrv add_group_srv;
+  AddGroupFromURDFSrv add_group_srv;
 
   //Construct a group using a urdf
   add_group_srv.request.group_name = group_name;

@@ -52,7 +52,7 @@ void trajectory_feedback(const TrajectoryFeedbackConstPtr& feedback)
 int main(int argc, char **argv) {
 
   //Initialize ROS node
-  ros::init(argc, argv, "example_06_trajectory_node");
+  ros::init(argc, argv, "example_04_trajectory_node");
   ros::NodeHandle n;
   ros::Rate loop_rate(200);
 

@@ -1,0 +1,3 @@
+<launch>
+  <param name="robot_description" command="cat $(find hebiros_description)/urdf/x_demo.urdf"/>
+</launch>
