@@ -4,6 +4,13 @@
 
 std::map<std::string, ros::ServiceServer> HebirosServices::services;
 
+void HebirosServices::registerModelServices(const std::string& model_name) {
+  services["/hebiros/"+model_name+"/fk"] =
+    HebirosNode::n_ptr->advertiseService<ModelFkSrv::Request, ModelFkSrv::Response>(
+    "/hebiros/"+model_name+"/fk",
+    boost::bind(&HebirosServices::fk, this, _1, _2, model_name));
+}
+
 bool HebirosServices::entryList(
   EntryListSrv::Request &req, EntryListSrv::Response &res) {
 
@@ -114,7 +121,11 @@ void HebirosServices::addJointChildren(std::set<std::string>& names,
 bool HebirosServices::addModelFromURDF(
       AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
 
-  return HebirosModel::load(req.model_name);
+  if (HebirosModel::load(req.model_name)) {
+    registerModelServices(req.model_name);
+    return true;
+  }
+  return false;
 }
 
 bool HebirosServices::size(
@@ -153,5 +164,37 @@ bool HebirosServices::sendCommandWithAcknowledgement(
   return true;
 }
 
+bool HebirosServices::fk(ModelFkSrv::Request& req, ModelFkSrv::Response& res, const std::string& model_name) {
+  // Look up model
+  auto model = HebirosModel::getModel(model_name);
+  if (!model)
+    return false;
 
+  // Convert ROS message into HEBI types
+  HebiFrameType frame_type = HebiFrameTypeOutput;
+  if (req.frame_type == ModelFkSrv::FrameTypeCenterOfMass)
+    frame_type == HebiFrameTypeCenterOfMass;
+  else if (req.frame_type == ModelFkSrv::FrameTypeOutput)
+    frame_type == HebiFrameTypeOutput;
+  else
+    return false; // Invalid frame type!
+  Eigen::VectorXd joints(req.positions.size());
+  for (size_t i = 0; i < joints.size(); ++i)
+    joints[i] = req.positions[i];
+ 
+  // Get the frames from the robot model 
+  hebi::robot_model::Matrix4dVector frames;
+  model->getModel().getFK(HebiFrameTypeOutput, joints, frames);
 
+  // Fill in the ROS messages
+  res.frames.resize(frames.size() * 16);
+  for (size_t i = 0; i < frames.size(); ++i) {
+    for (size_t j = 0; j < 4; ++j) {
+      for (size_t k = 0; k < 4; ++k) {
+        res.frames[i * 16 + j * 4 + k] = frames[i](j, k);
+      }
+    }
+  }
+
+  return true;
+}

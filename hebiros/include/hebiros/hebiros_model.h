@@ -15,6 +15,11 @@ class HebirosModel {
     // Technically, this is only used by this class, but it is used by the 
     // std::map contained herein, so it has to be public
     HebirosModel(std::unique_ptr<hebi::robot_model::RobotModel> model_);
+
+    static HebirosModel* getModel(const std::string& model_name);
+
+    hebi::robot_model::RobotModel& getModel();
+
   private:
     // Name to imported model map; filled in by "load"
     static std::map<std::string, HebirosModel> models;
