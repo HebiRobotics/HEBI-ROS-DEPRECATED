@@ -25,6 +25,16 @@ HebirosModel::HebirosModel(std::unique_ptr<hebi::robot_model::RobotModel> model_
  : model(std::move(model_)) {
 }
 
+HebirosModel* HebirosModel::getModel(const std::string& model_name) {
+  if (models.count(model_name) == 0)
+    return nullptr;
+  return &models.at(model_name);
+}
+
+hebi::robot_model::RobotModel& HebirosModel::getModel() {
+  return *model;
+}
+
 bool HebirosModel::loadURDF(const std::string& description_param, urdf::Model& model) {
 
   if (!model.initParam(description_param)) {

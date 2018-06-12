@@ -8,6 +8,7 @@
 #include "hebiros/AddGroupFromNamesSrv.h"
 #include "hebiros/AddGroupFromURDFSrv.h"
 #include "hebiros/AddModelFromURDFSrv.h"
+#include "hebiros/ModelFkSrv.h"
 #include "hebiros/SizeSrv.h"
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "hebiros/SetCommandLifetimeSrv.h"
@@ -25,6 +26,8 @@ class HebirosServices {
     virtual void registerNodeServices() {}
 
     virtual void registerGroupServices(std::string group_name) {}
+
+    void registerModelServices(const std::string& model_name);
 
     bool entryList(
       EntryListSrv::Request &req, EntryListSrv::Response &res);
@@ -56,13 +59,13 @@ class HebirosServices {
     bool sendCommandWithAcknowledgement(
       SendCommandWithAcknowledgementSrv::Request &req, 
       SendCommandWithAcknowledgementSrv::Response &res, std::string group_name);
-      
 
     bool split(const std::string &orig, std::string &name, std::string &family);
 
     void addJointChildren(std::set<std::string>& names, std::set<std::string>& families, 
       std::map<std::string, std::string>& full_names, const urdf::Link* link);
 
+    bool fk(ModelFkSrv::Request& req, ModelFkSrv::Response& res, const std::string& model_name);
 };
 
 #endif

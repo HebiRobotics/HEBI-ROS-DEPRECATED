@@ -73,6 +73,7 @@ add_service_files(
   AddGroupFromNamesSrv.srv
   AddGroupFromURDFSrv.srv
   AddModelFromURDFSrv.srv
+  ModelFkSrv.srv
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
