@@ -172,9 +172,9 @@ bool HebirosServices::fk(ModelFkSrv::Request& req, ModelFkSrv::Response& res, co
 
   // Convert ROS message into HEBI types
   HebiFrameType frame_type = HebiFrameTypeOutput;
-  if (req.frame_type == ModelFkSrv::FrameTypeCenterOfMass)
+  if (req.frame_type == ModelFkSrv::Request::FrameTypeCenterOfMass)
     frame_type == HebiFrameTypeCenterOfMass;
-  else if (req.frame_type == ModelFkSrv::FrameTypeOutput)
+  else if (req.frame_type == ModelFkSrv::Request::FrameTypeOutput)
     frame_type == HebiFrameTypeOutput;
   else
     return false; // Invalid frame type!
