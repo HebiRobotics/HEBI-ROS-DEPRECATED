@@ -79,6 +79,11 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       hebiros_group->feedback.accelerometer[i] = hebiros_joint->accelerometer;
       hebiros_group->feedback.gyro[i] = hebiros_joint->gyro;
 
+      // Add temperature feedback
+      hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temp.getMotorWindingTemperature();
+      hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temp.getMotorHousingTemperature();
+      hebiros_group->feedback.board_temperature[i] = hebiros_joint->temp.getActuatorBodyTemperature();
+
       if (hebiros_group->command_received) {
         double force = HebirosGazeboController::ComputeForce(hebiros_group, hebiros_joint,
           position, velocity, effort, iteration_time);
@@ -145,6 +150,9 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   int size = hebiros_group->joints.size();
 
   hebiros_group->feedback.position.resize(size);
+  hebiros_group->feedback.motor_winding_temperature.resize(size);
+  hebiros_group->feedback.motor_housing_temperature.resize(size);
+  hebiros_group->feedback.board_temperature.resize(size);
   hebiros_group->feedback.velocity.resize(size);
   hebiros_group->feedback.effort.resize(size);
   hebiros_group->feedback.position_command.resize(size);
