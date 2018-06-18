@@ -1,0 +1,9 @@
+<launch>
+  <!-- Load a 6-DOF arm kit URDF file -->
+  <param name="6_dof_robot_description" command="cat $(find hebiros_description)/urdf/A-2085-06.urdf"/>
+
+  <!-- Launch the main node -->
+  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" respawn="false" output="screen"/>
+
+  <test test-name="Unit-Tests" pkg="hebiros" type="hebiros-test" name="FkTests"/>
+</launch>
