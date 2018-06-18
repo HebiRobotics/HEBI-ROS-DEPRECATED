@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+
+<!-- HEBI 6-DOF Robot arm kit -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="A-2085-06">
+
+  <!-- *************************** XACRO MACROS *************************** -->
+
+  <xacro:include filename="./x_library.xacro"/>
+
+  <!-- ************************* ROBOT DEFINITION ************************* -->
+
+  <link name="world" />
+  <joint name="world_joint"  type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="world"/>
+    <child link="base"/>
+  </joint>
+
+  <!-- just for visualization: base post -->
+  <link name="base">
+    <visual>
+      <origin xyz="-.125 0 -.0254" rpy="0 0 0" />
+      <geometry>
+        <box size="0.25 0.5 0.0508" />
+      </geometry>
+      <xacro:silver_material/>
+    </visual>
+    <collision>
+      <origin xyz="-.125 0 -.0254" rpy="0 0 0" />
+      <geometry>
+        <box size="0.25 0.5 0.0508" />
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz=".125 0 -.0254" rpy="0 0 0" />
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+  <joint name="base_base" type="fixed">
+    <parent link="base"/>
+    <child link="HEBI/base/INPUT_INTERFACE"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- joints -->
+  <xacro:x8 joint="HEBI/base" child="shoulder_bracket" model="X8_9"/>
+  <xacro:x5_heavy_right_outside_bracket name="shoulder_bracket" child="HEBI/shoulder"/>
+  <xacro:x8 joint="HEBI/shoulder" child="shoulder_elbow" model="X8_16"/>
+  <xacro:x_tube_link name="shoulder_elbow" child="HEBI/elbow" extension="0.325" twist="${PI}"/>
+  <xacro:x8 joint="HEBI/elbow" child="elbow_wrist1" model="X8_9"/>
+  <xacro:x_tube_link name="elbow_wrist1" child="HEBI/wrist1" extension="0.325" twist="${PI}"/>
+  <xacro:x5 joint="HEBI/wrist1" child="wrist1_wrist2" model="X5_1"/>
+  <xacro:x5_light_right_bracket name="wrist1_wrist2" child="HEBI/wrist2"/>
+  <xacro:x5 joint="HEBI/wrist2" child="wrist2_wrist3" model="X5_1"/>
+  <xacro:x5_light_right_bracket name="wrist2_wrist3" child="HEBI/wrist3"/>
+  <xacro:x5 joint="HEBI/wrist3" child="end_effector" model="X5_1"/>
+
+  <!-- end link -->
+  <link name="end_effector/INPUT_INTERFACE">
+  </link>
+
+  <gazebo reference="base">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo>
+    <plugin filename="libhebiros_gazebo_plugin.so" name="hebiros_gazebo_plugin">
+    </plugin>
+  </gazebo>
+
+</robot>

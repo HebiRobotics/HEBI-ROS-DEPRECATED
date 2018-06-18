@@ -4,11 +4,11 @@
 
 std::map<std::string, HebirosModel> HebirosModel::models;
 
-bool HebirosModel::load(std::string name) {
+bool HebirosModel::load(const std::string& name, const std::string& description_param) {
 
   // Try to load:
   urdf::Model model;
-  bool success = loadURDF("robot_description", model);
+  bool success = loadURDF(description_param, model);
   if (!success)
     return false;
 

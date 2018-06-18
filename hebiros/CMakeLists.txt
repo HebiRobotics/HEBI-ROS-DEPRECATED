@@ -255,10 +255,9 @@ target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_hebiros.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+find_package(rostest REQUIRED)
+add_rostest_gtest(${PROJECT_NAME}-test launch/test_fk_1.test tests/test_fk_1.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

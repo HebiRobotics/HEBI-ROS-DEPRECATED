@@ -10,7 +10,7 @@ class HebirosModel {
   public:
     // Tries to read the model from the robot description parameter. Add to the
     // set of models and returns true on success, otherwise returns false.
-    static bool load(std::string name);
+    static bool load(const std::string& name, const std::string& description_param);
 
     // Technically, this is only used by this class, but it is used by the 
     // std::map contained herein, so it has to be public

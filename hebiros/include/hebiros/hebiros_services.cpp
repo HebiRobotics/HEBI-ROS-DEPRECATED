@@ -120,8 +120,11 @@ void HebirosServices::addJointChildren(std::set<std::string>& names,
 
 bool HebirosServices::addModelFromURDF(
       AddModelFromURDFSrv::Request &req, AddModelFromURDFSrv::Response &res) {
+  // Default to "robot_description" if not given.
+  static const std::string default_desc("robot_description");
+  auto& description_param = req.description_param.size() == 0 ? default_desc : req.description_param;
 
-  if (HebirosModel::load(req.model_name)) {
+  if (HebirosModel::load(req.model_name, req.description_param)) {
     registerModelServices(req.model_name);
     return true;
   }
