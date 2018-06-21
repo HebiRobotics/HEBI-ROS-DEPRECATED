@@ -46,7 +46,7 @@ class HebirosGazeboPlugin: public ModelPlugin {
     ros::ServiceServer acknowledge_srv;
 
     void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, std::string joint_name);
-    void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group);
+    void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time);
 
     bool SrvAddGroup(AddGroupFromNamesSrv::Request &req,
       AddGroupFromNamesSrv::Response &res);

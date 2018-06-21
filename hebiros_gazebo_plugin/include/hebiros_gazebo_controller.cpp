@@ -245,11 +245,7 @@ void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup>
 //Compute output force to the joint based on PID and control strategy
 double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double position, double velocity, double effort) {
-
-  ros::Time current_time = ros::Time::now();
-  ros::Duration iteration_time = current_time - hebiros_group->prev_time;
-  hebiros_group->prev_time = current_time;
+  double position, double velocity, double effort, const ros::Duration& iteration_time) {
 
   CommandMsg target = hebiros_group->command_target;
   int i = hebiros_joint->command_index;
@@ -352,7 +348,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
 //Compute the PID error for positions
 double HebirosGazeboController::ComputePositionPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double target_position, double position, ros::Duration iteration_time) {
+  double target_position, double position, const ros::Duration& iteration_time) {
 
   double position_error_p, position_error_i, position_error_d;
 
@@ -377,7 +373,7 @@ double HebirosGazeboController::ComputePositionPID(std::shared_ptr<HebirosGazebo
 //Compute the PID error for velocities
 double HebirosGazeboController::ComputeVelocityPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double target_velocity, double velocity, ros::Duration iteration_time) {
+  double target_velocity, double velocity, const ros::Duration& iteration_time) {
 
   double velocity_error_p, velocity_error_i, velocity_error_d;
 
@@ -402,7 +398,7 @@ double HebirosGazeboController::ComputeVelocityPID(std::shared_ptr<HebirosGazebo
 //Compute the PID error for efforts
 double HebirosGazeboController::ComputeEffortPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double target_effort, double effort, ros::Duration iteration_time) {
+  double target_effort, double effort, const ros::Duration& iteration_time) {
 
   double effort_error_p, effort_error_i, effort_error_d;
 

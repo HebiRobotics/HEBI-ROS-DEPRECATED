@@ -30,18 +30,22 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 //Update the joints at every simulation iteration
 void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 
-  for (auto group_pair : hebiros_groups) {
+  ros::Time current_time = ros::Time::now();
 
-    std::shared_ptr<HebirosGazeboGroup> hebiros_group = group_pair.second;
-    
+  for (auto group_pair : hebiros_groups) {
+    auto hebiros_group = group_pair.second;
+
+    // Get the time elapsed since the last iteration
+    ros::Duration iteration_time = current_time - hebiros_group->prev_time;
+    hebiros_group->prev_time = current_time;
     if (hebiros_group->group_added) {
-      UpdateGroup(group_pair.second);
+      UpdateGroup(hebiros_group, iteration_time);
     }
   }
 }
 
 //Publish feedback and compute PID control to command a joint
-void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group) {
+void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
 
   for (auto joint_pair : hebiros_group->joints) {
 
@@ -77,7 +81,7 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
 
       if (hebiros_group->command_received) {
         double force = HebirosGazeboController::ComputeForce(hebiros_group, hebiros_joint,
-          position, velocity, effort);
+          position, velocity, effort, iteration_time);
 
         if ((hebiros_group->command_lifetime == 0) || (
           elapsed_time.toSec() <= hebiros_group->command_lifetime/1000.0)) {
