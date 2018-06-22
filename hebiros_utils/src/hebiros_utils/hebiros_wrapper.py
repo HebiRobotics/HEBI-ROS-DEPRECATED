@@ -152,7 +152,7 @@ class HebirosWrapper(object):
 
     @classmethod
     def from_urdf(cls, hebi_group_name, lite_mode=False):
-        return cls(hebi_group_name, lite_mode=lite_mode)
+        return cls(hebi_group_name, from_urdf=True, lite_mode=lite_mode)
 
     def _feedback_joint_state_cb(self, msg):
         assert isinstance(msg, JointState)
