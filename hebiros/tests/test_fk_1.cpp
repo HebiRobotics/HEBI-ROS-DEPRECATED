@@ -31,7 +31,7 @@ class FKTests6DOF : public ::testing::Test {
     // 6 DOF tests have 6 modules!!!
     const size_t num_modules = 6;
 
-    static constexpr char* model_name = "6DOF";
+    static const std::string model_name;
       
     ros::NodeHandle n;
 
@@ -61,6 +61,8 @@ class FKTests6DOF : public ::testing::Test {
     }
 };
 
+const std::string FKTests6DOF::model_name { "6DOF" };
+
 // Note: the MATLAB ground truth is from the following script.
 // unfortunately, reshape gives column-major reordering :(
 //
@@ -79,7 +81,7 @@ class FKTests6DOF : public ::testing::Test {
 // reshape(kin.getFK('Output', <angle vector goes here>), 1, 11 * 16);
 TEST_F(FKTests6DOF, GetOutputFrames) {
   ros::ServiceClient model_fk_client = n.serviceClient<hebiros::ModelFkSrv>(
-    std::string("/hebiros/") + std::string(model_name) + std::string("/fk"));
+    std::string("/hebiros/") + model_name + std::string("/fk"));
       
   hebiros::ModelFkSrv model_fk_srv;
 
