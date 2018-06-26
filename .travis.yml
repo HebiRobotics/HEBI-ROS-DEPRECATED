@@ -11,7 +11,7 @@ notifications:
       - developer@hebirobotics.com
 env:
   matrix:
-    - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu VERBOSE_OUTPUT=true
+    - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu VERBOSE_OUTPUT=false
     - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu DEBUG_BASH=true
     - ROS_DISTRO="kinetic" PRERELEASE=true
 matrix:
