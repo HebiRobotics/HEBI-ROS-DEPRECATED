@@ -48,6 +48,7 @@ void HebirosSubscribersGazebo::feedback(const boost::shared_ptr<FeedbackMsg cons
 
   FeedbackMsg feedback_msg = *data;
   sensor_msgs::JointState joint_state_msg;
+  joint_state_msg.header.stamp = ros::Time::now();
   joint_state_msg.name = feedback_msg.name;
   joint_state_msg.position = feedback_msg.position;
   joint_state_msg.velocity = feedback_msg.velocity;
