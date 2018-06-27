@@ -358,6 +358,7 @@ void HebirosSubscribersPhysical::feedback(std::string group_name, const GroupFee
     double velocity = group_fbk[i].actuator().velocity().get();
     double effort = group_fbk[i].actuator().effort().get();
 
+    joint_state_msg.header.stamp = ros::Time::now();
     joint_state_msg.name.push_back(family+"/"+name);
     joint_state_msg.position.push_back(position);
     joint_state_msg.velocity.push_back(velocity);
