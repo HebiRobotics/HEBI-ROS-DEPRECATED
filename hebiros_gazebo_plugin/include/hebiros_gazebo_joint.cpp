@@ -5,7 +5,7 @@
 // TODO: support X8, too
 HebirosGazeboJoint::HebirosGazeboJoint(std::string name,
   std::shared_ptr<ros::NodeHandle> n)
-  : temp(hebiros::sim::TemperatureModel::createX5()) {
+  : temperature(hebiros::sim::TemperatureModel::createX5()) {
 
   this->name = name;
 
