@@ -19,7 +19,7 @@ class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoin
     int feedback_index;
     int command_index;
 
-    hebiros::sim::TemperatureModel temp;
+    hebiros::sim::TemperatureModel temperature;
 
     double prev_force {};
     double low_pass_alpha {};

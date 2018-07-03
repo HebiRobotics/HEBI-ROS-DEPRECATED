@@ -2,8 +2,7 @@
 
 namespace hebiros {
   namespace sim {
-    TemperatureModel TemperatureModel::createX5()
-    {
+    TemperatureModel TemperatureModel::createX5() {
       double r_be = 8.0; // (found experimentally from steady-state experiments)
       return TemperatureModel(
         2.57 * 1.8,     // r_wh (datasheet)
@@ -15,8 +14,7 @@ namespace hebiros {
       );
     }
 
-    TemperatureModel TemperatureModel::createX8()
-    {
+    TemperatureModel TemperatureModel::createX8() {
       double r_be = 4.0; // (found experimentally from steady-state experiments)
       return TemperatureModel(
         1.41 * 1.6,     // r_wh (datasheet)
@@ -47,8 +45,7 @@ namespace hebiros {
       double r_wh, double r_hb, double r_be,
       double c_w, double c_h, double c_b)
       : r_wh_(r_wh), r_hb_(r_hb), r_be_(r_be), 
-        c_w_(c_w), c_h_(c_h), c_b_(c_b) 
-    {
+        c_w_(c_w), c_h_(c_h), c_b_(c_b) {
     }
   }
 }

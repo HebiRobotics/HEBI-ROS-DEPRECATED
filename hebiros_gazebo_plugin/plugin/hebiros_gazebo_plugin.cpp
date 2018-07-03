@@ -80,9 +80,9 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       hebiros_group->feedback.gyro[i] = hebiros_joint->gyro;
 
       // Add temperature feedback
-      hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temp.getMotorWindingTemperature();
-      hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temp.getMotorHousingTemperature();
-      hebiros_group->feedback.board_temperature[i] = hebiros_joint->temp.getActuatorBodyTemperature();
+      hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
+      hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
+      hebiros_group->feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
 
       if (hebiros_group->command_received) {
         double force = HebirosGazeboController::ComputeForce(hebiros_group, hebiros_joint,

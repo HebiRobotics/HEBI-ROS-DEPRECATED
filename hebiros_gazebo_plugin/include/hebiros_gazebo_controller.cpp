@@ -331,10 +331,10 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
 
   gear_ratio = hebiros_joint->gear_ratio;
 
-  float voltage = 48.0;
+  float voltage = 48.0f;
   float motor_velocity = velocity * gear_ratio;
-  float speed_constant = 1530; // TODO: ADJUST FOR X8s
-  float term_resist = 9.99; // TODO: ADJUST FOR X8s
+  float speed_constant = 1530.0f; // TODO: ADJUST FOR X8s
+  float term_resist = 9.99f; // TODO: ADJUST FOR X8s
 
   if (pwm == 0) {
     force = 0;
@@ -344,16 +344,16 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
     force = ((pwm*voltage - (motor_velocity/speed_constant)) / term_resist) * 0.00626 * gear_ratio * 0.65;
   }
 
-  float prev_winding_temp = hebiros_joint->temp.getMotorWindingTemperature();
+  float prev_winding_temp = hebiros_joint->temperature.getMotorWindingTemperature();
 
   // Get components of power into the motor
   
   // Temperature compensated speed constant
-  float comp_speed_constant = speed_constant * 1.05 * // Experimental tuning factor                           
-    (1 + .001 * (prev_winding_temp - 20)); // .001 is speed constant change per temperature change 
+  float comp_speed_constant = speed_constant * 1.05f * // Experimental tuning factor                           
+    (1.f + .001f * (prev_winding_temp - 20.f)); // .001 is speed constant change per temperature change 
   float winding_resistance = term_resist * 
-    (1 + .004 * (prev_winding_temp - 20)); // .004 is resistance change per temperature change for copper 
-  float back_emf = (motor_velocity * 30.0 / M_PI) / comp_speed_constant;
+    (1.f + .004f * (prev_winding_temp - 20.f)); // .004 is resistance change per temperature change for copper 
+  float back_emf = (motor_velocity * 30.f / M_PI) / comp_speed_constant;
   float winding_voltage = pwm * voltage - back_emf;
 
   // TODO: could add ripple current estimate here, too
@@ -361,7 +361,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   // Update temperature:
   // Power = I^2R, but I = V/R so I^2R = V^2/R:
   double power_in = winding_voltage * winding_voltage / winding_resistance;
-  hebiros_joint->temp.update(power_in, iteration_time.toSec());
+  hebiros_joint->temperature.update(power_in, iteration_time.toSec());
 
   //alpha = hebiros_joint->low_pass_alpha;
   //force = (force * alpha) + hebiros_joint->prev_force * (1 - alpha);

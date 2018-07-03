@@ -32,12 +32,12 @@ namespace hebiros {
 
       // State variables - these are the bodies for which we
       // model temperature
-      double t_w_{34}; // Motor winding
-      double t_h_{34}; // Motor housing
-      double t_b_{32}; // Actuator body
+      double t_w_{34.0}; // Motor winding
+      double t_h_{34.0}; // Motor housing
+      double t_b_{32.0}; // Actuator body
 
       // Environment temperature (in *C) ; assume room temperature + fudge factor
-      static constexpr double t_e_{32};
+      static constexpr double t_e_{32.0};
     };
   }
 }
