@@ -6,6 +6,7 @@
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/Vector3.h"
 #include "hebiros_temperature_model.h"
+#include "temperature_safety_controller.h"
 
 class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoint> {
 
@@ -20,6 +21,7 @@ class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoin
     int command_index;
 
     hebiros::sim::TemperatureModel temperature;
+    hebiros::sim::TemperatureSafetyController temperature_safety{155};
 
     double prev_force {};
     double low_pass_alpha {};

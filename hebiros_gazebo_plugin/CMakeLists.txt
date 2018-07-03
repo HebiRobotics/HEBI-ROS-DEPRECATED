@@ -153,6 +153,7 @@ add_library(hebiros_gazebo_plugin
   include/hebiros_gazebo_group.cpp
   include/hebiros_gazebo_joint.cpp
   include/hebiros_temperature_model.cpp
+  include/temperature_safety_controller.cpp
   include/hebiros_gazebo_controller.cpp)
 
 add_dependencies(hebiros_gazebo_plugin ${catkin_EXPORTED_TARGETS})

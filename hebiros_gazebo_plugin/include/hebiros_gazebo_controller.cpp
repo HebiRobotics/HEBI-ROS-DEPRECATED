@@ -336,6 +336,8 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   float speed_constant = 1530.0f; // TODO: ADJUST FOR X8s
   float term_resist = 9.99f; // TODO: ADJUST FOR X8s
 
+  pwm = hebiros_joint->temperature_safety.limit(pwm);
+
   if (pwm == 0) {
     force = 0;
   }
@@ -362,6 +364,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   // Power = I^2R, but I = V/R so I^2R = V^2/R:
   double power_in = winding_voltage * winding_voltage / winding_resistance;
   hebiros_joint->temperature.update(power_in, iteration_time.toSec());
+  hebiros_joint->temperature_safety.update(hebiros_joint->temp.getMotorWindingTemperature());
 
   //alpha = hebiros_joint->low_pass_alpha;
   //force = (force * alpha) + hebiros_joint->prev_force * (1 - alpha);
