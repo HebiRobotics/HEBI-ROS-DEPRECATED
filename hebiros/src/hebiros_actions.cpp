@@ -2,8 +2,9 @@
 
 #include "hebiros.h"
 
-using namespace hebiros;
+#include "hebiros_group_registry.h"
 
+using namespace hebiros;
 
 std::map<std::string,
   std::shared_ptr<actionlib::SimpleActionServer<hebiros::TrajectoryAction>>>
@@ -21,7 +22,14 @@ void HebirosActions::registerGroupActions(std::string group_name) {
 
 void HebirosActions::trajectory(const TrajectoryGoalConstPtr& goal, std::string group_name) {
 
-  std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(group_name);
+  auto& registry = HebirosGroupRegistry::Instance();
+  HebirosGroup* group = registry.getGroup(group_name);
+
+  if (!group) {
+    ROS_WARN("Group not found.");
+    return;
+  }
+
   std::shared_ptr<actionlib::SimpleActionServer<TrajectoryAction>> action_server =
     trajectory_actions[group_name];
 

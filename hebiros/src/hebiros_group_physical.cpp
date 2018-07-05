@@ -1,23 +1,18 @@
 #include "hebiros_group_physical.h"
+#include "hebiros_group_registry.h"
 
-
-std::map<std::string, std::shared_ptr<HebirosGroupPhysical>> HebirosGroupPhysical::groups_physical;
-
-HebirosGroupPhysical::HebirosGroupPhysical(std::string name) :
-  HebirosGroup(name) {
-
-  groups_physical[name] = std::make_shared<HebirosGroupPhysical>(*this);
+HebirosGroupPhysical::HebirosGroupPhysical(std::shared_ptr<hebi::Group> group) :
+  HebirosGroup(), group_ptr(group), group_info(group->size()) {
 }
 
-std::shared_ptr<HebirosGroupPhysical> HebirosGroupPhysical::getGroup(std::string name) {
-  return groups_physical[name];
+HebirosGroupPhysical::~HebirosGroupPhysical() {
+  group_ptr->clearFeedbackHandlers();
 }
 
-void HebirosGroupPhysical::removeGroup(std::string name) {
-  groups_physical.erase(name);
-  HebirosGroup::groups.erase(name);
+void HebirosGroupPhysical::setFeedbackFrequencyHz(float frequency) {
+  group_ptr->setFeedbackFrequencyHz(frequency);
 }
-
-bool HebirosGroupPhysical::findGroup(std::string name) {
-  return groups_physical.find(name) != groups_physical.end();
+    
+void HebirosGroupPhysical::setCommandLifetimeMs(float lifetime) {
+  group_ptr->setCommandLifetimeMs(lifetime);
 }

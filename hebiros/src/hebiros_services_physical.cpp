@@ -1,7 +1,8 @@
 #include "hebiros_services_physical.h"
-
 #include "hebiros.h"
+#include "hebiros_group_registry.h"
 
+#include <memory>
 
 void HebirosServicesPhysical::registerNodeServices() {
 
@@ -74,32 +75,28 @@ bool HebirosServicesPhysical::addGroup(
   AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
   std::map<std::string, std::string> joint_full_names) {
 
-  if (HebirosGroup::findGroup(req.group_name)) {
+  auto& registry = HebirosGroupRegistry::Instance();
+
+  if (registry.hasGroup(req.group_name)) {
 
     ROS_WARN("Group [%s] already exists", req.group_name.c_str());
     return true;
   }
 
-  HebirosGroupPhysical group(req.group_name);
+  std::shared_ptr<hebi::Group> group_ptr = lookup.getGroupFromNames(req.families, req.names);
 
-  if (!(group.group_ptr = lookup.getGroupFromNames(req.families, req.names))) {
+  if (!group_ptr) {
 
     ROS_WARN("Lookup of group [%s] failed", req.group_name.c_str());
-    HebirosGroupPhysical::removeGroup(req.group_name);
     return false;
   }
 
-  if (!HebirosServices::addGroup(req, res, joint_full_names)) {
-    HebirosGroupPhysical::removeGroup(req.group_name);
+  std::unique_ptr<HebirosGroupPhysical> group(new HebirosGroupPhysical(group_ptr));
+  group->joint_full_names = joint_full_names;
+
+  if (!HebirosServices::addGroup(req, res, joint_full_names, std::move(group))) {
     return false;
   }
-
-  std::shared_ptr<HebirosGroupPhysical> group_physical =
-    HebirosGroupPhysical::getGroup(req.group_name);
-
-  group_physical->joint_full_names = joint_full_names;
-  group_physical->group_ptr = group.group_ptr;
-  group_physical->group_info_ptr = new GroupInfo(group_physical->size);
 
   registerGroupServices(req.group_name);
   HebirosNode::publishers_physical.registerGroupPublishers(req.group_name);
@@ -161,24 +158,34 @@ bool HebirosServicesPhysical::size(
   return true;
 }
 
+// TODO: move this function to HebirosServices, not Physical
 bool HebirosServicesPhysical::setFeedbackFrequency(
   SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res,
   std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
-  group->group_ptr->setFeedbackFrequencyHz(req.feedback_frequency);
+  auto& registry = HebirosGroupRegistry::Instance();
+
+  HebirosGroup* group = registry.getGroup(group_name);
+  if (!group)
+    return false;
+  group->setFeedbackFrequencyHz(req.feedback_frequency);
 
   HebirosServices::setFeedbackFrequency(req, res, group_name);
 
   return true;
 }
 
+// TODO: move this function to HebirosServices, not Physical
 bool HebirosServicesPhysical::setCommandLifetime(
   SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
   std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
-  group->group_ptr->setCommandLifetimeMs(req.command_lifetime);
+  auto& registry = HebirosGroupRegistry::Instance();
+
+  HebirosGroup* group = registry.getGroup(group_name);
+  if (!group)
+    return false;
+  group->setCommandLifetimeMs(req.command_lifetime);
 
   HebirosServices::setCommandLifetime(req, res, group_name);
 
@@ -189,7 +196,14 @@ bool HebirosServicesPhysical::sendCommandWithAcknowledgement(
   SendCommandWithAcknowledgementSrv::Request &req, 
   SendCommandWithAcknowledgementSrv::Response &res, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  // TODO: replace with better abstraction later -- move send command into group
+  HebirosGroupPhysical* group = dynamic_cast<HebirosGroupPhysical*>
+    (hebiros::HebirosGroupRegistry::Instance().getGroup(group_name)); 
+  if (!group) {
+    ROS_WARN("Improper group type during command call");
+    return false;
+  }
+
   GroupCommand group_command(group->size);
 
   sensor_msgs::JointState joint_data;

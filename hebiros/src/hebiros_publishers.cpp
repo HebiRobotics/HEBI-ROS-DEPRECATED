@@ -1,4 +1,5 @@
 #include "hebiros_publishers.h"
+#include "hebiros_group_registry.h"
 
 #include "hebiros.h"
 
@@ -40,7 +41,7 @@ void HebirosPublishers::feedbackJointState(sensor_msgs::JointState joint_state_m
 void HebirosPublishers::feedbackJointStateUrdf(sensor_msgs::JointState joint_state_msg,
   std::string group_name) {
 
-  std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(group_name);
+  HebirosGroup* group = HebirosGroupRegistry::Instance().getGroup(group_name);
 
   if (joint_state_msg.name.size() == group->joint_full_names.size()) {
     for (int i = 0; i < group->joint_full_names.size(); i++) {

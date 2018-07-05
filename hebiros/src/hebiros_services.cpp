@@ -2,6 +2,9 @@
 
 #include "hebiros.h"
 
+#include "hebiros_group.h"
+#include "hebiros_group_registry.h"
+
 std::map<std::string, ros::ServiceServer> HebirosServices::services;
 
 void HebirosServices::registerModelServices(const std::string& model_name) {
@@ -19,14 +22,23 @@ bool HebirosServices::entryList(
 
 bool HebirosServices::addGroup(
   AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
-  std::map<std::string, std::string> joint_full_names) {
+  std::map<std::string, std::string> joint_full_names, std::unique_ptr<HebirosGroup> group_tmp) {
 
   if (req.families.size() != 1 && req.families.size() != req.names.size()) {
     ROS_WARN("Invalid number of familes for group [%s]", req.group_name.c_str());
     return false;
   }
 
-  std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(req.group_name);
+  auto& registry = HebirosGroupRegistry::Instance();
+
+  if (registry.hasGroup(req.group_name))
+  {
+    ROS_WARN("Group [%s] already exists!", req.group_name.c_str());
+    return false;
+  }
+
+  registry.addGroup(req.group_name, std::move(group_tmp));
+  HebirosGroup* group = registry.getGroup(req.group_name);
 
   ROS_INFO("Created group [%s]:", req.group_name.c_str());
   for (int i = 0; i < req.families.size(); i++) {
@@ -39,39 +51,12 @@ bool HebirosServices::addGroup(
         ROS_INFO("/%s/%s", req.group_name.c_str(), joint_name.c_str());
 
         group->joints[joint_name] = j;
-
-        if (HebirosGroupGazebo::findGroup(req.group_name)) {
-          std::shared_ptr<HebirosGroupGazebo> group_gazebo =
-            HebirosGroupGazebo::getGroup(req.group_name);
-          group_gazebo->joints[joint_name] = j;
-        }
-
-        if (HebirosGroupPhysical::findGroup(req.group_name)) {
-          std::shared_ptr<HebirosGroupPhysical> group_physical =
-            HebirosGroupPhysical::getGroup(req.group_name);
-          group_physical->joints[joint_name] = j;
-        }
       }
     }
   }
 
   group->joint_full_names = joint_full_names;
-
-  if (HebirosGroupGazebo::findGroup(req.group_name)) {
-    std::shared_ptr<HebirosGroupGazebo> group_gazebo =
-      HebirosGroupGazebo::getGroup(req.group_name);
-    group_gazebo->size = group_gazebo->joints.size();
-    group->size = group_gazebo->size;
-    group_gazebo->joint_full_names = joint_full_names;
-  }
-
-  if (HebirosGroupPhysical::findGroup(req.group_name)) {
-    std::shared_ptr<HebirosGroupPhysical> group_physical =
-      HebirosGroupPhysical::getGroup(req.group_name);
-    group_physical->size = group_physical->joints.size();
-    group->size = group_physical->size;
-    group_physical->joint_full_names = joint_full_names;
-  }
+  group->size = group->joints.size();
 
   return true;
 }
@@ -134,8 +119,16 @@ bool HebirosServices::addModelFromURDF(
 bool HebirosServices::size(
   SizeSrv::Request &req, SizeSrv::Response &res, std::string group_name) {
 
-  std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(group_name);
-  res.size = group->size;
+  auto& registry = HebirosGroupRegistry::Instance();
+
+  if (!registry.hasGroup(group_name))
+  {
+    res.size = -1;
+    ROS_INFO("/hebiros/%s not found; could not get size", group_name.c_str());
+    return false;
+  }
+
+  res.size = registry.getGroup(group_name)->size;
 
   ROS_INFO("/hebiros/%s size=%d", group_name.c_str(), res.size);
 

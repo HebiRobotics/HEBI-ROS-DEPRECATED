@@ -14,8 +14,9 @@
 #include "hebiros/SetCommandLifetimeSrv.h"
 #include "hebiros/SendCommandWithAcknowledgementSrv.h"
 
-using namespace hebiros;
+#include "hebiros_group.h"
 
+using namespace hebiros;
 
 class HebirosServices {
 
@@ -34,7 +35,8 @@ class HebirosServices {
 
     bool addGroup(
       AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
-      std::map<std::string, std::string> joint_full_names);
+      std::map<std::string, std::string> joint_full_names,
+      std::unique_ptr<HebirosGroup> group_tmp);
 
     bool addGroupFromNames(
       AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);

@@ -44,11 +44,7 @@ HebirosNode::HebirosNode (int argc, char **argv) {
 }
 
 void HebirosNode::cleanup() {
-  for (auto group_pair : HebirosGroupPhysical::groups_physical) {
-    group_pair.second->group_ptr->clearFeedbackHandlers();
-  }
 }
-
 
 void HebirosNode::loop() {
   ros::Rate loop_rate(HebirosParameters::getInt("/hebiros/node_frequency"));

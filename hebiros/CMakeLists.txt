@@ -182,6 +182,7 @@ add_executable(hebiros_node src/hebiros_node.cpp
   src/hebiros_group.cpp
   src/hebiros_group_gazebo.cpp
   src/hebiros_group_physical.cpp
+  src/hebiros_group_registry.cpp
   src/hebiros_services.cpp
   src/hebiros_services_gazebo.cpp
   src/hebiros_services_physical.cpp

@@ -1,5 +1,5 @@
 #include "hebiros_subscribers_physical.h"
-
+#include "hebiros_group_registry.h"
 #include "hebiros.h"
 
 using namespace hebi;
@@ -16,23 +16,36 @@ void HebirosSubscribersPhysical::registerGroupSubscribers(std::string group_name
     "/hebiros/"+group_name+"/command/joint_state", 100,
     boost::bind(&HebirosSubscribersPhysical::jointCommand, this, _1, group_name));
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
-  group->group_ptr->requestInfo(*group->group_info_ptr);
+  // TODO: replace with better abstraction later
+  HebirosGroupPhysical* group = dynamic_cast<HebirosGroupPhysical*>
+    (hebiros::HebirosGroupRegistry::Instance().getGroup(group_name));
+  if (!group) {
+    ROS_WARN("Improper group type during register subscribers call");
+    return;
+  }
+  
+  group->group_ptr->requestInfo(group->group_info);
 
   group->group_ptr->addFeedbackHandler([this, group_name](const GroupFeedback& group_fbk) {
     this->feedback(group_name, group_fbk);
   });
 
-  group->group_ptr->setFeedbackFrequencyHz(
+  group->setFeedbackFrequencyHz(
     HebirosParameters::getInt("/hebiros/feedback_frequency"));
-  group->group_ptr->setCommandLifetimeMs(
+  group->setCommandLifetimeMs(
     HebirosParameters::getInt("/hebiros/command_lifetime"));
 }
 
 void HebirosSubscribersPhysical::command(const boost::shared_ptr<CommandMsg const> data,
   std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  // TODO: replace with better abstraction later -- move send command into group
+  HebirosGroupPhysical* group = dynamic_cast<HebirosGroupPhysical*>
+    (hebiros::HebirosGroupRegistry::Instance().getGroup(group_name)); 
+  if (!group) {
+    ROS_WARN("Improper group type during command call");
+    return;
+  }
 
   sensor_msgs::JointState joint_data;
   joint_data.name = data->name;
@@ -52,7 +65,13 @@ void HebirosSubscribersPhysical::command(const boost::shared_ptr<CommandMsg cons
 void HebirosSubscribersPhysical::jointCommand(
   const boost::shared_ptr<sensor_msgs::JointState const> data, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  // TODO: replace with better abstraction later -- move send command into group
+  HebirosGroupPhysical* group = dynamic_cast<HebirosGroupPhysical*>
+    (hebiros::HebirosGroupRegistry::Instance().getGroup(group_name)); 
+  if (!group) {
+    ROS_WARN("Improper group type during jointCommand call");
+    return;
+  }
 
   sensor_msgs::JointState joint_data;
   joint_data.name = data->name;
@@ -69,7 +88,7 @@ void HebirosSubscribersPhysical::jointCommand(
 void HebirosSubscribersPhysical::addJointCommand(GroupCommand* group_command,
   sensor_msgs::JointState data, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  HebirosGroup* group = hebiros::HebirosGroupRegistry::Instance().getGroup(group_name);
 
   for (int i = 0; i < data.name.size(); i++) {
     if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
@@ -95,7 +114,7 @@ void HebirosSubscribersPhysical::addJointCommand(GroupCommand* group_command,
 void HebirosSubscribersPhysical::addSettingsCommand(GroupCommand* group_command,
   SettingsMsg data, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  HebirosGroup* group = hebiros::HebirosGroupRegistry::Instance().getGroup(group_name);
 
   for (int i = 0; i < data.name.size(); i++) {
     if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
@@ -127,7 +146,7 @@ void HebirosSubscribersPhysical::addSettingsCommand(GroupCommand* group_command,
 void HebirosSubscribersPhysical::addPositionGainsCommand(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  HebirosGroup* group = hebiros::HebirosGroupRegistry::Instance().getGroup(group_name);
 
   for (int i = 0; i < data.name.size(); i++) {
     if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
@@ -200,7 +219,7 @@ void HebirosSubscribersPhysical::addPositionGainsCommand(GroupCommand* group_com
 void HebirosSubscribersPhysical::addVelocityGainsCommand(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  HebirosGroup* group = hebiros::HebirosGroupRegistry::Instance().getGroup(group_name);
 
   for (int i = 0; i < data.name.size(); i++) {
     if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
@@ -273,7 +292,7 @@ void HebirosSubscribersPhysical::addVelocityGainsCommand(GroupCommand* group_com
 void HebirosSubscribersPhysical::addEffortGainsCommand(GroupCommand* group_command,
   PidGainsMsg data, std::string group_name) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  HebirosGroup* group = hebiros::HebirosGroupRegistry::Instance().getGroup(group_name);
 
   for (int i = 0; i < data.name.size(); i++) {
     if (HebirosSubscribers::jointFound(group_name, data.name[i])) {
@@ -346,14 +365,20 @@ void HebirosSubscribersPhysical::addEffortGainsCommand(GroupCommand* group_comma
 
 void HebirosSubscribersPhysical::feedback(std::string group_name, const GroupFeedback& group_fbk) {
 
-  std::shared_ptr<HebirosGroupPhysical> group = HebirosGroupPhysical::getGroup(group_name);
+  // TODO: replace with better abstraction later
+  HebirosGroupPhysical* group = dynamic_cast<HebirosGroupPhysical*>
+    (hebiros::HebirosGroupRegistry::Instance().getGroup(group_name));
+  if (!group) {
+    ROS_WARN("Improper group type during feedback call");
+    return;
+  }
 
   FeedbackMsg feedback_msg;
   sensor_msgs::JointState joint_state_msg;
 
   for (int i = 0; i < group_fbk.size(); i++) {
-    std::string name = (*group->group_info_ptr)[i].settings().name().get();
-    std::string family = (*group->group_info_ptr)[i].settings().family().get();
+    std::string name = group->group_info[i].settings().name().get();
+    std::string family = group->group_info[i].settings().family().get();
     double position = group_fbk[i].actuator().position().get();
     double velocity = group_fbk[i].actuator().velocity().get();
     double effort = group_fbk[i].actuator().effort().get();

@@ -2,12 +2,13 @@
 
 #include "hebiros.h"
 
+#include "hebiros_group_registry.h"
 
 std::map<std::string, ros::Subscriber> HebirosSubscribers::subscribers;
 
 bool HebirosSubscribers::jointFound(std::string group_name, std::string joint_name) {
 
-  std::shared_ptr<HebirosGroup> group = HebirosGroup::getGroup(group_name);
+  HebirosGroup* group = hebiros::HebirosGroupRegistry::Instance().getGroup(group_name);
 
   return group->joints.find(joint_name) != group->joints.end();
 }
