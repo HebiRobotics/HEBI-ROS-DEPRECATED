@@ -364,7 +364,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   // Power = I^2R, but I = V/R so I^2R = V^2/R:
   double power_in = winding_voltage * winding_voltage / winding_resistance;
   hebiros_joint->temperature.update(power_in, iteration_time.toSec());
-  hebiros_joint->temperature_safety.update(hebiros_joint->temp.getMotorWindingTemperature());
+  hebiros_joint->temperature_safety.update(hebiros_joint->temperature.getMotorWindingTemperature());
 
   //alpha = hebiros_joint->low_pass_alpha;
   //force = (force * alpha) + hebiros_joint->prev_force * (1 - alpha);
