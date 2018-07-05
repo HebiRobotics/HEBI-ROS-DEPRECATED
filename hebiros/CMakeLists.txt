@@ -177,23 +177,23 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebi/mac_address.cpp
   include/hebi/trajectory.cpp
 
-  include/hebiros/hebiros.cpp
-  include/hebiros/hebiros_parameters.cpp
-  include/hebiros/hebiros_group.cpp
-  include/hebiros/hebiros_group_gazebo.cpp
-  include/hebiros/hebiros_group_physical.cpp
-  include/hebiros/hebiros_services.cpp
-  include/hebiros/hebiros_services_gazebo.cpp
-  include/hebiros/hebiros_services_physical.cpp
-  include/hebiros/hebiros_subscribers.cpp
-  include/hebiros/hebiros_subscribers_gazebo.cpp
-  include/hebiros/hebiros_subscribers_physical.cpp
-  include/hebiros/hebiros_publishers.cpp
-  include/hebiros/hebiros_publishers_gazebo.cpp
-  include/hebiros/hebiros_publishers_physical.cpp
-  include/hebiros/hebiros_clients.cpp
-  include/hebiros/hebiros_actions.cpp
-  include/hebiros/hebiros_model.cpp
+  src/hebiros.cpp
+  src/hebiros_parameters.cpp
+  src/hebiros_group.cpp
+  src/hebiros_group_gazebo.cpp
+  src/hebiros_group_physical.cpp
+  src/hebiros_services.cpp
+  src/hebiros_services_gazebo.cpp
+  src/hebiros_services_physical.cpp
+  src/hebiros_subscribers.cpp
+  src/hebiros_subscribers_gazebo.cpp
+  src/hebiros_subscribers_physical.cpp
+  src/hebiros_publishers.cpp
+  src/hebiros_publishers_gazebo.cpp
+  src/hebiros_publishers_physical.cpp
+  src/hebiros_clients.cpp
+  src/hebiros_actions.cpp
+  src/hebiros_model.cpp
 )
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
