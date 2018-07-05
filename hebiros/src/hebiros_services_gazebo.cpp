@@ -2,6 +2,7 @@
 
 #include "hebiros.h"
 
+#include "hebiros_group_registry.h"
 
 void HebirosServicesGazebo::registerNodeServices() {
 
@@ -54,16 +55,17 @@ bool HebirosServicesGazebo::addGroup(
   AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
   std::map<std::string, std::string> joint_full_names) {
 
-  if (HebirosGroup::findGroup(req.group_name)) {
+  auto& registry = HebirosGroupRegistry::Instance();
+
+  if (registry.hasGroup(req.group_name)) {
 
     ROS_WARN("Group [%s] already exists", req.group_name.c_str());
     return true;
   }
   
-  HebirosGroupGazebo group(req.group_name);
+  std::unique_ptr<HebirosGroupGazebo> group(new HebirosGroupGazebo());
 
-  if (!HebirosServices::addGroup(req, res, joint_full_names)) {
-    HebirosGroupGazebo::removeGroup(req.group_name);
+  if (!HebirosServices::addGroup(req, res, joint_full_names, std::move(group))) {
     return false;
   }
 

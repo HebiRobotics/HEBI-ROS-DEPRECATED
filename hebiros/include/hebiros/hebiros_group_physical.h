@@ -1,29 +1,20 @@
-#ifndef HEBIROS_GROUP_PHYSICAL_H
-#define HEBIROS_GROUP_PHYSICAL_H
-
-#include "ros/ros.h"
+#pragma once
 
 #include "group.hpp"
-
+#include "group_info.hpp"
 #include "hebiros_group.h"
-
-
-using namespace hebi;
 
 class HebirosGroupPhysical : public HebirosGroup {
 
   public:
 
-    static std::map<std::string, std::shared_ptr<HebirosGroupPhysical>> groups_physical;
+    std::shared_ptr<hebi::Group> group_ptr;
+    hebi::GroupInfo group_info;
 
-    std::shared_ptr<Group> group_ptr;
-    GroupInfo* group_info_ptr;
+    HebirosGroupPhysical(std::shared_ptr<hebi::Group> group);
+    virtual ~HebirosGroupPhysical();
 
-    HebirosGroupPhysical(std::string name);
-    static std::shared_ptr<HebirosGroupPhysical> getGroup(std::string name);
-    static void removeGroup(std::string name);
-    static bool findGroup(std::string name);
+    void setFeedbackFrequencyHz(float frequency) override;
+    void setCommandLifetimeMs(float lifetime) override;
 
 };
-
-#endif

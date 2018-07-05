@@ -1,6 +1,5 @@
-
 #include "hebiros_subscribers_gazebo.h"
-
+#include "hebiros_group_registry.h"
 #include "hebiros.h"
 
 using namespace hebiros;
@@ -44,7 +43,13 @@ void HebirosSubscribersGazebo::jointCommand(
 void HebirosSubscribersGazebo::feedback(const boost::shared_ptr<FeedbackMsg const> data,
   std::string group_name) {
 
-  std::shared_ptr<HebirosGroupGazebo> group = HebirosGroupGazebo::getGroup(group_name);
+  // TODO: replace with better abstraction later
+  HebirosGroupGazebo* group = dynamic_cast<HebirosGroupGazebo*>
+    (hebiros::HebirosGroupRegistry::Instance().getGroup(group_name));
+  if (!group) {
+    ROS_WARN("Improper group type during feedback call");
+    return;
+  }
 
   FeedbackMsg feedback_msg = *data;
   sensor_msgs::JointState joint_state_msg;
