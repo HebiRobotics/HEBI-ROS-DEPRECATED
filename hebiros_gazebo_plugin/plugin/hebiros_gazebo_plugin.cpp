@@ -68,6 +68,10 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       joint->SetProvideFeedback(true);
       double position = joint->GetAngle(0).Radian();
       double velocity = joint->GetVelocity(0);
+      //physics::JointWrench wrench = joint->GetForceTorque(0u);  // Net torque (motor + environment). Non-zero values represent transient effects.
+      //double effort = -1*wrench.body2Torque.z;                  // reactive torque from motor
+      //effort = std::max(-20.0, std::min(20.0, effort));
+      //effort += joint->GetForce(0);                             // torque from motor
       double effort = joint->GetForce(0);
 
       hebiros_group->feedback.position[i] = position;
