@@ -48,6 +48,9 @@ class HebirosGazeboPlugin: public ModelPlugin {
     void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, std::string joint_name);
     void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time);
 
+    double prev_effort;
+    double low_pass_alpha;
+
     bool SrvAddGroup(AddGroupFromNamesSrv::Request &req,
       AddGroupFromNamesSrv::Response &res);
 
