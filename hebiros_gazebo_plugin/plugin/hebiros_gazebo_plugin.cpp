@@ -24,6 +24,9 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
 
+  this->prev_effort = 0.0;
+  this->low_pass_alpha = 0.1;
+
   ROS_INFO("Loaded hebiros gazebo plugin");
 }
 
@@ -73,6 +76,9 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       //effort = std::max(-20.0, std::min(20.0, effort));
       //effort += joint->GetForce(0);                             // torque from motor
       double effort = joint->GetForce(0);
+      double alpha = this->low_pass_alpha;
+      effort = (effort * alpha) + this->prev_effort * (1 - alpha);
+      this->prev_effort = effort;
 
       hebiros_group->feedback.position[i] = position;
       hebiros_group->feedback.velocity[i] = velocity;
