@@ -11,8 +11,6 @@ namespace hebiros {
     // changed and owned by the node at a later point, and the singleton removed
     static HebirosGroupRegistry& Instance();
 
-    HebirosGroupRegistry();
-
     // Takes ownership of this group, and adds it to the registry of groups.
     void addGroup(const std::string& name, std::unique_ptr<HebirosGroup> group);
 
@@ -26,6 +24,11 @@ namespace hebiros {
     bool hasGroup(const std::string& name) const;
 
   private:
+
+    // Note -- after refactoring so this isn't a singleton, this should probably
+    // become public.
+    HebirosGroupRegistry() = default;
+
     std::map<std::string, std::unique_ptr<HebirosGroup>> _groups{};
 
     static HebirosGroupRegistry _instance;

@@ -168,7 +168,7 @@ bool HebirosServicesPhysical::setFeedbackFrequency(
   HebirosGroup* group = registry.getGroup(group_name);
   if (!group)
     return false;
-  group->setFeedbackFrequencyHz(req.feedback_frequency);
+  group->setFeedbackFrequency(req.feedback_frequency);
 
   HebirosServices::setFeedbackFrequency(req, res, group_name);
 
@@ -185,7 +185,7 @@ bool HebirosServicesPhysical::setCommandLifetime(
   HebirosGroup* group = registry.getGroup(group_name);
   if (!group)
     return false;
-  group->setCommandLifetimeMs(req.command_lifetime);
+  group->setCommandLifetime(req.command_lifetime);
 
   HebirosServices::setCommandLifetime(req, res, group_name);
 

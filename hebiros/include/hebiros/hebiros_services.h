@@ -35,7 +35,7 @@ class HebirosServices {
 
     bool addGroup(
       AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
-      std::map<std::string, std::string> joint_full_names,
+      const std::map<std::string, std::string>& joint_full_names,
       std::unique_ptr<HebirosGroup> group_tmp);
 
     bool addGroupFromNames(

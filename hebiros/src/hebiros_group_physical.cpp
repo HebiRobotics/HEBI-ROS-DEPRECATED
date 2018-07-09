@@ -9,10 +9,10 @@ HebirosGroupPhysical::~HebirosGroupPhysical() {
   group_ptr->clearFeedbackHandlers();
 }
 
-void HebirosGroupPhysical::setFeedbackFrequencyHz(float frequency) {
-  group_ptr->setFeedbackFrequencyHz(frequency);
+void HebirosGroupPhysical::setFeedbackFrequency(float frequency_hz) {
+  group_ptr->setFeedbackFrequencyHz(frequency_hz);
 }
     
-void HebirosGroupPhysical::setCommandLifetimeMs(float lifetime) {
-  group_ptr->setCommandLifetimeMs(lifetime);
+void HebirosGroupPhysical::setCommandLifetime(float lifetime_ms) {
+  group_ptr->setCommandLifetimeMs(lifetime_ms);
 }

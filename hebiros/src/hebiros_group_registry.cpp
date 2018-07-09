@@ -9,9 +9,6 @@ namespace hebiros {
     return s;
   }
 
-  HebirosGroupRegistry::HebirosGroupRegistry() {
-  }
-
   void HebirosGroupRegistry::addGroup(const std::string& name, std::unique_ptr<HebirosGroup> group) {
     _groups[name] = std::move(group);
   }

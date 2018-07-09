@@ -11,7 +11,7 @@ class HebirosGroup {
   public:
 
     HebirosGroup();
-    virtual ~HebirosGroup() {};
+    virtual ~HebirosGroup() = default;
 
     int size;
     std::map<std::string, std::string> joint_full_names;
@@ -19,6 +19,6 @@ class HebirosGroup {
     sensor_msgs::JointState joint_state_msg;
     hebiros::FeedbackMsg feedback_msg;
 
-    virtual void setFeedbackFrequencyHz(float frequency);
-    virtual void setCommandLifetimeMs(float lifetime);
+    virtual void setFeedbackFrequency(float frequency_hz);
+    virtual void setCommandLifetime(float lifetime_ms);
 };
