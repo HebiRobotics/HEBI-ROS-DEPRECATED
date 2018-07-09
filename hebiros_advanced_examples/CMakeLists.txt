@@ -14,6 +14,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+
 add_executable(example_set_gains_node src/other/example_set_gains_node.cpp)
 add_executable(example_rviz_node src/rviz/example_rviz_node.cpp)
 add_executable(example_moveit_node src/moveit/example_moveit_node.cpp)
@@ -40,6 +41,7 @@ target_link_libraries(example_mobile_robot_node ${catkin_LIBRARIES})
 target_link_libraries(example_omnibase_free_roam ${catkin_LIBRARIES})
 target_link_libraries(example_omnibase_odometry ${catkin_LIBRARIES})
 
+
 install(PROGRAMS
   src/omnibase/key_read.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -50,3 +52,13 @@ install(FILES
   launch/omnibase/example_omnibase_free_roam.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+
+
+
+
+
+
+
+
+
