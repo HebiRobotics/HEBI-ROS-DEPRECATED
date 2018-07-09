@@ -3,8 +3,8 @@
 HebirosGroup::HebirosGroup() {
 }
 
-void HebirosGroup::setFeedbackFrequencyHz(float frequency) {
+void HebirosGroup::setFeedbackFrequency(float frequency_hz) {
 }
 
-void HebirosGroup::setCommandLifetimeMs(float lifetime) {
+void HebirosGroup::setCommandLifetime(float lifetime_ms) {
 }

@@ -22,7 +22,7 @@ bool HebirosServices::entryList(
 
 bool HebirosServices::addGroup(
   AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res,
-  std::map<std::string, std::string> joint_full_names, std::unique_ptr<HebirosGroup> group_tmp) {
+  const std::map<std::string, std::string>& joint_full_names, std::unique_ptr<HebirosGroup> group_tmp) {
 
   if (req.families.size() != 1 && req.families.size() != req.names.size()) {
     ROS_WARN("Invalid number of familes for group [%s]", req.group_name.c_str());

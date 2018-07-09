@@ -14,7 +14,7 @@ class HebirosGroupPhysical : public HebirosGroup {
     HebirosGroupPhysical(std::shared_ptr<hebi::Group> group);
     virtual ~HebirosGroupPhysical();
 
-    void setFeedbackFrequencyHz(float frequency) override;
-    void setCommandLifetimeMs(float lifetime) override;
+    void setFeedbackFrequency(float frequency_hz) override;
+    void setCommandLifetime(float lifetime_ms) override;
 
 };

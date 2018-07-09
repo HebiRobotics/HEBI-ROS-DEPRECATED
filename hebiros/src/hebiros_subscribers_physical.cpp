@@ -30,9 +30,9 @@ void HebirosSubscribersPhysical::registerGroupSubscribers(std::string group_name
     this->feedback(group_name, group_fbk);
   });
 
-  group->setFeedbackFrequencyHz(
+  group->setFeedbackFrequency(
     HebirosParameters::getInt("/hebiros/feedback_frequency"));
-  group->setCommandLifetimeMs(
+  group->setCommandLifetime(
     HebirosParameters::getInt("/hebiros/command_lifetime"));
 }
 
