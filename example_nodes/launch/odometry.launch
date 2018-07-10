@@ -1,0 +1,10 @@
+<launch>
+
+    <node pkg="example_nodes" type="omnibase_odometry" name="omnibase_odometry" />
+
+    <node pkg="example_nodes" type="omnibase_node" name="omnibase_node" />
+
+    <node pkg="example_nodes" type="key_read.py" name="key_read" />
+
+
+  </launch>
