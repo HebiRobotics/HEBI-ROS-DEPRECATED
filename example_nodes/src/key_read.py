@@ -70,7 +70,7 @@ def shutdownHook():
 
 if __name__=="__main__":
 
-	pub = rospy.Publisher('keys/cmd_vel', Twist, queue_size = 3)
+	pub = rospy.Publisher('keys/cmd_vel', Twist, queue_size = 1)
 	rospy.init_node('key_read_node')
 	pygame.init()
 	pygame.font.init()

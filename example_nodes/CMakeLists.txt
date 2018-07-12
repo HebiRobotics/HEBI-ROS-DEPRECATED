@@ -197,6 +197,8 @@ include_directories(
 install(FILES
   launch/free_roam.launch
   launch/odometry.launch
+  launch/free_roam_trajectory.launch
+  launch/odometry_trajectory.launch
   # myfile1
   # myfile2
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
@@ -286,6 +288,40 @@ add_executable(omnibase_odometry src/omnibase_odometry.cpp
 add_dependencies(omnibase_odometry hebiros_generate_messages_cpp)
 target_link_libraries(omnibase_odometry ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
+add_executable(omnibase_node_trajectory src/omnibase_node_trajectory.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+
+  include/hebiros/hebiros.cpp
+  include/hebiros/hebiros_parameters.cpp
+  include/hebiros/hebiros_group.cpp
+  include/hebiros/hebiros_group_gazebo.cpp
+  include/hebiros/hebiros_group_physical.cpp
+  include/hebiros/hebiros_services.cpp
+  include/hebiros/hebiros_services_gazebo.cpp
+  include/hebiros/hebiros_services_physical.cpp
+  include/hebiros/hebiros_subscribers.cpp
+  include/hebiros/hebiros_subscribers_gazebo.cpp
+  include/hebiros/hebiros_subscribers_physical.cpp
+  include/hebiros/hebiros_publishers.cpp
+  include/hebiros/hebiros_publishers_gazebo.cpp
+  include/hebiros/hebiros_publishers_physical.cpp
+  include/hebiros/hebiros_clients.cpp
+  include/hebiros/hebiros_actions.cpp
+  include/hebiros/hebiros_model.cpp
+)
+add_dependencies(omnibase_node_trajectory hebiros_generate_messages_cpp)
+target_link_libraries(omnibase_node_trajectory ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
 
 
