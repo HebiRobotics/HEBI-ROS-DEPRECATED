@@ -1,10 +1,10 @@
 /**
 * Provides a base level implementation of odometry calculations for a 3-wheeled
-* omnidirectional base (omnibase). This file works in the hebiros setup, and 
-* publishes odometry results to an odometry node.
+* omnidirectional base (omnibase). This file works using the C++ API, and 
+* publishes odometry results to a ROS odometry node.
 *
-* @author Hardik Singh < hardik @ hebirobotics.com >
-* @since 10 Jul 2018
+* @author Hardik Singh < hardik@hebirobotics.com >
+* @since 13 Jul 2018
 **/
 
 #include <ros/ros.h>
@@ -16,7 +16,6 @@
 #include <thread>
 #include "hebi.h"
 #include "lookup.hpp"
-#include "group_command.hpp"
 #include "group_feedback.hpp"
 
 #include <ros/console.h>
@@ -56,7 +55,6 @@ int main(int argc, char ** argv) {
     return -1;
   }
 
-  GroupCommand group_command(group -> size());
   GroupFeedback feedback(group -> size());
 
   ////////////////////////////////////////////////////////////////////////////
@@ -67,8 +65,9 @@ int main(int argc, char ** argv) {
   double d0; double d1; double d2;
   double dx; double dy; 
   double dtheta0; double dtheta1; double dtheta2;
-  Eigen::VectorXd prevPose(3);
-  Eigen::VectorXd currPose(3);
+  int num_wheels = 3;
+  Eigen::VectorXd prevPose(num_wheels);
+  Eigen::VectorXd currPose(num_wheels);
   geometry_msgs::Twist output;
   bool startup_complete = false;
 

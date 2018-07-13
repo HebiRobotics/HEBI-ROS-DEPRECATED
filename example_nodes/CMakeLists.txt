@@ -10,12 +10,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O2")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  hebiros
   roscpp
   rospy
-  tf
-  tf2
-  tf2_ros
   std_msgs
   sensor_msgs
   urdf
@@ -27,7 +23,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -41,42 +36,21 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## Generate messages in the 'msg' folder
 #add_message_files(
 #  FILES
-#  EntryMsg.msg
-#  EntryListMsg.msg
-#  FeedbackMsg.msg
-#  WaypointMsg.msg
-#  CommandMsg.msg
-#  SettingsMsg.msg
-#  PidGainsMsg.msg
 #)
 
 ## Generate services in the 'srv' folder
 #add_service_files(
 #  FILES
-#  EntryListSrv.srv
-#  AddGroupFromNamesSrv.srv
-#  AddGroupFromURDFSrv.srv
-#  AddModelFromURDFSrv.srv
-#  ModelFkSrv.srv
-#  SizeSrv.srv
-#  SetFeedbackFrequencySrv.srv
-#  SetCommandLifetimeSrv.srv
-#  SendCommandWithAcknowledgementSrv.srv
 #)
 
 ## Generate actions in the 'action' folder
 #add_action_files(
 #  FILES
-#  Trajectory.action
 #)
-
 
 ## Generate added messages and services with any dependencies listed here
 #generate_messages(
 #  DEPENDENCIES
-#  std_msgs
-#  sensor_msgs
-#  actionlib_msgs
 #)
 
 
@@ -111,12 +85,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES hebiros
 #  CATKIN_DEPENDS other_catkin_pkg
-#  CATKIN_DEPENDS roscpp
-#  CATKIN_DEPENDS actionlib
-#  CATKIN_DEPENDS message_runtime
-#  CATKIN_DEPENDS tf
 #  DEPENDS system_lib
 )
 
@@ -131,7 +100,6 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   include/hebi
   include/hebi/Eigen
-  include/hebiros
 )
 
 ## Declare a C++ library
@@ -196,9 +164,13 @@ include_directories(
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
   launch/free_roam.launch
+  launch/trajectory_free_roam.launch
   launch/odometry.launch
+<<<<<<< HEAD
   # myfile1
   # myfile2
+=======
+>>>>>>> 05a1335... Updated C++ omnibase files, trajectory files added, hebiros dependencies removed 13 Jul 18
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -229,28 +201,34 @@ add_executable(omnibase_node src/omnibase_node.cpp
   include/hebi/lookup.cpp
   include/hebi/mac_address.cpp
   include/hebi/trajectory.cpp
-
-  include/hebiros/hebiros.cpp
-  include/hebiros/hebiros_parameters.cpp
-  include/hebiros/hebiros_group.cpp
-  include/hebiros/hebiros_group_gazebo.cpp
-  include/hebiros/hebiros_group_physical.cpp
-  include/hebiros/hebiros_services.cpp
-  include/hebiros/hebiros_services_gazebo.cpp
-  include/hebiros/hebiros_services_physical.cpp
-  include/hebiros/hebiros_subscribers.cpp
-  include/hebiros/hebiros_subscribers_gazebo.cpp
-  include/hebiros/hebiros_subscribers_physical.cpp
-  include/hebiros/hebiros_publishers.cpp
-  include/hebiros/hebiros_publishers_gazebo.cpp
-  include/hebiros/hebiros_publishers_physical.cpp
-  include/hebiros/hebiros_clients.cpp
-  include/hebiros/hebiros_actions.cpp
-  include/hebiros/hebiros_model.cpp
 )
-add_dependencies(omnibase_node hebiros_generate_messages_cpp)
+add_dependencies(omnibase_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(omnibase_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
+
+
+add_executable(omnibase_node_trajectory src/omnibase_node_trajectory.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+)
+add_dependencies(omnibase_node_trajectory ${catkin_EXPORTED_TARGETS})
+target_link_libraries(omnibase_node_trajectory ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+
+<<<<<<< HEAD
+
+=======
 add_executable(omnibase_odometry src/omnibase_odometry.cpp
   include/hebi/command.cpp
   include/hebi/feedback.cpp
@@ -264,29 +242,8 @@ add_executable(omnibase_odometry src/omnibase_odometry.cpp
   include/hebi/lookup.cpp
   include/hebi/mac_address.cpp
   include/hebi/trajectory.cpp
-
-  include/hebiros/hebiros.cpp
-  include/hebiros/hebiros_parameters.cpp
-  include/hebiros/hebiros_group.cpp
-  include/hebiros/hebiros_group_gazebo.cpp
-  include/hebiros/hebiros_group_physical.cpp
-  include/hebiros/hebiros_services.cpp
-  include/hebiros/hebiros_services_gazebo.cpp
-  include/hebiros/hebiros_services_physical.cpp
-  include/hebiros/hebiros_subscribers.cpp
-  include/hebiros/hebiros_subscribers_gazebo.cpp
-  include/hebiros/hebiros_subscribers_physical.cpp
-  include/hebiros/hebiros_publishers.cpp
-  include/hebiros/hebiros_publishers_gazebo.cpp
-  include/hebiros/hebiros_publishers_physical.cpp
-  include/hebiros/hebiros_clients.cpp
-  include/hebiros/hebiros_actions.cpp
-  include/hebiros/hebiros_model.cpp
 )
-add_dependencies(omnibase_odometry hebiros_generate_messages_cpp)
+add_dependencies(omnibase_odometry ${catkin_EXPORTED_TARGETS})
 target_link_libraries(omnibase_odometry ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-
-
-
+>>>>>>> 05a1335... Updated C++ omnibase files, trajectory files added, hebiros dependencies removed 13 Jul 18
 
