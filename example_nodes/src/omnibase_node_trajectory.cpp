@@ -1,16 +1,15 @@
 /**
-* Provides a base level implentation of user controls for a 3-wheeled 
-* omnidirectional base (omnibase).
+* Provides an implentation of user controls for a 3-wheeled omnidirectional 
+* base (omnibase). This example uses the HEBI trajectory generator to move the
+* omnibase more smoothly.
 * You can move forward/backward, left/right, or rotate in spot.
 * 
-* @author Hardik Singh < hardik @ hebirobotics.com >
-* @since 10 Jul 2018
+* @author Hardik Singh < hardik@hebirobotics.com >
+* @since 13 Jul 2018
 **/
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
-#include "sensor_msgs/JointState.h"
-
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -137,6 +136,7 @@ int main(int argc, char ** argv) {
   }
 
   GroupCommand group_command(group -> size());
+  group_command.readGains("omnibase_gains.xml");
   GroupFeedback feedback(group -> size());
   group -> setFeedbackFrequencyHz(rate_of_command);
 
@@ -144,30 +144,15 @@ int main(int argc, char ** argv) {
   ////////                   HEBI SETUP END                           ////////
   ////////////////////////////////////////////////////////////////////////////
 
-
   /******** Trajectory Setup **********/
-
-  const double nan = std::numeric_limits<float>::quiet_NaN();
 
   double rampTime = 0.33;
   Eigen::VectorXd omniBaseTrajTime(2);
   omniBaseTrajTime << 0, rampTime;
 
-  Eigen::MatrixXd velocities(num_wheels, 2);
-  Eigen::MatrixXd accelerations(num_wheels, 2);
-  Eigen::MatrixXd jerks(num_wheels, 2);
-
-  velocities << 0, 0,
-                0, 0,
-                0, 0;
-
-  accelerations << 0, 0,
-                   0, 0,
-                   0, 0;
-
-  jerks << 0, 0,
-           0, 0,
-           0, 0;
+  Eigen::MatrixXd velocities = Eigen::MatrixXd::Zero(num_wheels, 2);
+  Eigen::MatrixXd accelerations = Eigen::MatrixXd::Zero(num_wheels, 2);
+  Eigen::MatrixXd jerks = Eigen::MatrixXd::Zero(num_wheels, 2);
 
   std::shared_ptr<hebi::trajectory::Trajectory> trajectory;
   ros::Time trajStartTime;
@@ -184,15 +169,10 @@ int main(int argc, char ** argv) {
         omniPos = feedback.getPosition();
         // initialise trajectory object
         trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
-                                                        omniBaseTrajTime,
-                                                        velocities,
-                                                        &accelerations,
-                                                        &jerks);
+                        omniBaseTrajTime, velocities, &accelerations, &jerks);
         trajStartTime = ros::Time::now();
         startup_complete = true;
-
       }
-
     } else {
 
       /* Get new body velocities from trajectory generator */
@@ -230,12 +210,9 @@ int main(int argc, char ** argv) {
                jerk_traj[1], 0,
                jerk_traj[2], 0;
 
-       trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
-                                                        omniBaseTrajTime,
-                                                        velocities,
-                                                        &accelerations,
-                                                        &jerks);
-       trajStartTime = ros::Time::now();
+      trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
+                        omniBaseTrajTime, velocities, &accelerations, &jerks);
+      trajStartTime = ros::Time::now();
     }
 
     ros::spinOnce();
