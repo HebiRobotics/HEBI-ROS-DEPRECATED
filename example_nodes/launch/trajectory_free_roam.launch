@@ -1,0 +1,9 @@
+<launch>
+
+
+    <node pkg="example_nodes" type="omnibase_node_trajectory" name="omnibase_node_trajectory" />
+
+    <node pkg="example_nodes" type="key_read.py" name="key_read" />
+
+
+  </launch>
