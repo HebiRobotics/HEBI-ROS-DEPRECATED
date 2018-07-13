@@ -1,6 +1,5 @@
 <launch>
 
-    <node pkg="example_nodes" type="omnibase_odometry" name="omnibase_odometry" />
 
     <node pkg="example_nodes" type="omnibase_node_trajectory" name="omnibase_node_trajectory" />
 
