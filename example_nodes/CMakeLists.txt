@@ -166,11 +166,6 @@ install(FILES
   launch/free_roam.launch
   launch/trajectory_free_roam.launch
   launch/odometry.launch
-<<<<<<< HEAD
-  # myfile1
-  # myfile2
-=======
->>>>>>> 05a1335... Updated C++ omnibase files, trajectory files added, hebiros dependencies removed 13 Jul 18
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -226,9 +221,7 @@ target_link_libraries(omnibase_node_trajectory ${catkin_LIBRARIES} ${PROJECT_SOU
 
 
 
-<<<<<<< HEAD
 
-=======
 add_executable(omnibase_odometry src/omnibase_odometry.cpp
   include/hebi/command.cpp
   include/hebi/feedback.cpp
@@ -245,5 +238,5 @@ add_executable(omnibase_odometry src/omnibase_odometry.cpp
 )
 add_dependencies(omnibase_odometry ${catkin_EXPORTED_TARGETS})
 target_link_libraries(omnibase_odometry ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
->>>>>>> 05a1335... Updated C++ omnibase files, trajectory files added, hebiros dependencies removed 13 Jul 18
+
 
