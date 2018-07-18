@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="example_nodes" type="arm_node" name="arm_node" />
+    <node pkg="example_nodes" type="key_read_arm.py" name="key_read_arm" />
+
+
+  </launch>
