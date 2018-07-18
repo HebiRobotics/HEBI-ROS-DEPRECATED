@@ -6,8 +6,7 @@ import rospy
 
 import geometry_msgs.msg 
 from geometry_msgs.msg import Twist
-
-from example_nodes.msg import Waypoint
+from geometry_msgs.msg import Point
 
 import sys, pygame
 
@@ -72,7 +71,7 @@ def shutdownHook():
 
 if __name__=="__main__":
 
-	pub = rospy.Publisher('keys/cmd_vel', Waypoint, queue_size = 1)
+	pub = rospy.Publisher('keys/cmd_vel', Point, queue_size = 1)
 	rospy.init_node('key_read_node')
 	pygame.init()
 	pygame.font.init()
@@ -86,7 +85,7 @@ if __name__=="__main__":
 	running = True
 	n = len(screenMsg) + 1
 	#twist = Twist()
-	output = Waypoint()
+	output = Point()
 
 	r = rospy.Rate(50)
 
