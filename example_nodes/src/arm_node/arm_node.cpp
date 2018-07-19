@@ -51,7 +51,33 @@ namespace hebi {
       // Replan a smooth joint trajectory from the current location through a
       // series of cartesian waypoints.
       void updateCartesianWaypoints(example_nodes::TargetWaypoints target_waypoints) {
-        // TODO TODO
+        size_t num_waypoints = target_waypoints.waypoints_vector.size();
+
+        // These are the joint angles that will be added
+        Eigen::MatrixXd positions(arm_.size(), num_waypoints);
+
+        // Plan to each subsequent point from the last position
+        Eigen::VectorXd last_position = arm_.getLastFeedback().getPosition();
+
+        // Get joint angles to move to each waypoint
+        for (size_t i = 0; i < num_waypoints; ++i) {
+          const auto& waypoint = target_waypoints.waypoints_vector[i];
+
+          Eigen::Vector3d xyz(waypoint.x, waypoint.y, waypoint.z);
+
+          // Find the joint angles for the next waypoint, starting from the last
+          // waypoint
+          last_position = arm_.getKinematics().solveIK(last_position, xyz);
+
+          // Save the waypoints
+          positions.col(i) = last_position; 
+        }
+
+        // Replan:
+        arm_.getTrajectory().replan(
+          ::ros::Time::now().toSec(),
+          arm_.getLastFeedback(),
+          positions);
       }
 
     private:
@@ -120,6 +146,10 @@ int main(int argc, char ** argv) {
 
   ros::Subscriber key_subscriber =
     node.subscribe<geometry_msgs::Point>("keys/cmd_vel", 50, &hebi::ros::ArmNode::offsetTargetCallback, &arm_node);
+
+  // Subscribe to lists of (x, y, z) waypoints
+  ros::Subscriber waypoint_subscriber =
+    node.subscribe<example_nodes::TargetWaypoints>("cartesian_waypoints", 50, &hebi::ros::ArmNode::updateCartesianWaypoints, &arm_node);
 
   /////////////////// Main Loop ///////////////////
 

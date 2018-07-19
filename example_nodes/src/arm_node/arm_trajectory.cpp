@@ -96,9 +96,19 @@ namespace hebi {
       int num_joints = new_positions.rows();
       int num_waypoints = new_positions.cols();
 
-      replan(t_now, feedback, new_positions,
-        Eigen::MatrixXd::Zero(num_joints, num_waypoints),
-        Eigen::MatrixXd::Zero(num_joints, num_waypoints));
+      // Unconstrained velocities and accelerations during the path, but set to
+      // zero at the end.
+      double nan = std::numeric_limits<double>::quiet_NaN();
+
+      Eigen::MatrixXd velocities(num_joints, num_waypoints);
+      velocities.setConstant(nan);
+      velocities.rightCols<1>() = Eigen::VectorXd::Zero(num_joints);
+
+      Eigen::MatrixXd accelerations(num_joints, num_waypoints);
+      accelerations.setConstant(nan);
+      accelerations.rightCols<1>() = Eigen::VectorXd::Zero(num_joints);
+
+      replan(t_now, feedback, new_positions, velocities, accelerations);
     }
 
     void ArmTrajectory::replan(
@@ -113,9 +123,7 @@ namespace hebi {
       new_positions_matrix = Eigen::MatrixXd::Zero(num_joints, 1);
       new_positions_matrix.col(0) = new_positions;
 
-      replan(t_now, feedback, new_positions_matrix,
-        Eigen::MatrixXd::Zero(num_joints, num_waypoints),
-        Eigen::MatrixXd::Zero(num_joints, num_waypoints));
+      replan(t_now, feedback, new_positions_matrix);
     }
 
     // Heuristic to get the timing of the waypoints. This function can be
