@@ -89,7 +89,7 @@ int main(int argc, char ** argv) {
 
   hebi::robot_model::RobotModel model;
   model.addActuator(ActuatorType::X5_9);
-  model.addBracket(BracketType::X5HeavyLeftOutside ); // fourgrowers has right not left
+  model.addBracket(BracketType::X5HeavyLeftOutside );
   model.addActuator(ActuatorType::X5_9);
   model.addLink(LinkType::X5, 0.325, M_PI);
   model.addActuator(ActuatorType::X5_9);
