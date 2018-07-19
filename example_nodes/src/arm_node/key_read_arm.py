@@ -20,16 +20,7 @@ CTRL-C to quit
 screenMsg = """
 NAVIGATION INSTRUCTIONS
 
-W : forward
-S : back
-Q : left
-E : right
-A : rotate left
-D : rotate right
-
-J : increase speed
-K : reset speed to default
-L : lower speed
+Use W/A/S/D/Q/E to move the arm around!
 
 P : quit
 
@@ -39,25 +30,18 @@ Enjoy!
 screenMsg = screenMsg.split("\n")
 
 keyBindings = {
-		'd':(0,-1,0), #right
-		'D':(0,-1,0),#
+		'd':(0,-1,0),
+		'D':(0,-1,0),
 		'a':(0,1,0),
 		'A':(0,1,0),
 		's':(-1,0,0),
 		'S':(-1,0,0),
 		'w':(1,0,0),
 		'W':(1,0,0),
-		## these are for the diagonal + rotational movement
-		# 'q':(0,1,-1),
-		# 'Q':(0,1,-1),
-		# 'e':(0,1,1),
-		# 'E':(0,1,1),
-		## these are for the horizontal translation
 		'q':(0,0,1),
 		'Q':(0,0,1),
 		'e':(0,0,-1),
 		'E':(0,0,-1),
-		##
 	}
 
 speedBindings = {
@@ -84,7 +68,6 @@ if __name__=="__main__":
 	z = 0
 	running = True
 	n = len(screenMsg) + 1
-	#twist = Twist()
 	output = Point()
 
 	r = rospy.Rate(50)
@@ -137,15 +120,9 @@ if __name__=="__main__":
 				th = 0
 
 		# important parameters
-		#twist.linear.x += x; twist.linear.y += y; 
-		#twist.linear.z += z;
 		output.x = x
 		output.y = y
 		output.z = z
-		# not important parameters, NO NEED TO CHANGE
-		#twist.angular.z = 0;
-		#twist.angular.x = 0; twist.angular.y = 0; 
-		#print(twist)
 		pub.publish(output)
 
 		r.sleep()
