@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   actionlib_msgs
   actionlib
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -34,9 +35,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ################################################
 
 ## Generate messages in the 'msg' folder
-#add_message_files(
-#  FILES
-#)
+add_message_files(
+  FILES
+  TargetWaypoints.msg
+)
 
 ## Generate services in the 'srv' folder
 #add_service_files(
@@ -49,9 +51,11 @@ find_package(Boost REQUIRED COMPONENTS system)
 #)
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#  DEPENDENCIES
-#)
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
 
 
 ################################################
@@ -87,6 +91,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
+  CATKIN_DEPENDS message_runtime
 )
 
 ###########
@@ -100,6 +105,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   include/hebi
   include/hebi/Eigen
+  include/util
 )
 
 ## Declare a C++ library
@@ -183,7 +189,7 @@ install(FILES
 # catkin_add_nosetests(test)
 
 
-add_executable(omnibase_node src/omnibase_node.cpp
+add_executable(omnibase_node src/omnibase/omnibase_node.cpp
   include/hebi/command.cpp
   include/hebi/feedback.cpp
   include/hebi/group_command.cpp
@@ -202,7 +208,7 @@ target_link_libraries(omnibase_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/li
 
 
 
-add_executable(omnibase_node_trajectory src/omnibase_node_trajectory.cpp
+add_executable(omnibase_node_trajectory src/omnibase/omnibase_node_trajectory.cpp
   include/hebi/command.cpp
   include/hebi/feedback.cpp
   include/hebi/group_command.cpp
@@ -221,8 +227,7 @@ target_link_libraries(omnibase_node_trajectory ${catkin_LIBRARIES} ${PROJECT_SOU
 
 
 
-
-add_executable(omnibase_odometry src/omnibase_odometry.cpp
+add_executable(omnibase_odometry src/omnibase/omnibase_odometry.cpp
   include/hebi/command.cpp
   include/hebi/feedback.cpp
   include/hebi/group_command.cpp
@@ -238,5 +243,29 @@ add_executable(omnibase_odometry src/omnibase_odometry.cpp
 )
 add_dependencies(omnibase_odometry ${catkin_EXPORTED_TARGETS})
 target_link_libraries(omnibase_odometry ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+add_executable(arm_node src/arm_node/arm_node.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+
+  include/util/grav_comp.hpp
+
+  src/arm_node/arm_kinematics.cpp
+  src/arm_node/arm_trajectory.cpp
+  src/arm_node/arm.cpp
+)
+add_dependencies(arm_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(arm_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
 
