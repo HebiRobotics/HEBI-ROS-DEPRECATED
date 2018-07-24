@@ -268,4 +268,3 @@ add_executable(arm_node src/arm_node/arm_node.cpp
 add_dependencies(arm_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(arm_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
-

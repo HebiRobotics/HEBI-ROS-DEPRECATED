@@ -8,6 +8,7 @@ import geometry_msgs.msg
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Point
 
+
 import sys, pygame
 
 
@@ -68,6 +69,7 @@ if __name__=="__main__":
 	z = 0
 	running = True
 	n = len(screenMsg) + 1
+
 	output = Point()
 
 	r = rospy.Rate(50)
@@ -123,6 +125,7 @@ if __name__=="__main__":
 		output.x = x
 		output.y = y
 		output.z = z
+
 		pub.publish(output)
 
 		r.sleep()
