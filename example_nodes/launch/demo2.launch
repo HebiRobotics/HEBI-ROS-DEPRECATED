@@ -1,0 +1,10 @@
+<launch>
+
+    <node pkg="example_nodes" type="omnibase_node_trajectory" name="omnibase_node_trajectory" />
+    <node pkg="example_nodes" type="omnibase_odometry" name="omnibase_odometry" />
+
+    <node pkg="example_nodes" type="key_read_rosie.py" name="key_read_rosie" />
+
+    <node pkg="example_nodes" type="demo_central" name="demo_central" />
+
+  </launch>

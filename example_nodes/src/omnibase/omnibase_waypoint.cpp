@@ -25,63 +25,75 @@ using namespace hebi;
 
 // Global Variables
 int num_wheels = 3;
-geometry_msgs::Twist directions;
-Eigen::VectorXd omniVels(num_wheels); 
-Eigen::VectorXd omniPos(num_wheels);
+geometry_msgs::Twist waypoint_cmd; // has a linear x y and a z we dont use
+Eigen::VectorXd target_pos(num_wheels);
+Eigen::VectorXd curr_pos(num_wheels);
 Eigen::VectorXd omniEfforts(num_wheels);
-bool keys_init = false;
 double rate_of_command = 60;
 double speed = 0.3; // m/s
 double wheelRotSpeed = M_PI/3; // (rad/s)
 
 // Trajectory items
+Eigen::VectorXd pos_traj(num_wheels);
 Eigen::VectorXd vel_traj(num_wheels);
 Eigen::VectorXd accel_traj(num_wheels);
-Eigen::VectorXd jerk_traj(num_wheels);
-Eigen::VectorXd desired_vel(num_wheels);
+
+bool trajectory_activate = false;
+
+double rampTime = 0.33;
+Eigen::VectorXd omniBaseTrajTime(2);
+
+Eigen::MatrixXd positions; 
+Eigen::MatrixXd velocities; 
+Eigen::MatrixXd accelerations;
+
+std::shared_ptr<hebi::trajectory::Trajectory> global_trajectory;
+ros::Time trajStartTime;
 
 
 
-void directions_callback(geometry_msgs::Twist data) {
+void waypoint_callback(geometry_msgs::Twist data) {
   /* Callback function that keeps up to date with key presses and commands */
-  directions = data;
-  keys_init = true;
+  if ( (!trajectory_activate)
+                      && ((data.linear.x != 0) || (data.linear.y != 0)))  {
+    waypoint_cmd = data;
+    trajectory_activate = true;
+  } 
 }
 
 
-void updateOmniVels() {
-  /* Declare main kinematic variables */
+void generateWheelTrajectory() {
+  // take waypoint command
+  // take current position of the wheels, assumed as 0 0 0
+  // calculate how many rotations need to be done per 
   double wheelRadius = 0.0762; // m
-  double baseRadius = 0.235; // m (center of omni to origin of base)
+  double offset = 1; //1-(0.3/(sqrt(pow(waypoint_cmd.linear.x,2) + pow(waypoint_cmd.linear.y,2)))); //multiplier
+  double x = (waypoint_cmd.linear.x * offset) / (2*wheelRadius*M_PI);
+  double y = (waypoint_cmd.linear.y * offset) / (2*wheelRadius*M_PI);
   double ratio = sqrt(3)/2;
+  // so we have a new x and y
 
-  // Wheel 1, front right
-  omniVels[0] = vel_traj[0] * 0.5/wheelRadius + 
-                vel_traj[1] * -ratio/wheelRadius +
-                vel_traj[2] * baseRadius/wheelRadius;
+  target_pos[0] = curr_pos[0] + (0.5*x + -ratio*y) * (2*M_PI);
+  target_pos[1] = curr_pos[1] + (0.5*x + ratio*y) * (2*M_PI);
+  target_pos[2] = curr_pos[2] + (-x) * (2*M_PI);
 
-  // Wheel 2, front left
-  omniVels[1] = vel_traj[0] * 0.5/wheelRadius + 
-                vel_traj[1] * ratio/wheelRadius +
-                vel_traj[2] * baseRadius/wheelRadius;
+  omniBaseTrajTime << 0, 
+        (4 * sqrt(pow(waypoint_cmd.linear.x,2) + pow(waypoint_cmd.linear.y,2)));
 
-  // Wheel 3, back center
-  omniVels[2] = vel_traj[0] * -1/wheelRadius + 
-                0 +
-                vel_traj[2] * baseRadius/wheelRadius;
+  positions << curr_pos[0], target_pos[0],
+               curr_pos[1], target_pos[1],
+               curr_pos[2], target_pos[2];
+  velocities = Eigen::MatrixXd::Zero(num_wheels, 2);
+  accelerations = Eigen::MatrixXd::Zero(num_wheels, 2);
+
+  // initialise trajectory object
+  global_trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
+                  omniBaseTrajTime, positions, &velocities, &accelerations);
+  trajStartTime = ros::Time::now();
+
+
 }
 
-
-void updatePoseCmd() { 
-  /* We assume that we have access to: */
-  // - feedback from modules 
-  // - omniVels; the velocities being commanded to each module 
-  // - rate-of-command; in hertz
-
-  omniPos[0] = omniPos[0] + omniVels[0] * (1/rate_of_command);
-  omniPos[1] = omniPos[1] + omniVels[1] * (1/rate_of_command);
-  omniPos[2] = omniPos[2] + omniVels[2] * (1/rate_of_command);
-}
 
 void updateOmniEfforts() {
   double chassisMass = 12; //kg
@@ -108,14 +120,14 @@ void updateOmniEfforts() {
 int main(int argc, char ** argv) {
 
   // Initialize ROS node
-  ros::init(argc, argv, "omnibase_node_trajectory");
+  ros::init(argc, argv, "omnibase_node_waypoint");
 
   ros::NodeHandle node;
 
   ros::Rate loop_rate(rate_of_command);
 
   ros::Subscriber key_subscriber = node.subscribe("/demo/cmd_vel", 20,
-                           directions_callback);
+                           waypoint_callback);
 
   ////////////////////////////////////////////////////////////////////////////
   ////////                   HEBI API SETUP                            ////////
@@ -146,17 +158,12 @@ int main(int argc, char ** argv) {
   ////////////////////////////////////////////////////////////////////////////
 
   /******** Trajectory Setup **********/
-
-  double rampTime = 0.33;
-  Eigen::VectorXd omniBaseTrajTime(2);
-  omniBaseTrajTime << 0, rampTime;
-
-  Eigen::MatrixXd velocities = Eigen::MatrixXd::Zero(num_wheels, 2);
-  Eigen::MatrixXd accelerations = Eigen::MatrixXd::Zero(num_wheels, 2);
-  Eigen::MatrixXd jerks = Eigen::MatrixXd::Zero(num_wheels, 2);
-
-  std::shared_ptr<hebi::trajectory::Trajectory> trajectory;
-  ros::Time trajStartTime;
+  waypoint_cmd.linear.x = 0;
+  waypoint_cmd.linear.y = 0;
+  positions  = Eigen::MatrixXd::Zero(num_wheels,2);
+  velocities = Eigen::MatrixXd::Zero(num_wheels, 2);
+  accelerations = Eigen::MatrixXd::Zero(num_wheels, 2);
+  generateWheelTrajectory();
 
   /******** MAIN LOOP **********/
   bool startup_complete = false;
@@ -165,56 +172,50 @@ int main(int argc, char ** argv) {
     if ( !startup_complete ) {
       /* Ensure that we are receiving feedback and key commands */
       /* Store the initial pose of the omnibase in omniPos */
-      if (group->getNextFeedback(feedback) && keys_init == true) {
+      if (group->getNextFeedback(feedback)) {
         // grab initial feedback
-        omniPos = feedback.getPosition();
+        curr_pos = feedback.getPosition();
+        target_pos = curr_pos;
         group -> sendCommand(gains_cmd);
         // initialise trajectory object
-        trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
-                        omniBaseTrajTime, velocities, &accelerations, &jerks);
+        global_trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
+                        omniBaseTrajTime, positions, &velocities, &accelerations);
         trajStartTime = ros::Time::now();
         startup_complete = true;
       }
     } else {
 
-      /* Get new body velocities from trajectory generator */
-      double t = std::min((ros::Time::now() - trajStartTime).toSec(),
-                                                   trajectory -> getDuration());
-      trajectory -> getState(t, &vel_traj, &accel_traj, &jerk_traj);
 
-      /* Convert body velocities to wheel velocities */
-      updateOmniVels();
-      updatePoseCmd(); 
-      updateOmniEfforts();
+      if (trajectory_activate) {
+        ROS_INFO("Generating the new trajectory!");
+        generateWheelTrajectory();
+        trajectory_activate = false;
 
-      /* Set the new positions, velocities, and efforts */
-      group_command.setVelocity(omniVels);
-      group_command.setPosition(omniPos);
-      group_command.setEffort(omniEfforts);
+      } else {
+        double t = std::min((ros::Time::now() - trajStartTime).toSec(),
+                                            global_trajectory -> getDuration());
 
-      /* Send the new commands */
-      group -> sendCommand(group_command);
 
-      /* Re-evaluate trajectory state */
-      desired_vel[0] = directions.linear.x * speed;
-      desired_vel[1] = directions.linear.y * speed;
-      desired_vel[2] = directions.angular.z * wheelRotSpeed;
+        if (t == global_trajectory -> getDuration()) {
+          curr_pos = target_pos;
+        }
 
-      velocities << vel_traj[0], desired_vel[0],
-                    vel_traj[1], desired_vel[1],
-                    vel_traj[2], desired_vel[2];
 
-      accelerations << accel_traj[0], 0,
-                       accel_traj[1], 0,
-                       accel_traj[2], 0;
+        // if still in trajectory
+        global_trajectory -> getState(t, &pos_traj, &vel_traj, &accel_traj);
 
-      jerks << jerk_traj[0], 0,
-               jerk_traj[1], 0,
-               jerk_traj[2], 0;
+        // /* Convert body velocities to wheel velocities */
+        updateOmniEfforts();
 
-      trajectory = hebi::trajectory::Trajectory::createUnconstrainedQp(
-                        omniBaseTrajTime, velocities, &accelerations, &jerks);
-      trajStartTime = ros::Time::now();
+        /* Set the new positions, velocities, and efforts */
+        group_command.setPosition(pos_traj);
+        group_command.setVelocity(vel_traj);
+        group_command.setEffort(omniEfforts);
+
+        /* Send the new commands */
+        group -> sendCommand(group_command);
+
+      }
     }
 
     ros::spinOnce();

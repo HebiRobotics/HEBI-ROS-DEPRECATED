@@ -106,6 +106,9 @@ include_directories(
   include/hebi
   include/hebi/Eigen
   include/util
+  include/gains
+  include/librealsense2
+  include/librealsense2/examples
 )
 
 ## Declare a C++ library
@@ -172,6 +175,8 @@ install(FILES
   launch/free_roam.launch
   launch/trajectory_free_roam.launch
   launch/odometry.launch
+  launch/arm_node.launch
+  launch/demo1.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -268,4 +273,80 @@ add_executable(arm_node src/arm_node/arm_node.cpp
 add_dependencies(arm_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(arm_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
+
+add_executable(Rosie_arm_node src/Rosie_Demo/Rosie_arm_node.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+
+  include/util/grav_comp.hpp
+
+  src/Rosie_Demo/arm_kinematics.cpp
+  src/Rosie_Demo/arm_trajectory.cpp
+  src/Rosie_Demo/arm.cpp
+)
+add_dependencies(Rosie_arm_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(Rosie_arm_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+add_executable(demo_central src/Rosie_Demo/demo_central.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+)
+add_dependencies(demo_central ${catkin_EXPORTED_TARGETS})
+target_link_libraries(demo_central ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+add_executable(omnibase_waypoint src/omnibase/omnibase_waypoint.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+)
+add_dependencies(omnibase_waypoint ${catkin_EXPORTED_TARGETS})
+target_link_libraries(omnibase_waypoint ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+#add_executable(vision_process src/Rosie_Demo/vision_process.cpp
+#  include/librealsense2/rs.hpp
+#  include/librealsense2/examples/example.hpp
+#)
+#add_dependencies(vision_process ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(vision_process ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+
+
+#file (COPY ${PROJECT_SOURCE_DIR}/src/omnibase/omnibase_gains.xml
+#      DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION}/src/omnibase/)
+
+#file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/gains/6-DoF-Arm-Gains-Rosie.xml
+#      DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION}/src/Rosie_Demo)
 
