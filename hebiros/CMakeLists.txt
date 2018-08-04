@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   sensor_msgs
+  control_msgs
+  trajectory_msgs
   tf
   urdf
   message_generation
