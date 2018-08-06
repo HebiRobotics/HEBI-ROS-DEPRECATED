@@ -6,7 +6,7 @@
 
 using namespace hebiros;
 
-int count_character_occurences(std::string s, char ch) {
+int count_character_occurrences(std::string s, char ch) {
   int count = 0;
 
   for (int i = 0; i < s.size(); i++) {
@@ -176,7 +176,7 @@ void HebirosActions::follow_joint_trajectory(const control_msgs::FollowJointTraj
   for (int i = 0; i < num_joints; i++) {
     std::string joint_name = goal->trajectory.joint_names[i];
     std::string hebi_joint_name;
-    if (count_character_occurences(joint_name, '/') > 1) {
+    if (count_character_occurrences(joint_name, '/') > 1) {
       int split_index = joint_name.rfind('/');
       hebi_joint_name = joint_name.substr(0, split_index);
     } else {
@@ -234,7 +234,7 @@ void HebirosActions::follow_joint_trajectory(const control_msgs::FollowJointTraj
     for (int i = 0; i < num_joints; i++) {
       std::string joint_name = goal->trajectory.joint_names[i];
       std::string hebi_joint_name;
-      if (count_character_occurences(joint_name, '/') > 1) {
+      if (count_character_occurrences(joint_name, '/') > 1) {
         int split_index = joint_name.rfind('/');
         hebi_joint_name = joint_name.substr(0, split_index);
       } else {
