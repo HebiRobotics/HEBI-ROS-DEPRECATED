@@ -1,55 +1,256 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2017 Intel Corporation. All Rights Reserved.
 
-#include "rs.hpp" // Include RealSense Cross Platform API
-#include "example.hpp"          // Include short list of convenience functions for rendering
+#include <ros/ros.h>
+#include <geometry_msgs/Point.h>
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <example_nodes/TargetWaypoints.h>
+#include <example_nodes/State.h>
+#include <sensor_msgs/Image.h>
 
-// Capture Example demonstrates how to
-// capture depth and color video streams and render them to the screen
-int main(int argc, char * argv[]) try
-{
-    rs2::log_to_console(RS2_LOG_SEVERITY_ERROR);
-    // Create a simple OpenGL window for rendering:
-    window app(1280, 720, "RealSense Capture Example");
-    // Declare two textures on the GPU, one for color and one for depth
-    texture depth_image, color_image;
+#include <ros/console.h>
 
-    // Declare depth colorizer for pretty visualization of depth data
-    rs2::colorizer color_map;
+#include <cv_bridge/cv_bridge.h>
+#include <opencv/cv.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/highgui/highgui.hpp>
 
-    // Declare RealSense pipeline, encapsulating the actual device and sensors
-    rs2::pipeline pipe;
-    // Start streaming with default recommended configuration
-    pipe.start();
+// Global Variables
+static const std::string OPENCV_WINDOW = "Image window";
+int rate_of_command = 60;
 
-    while(app) // Application still alive?
-    {
-        rs2::frameset data = pipe.wait_for_frames(); // Wait for next set of frames from the camera
+//inputs
+sensor_msgs::Image input_image;
+cv_bridge::CvImagePtr cvImagePtr;
+sensor_msgs::Image depth_image;
+cv_bridge::CvImagePtr dpImagePtr;
+//middle
+int height = 0;
+int width = 0;
 
-        rs2::frame depth = color_map(data.get_depth_frame()); // Find and colorize the depth data
-        rs2::frame color = data.get_color_frame();            // Find the color data
 
-        // For cameras that don't have RGB sensor, we'll render infrared frames instead of color
-        if (!color)
-            color = data.get_infrared_frame();
+//outputs
+geometry_msgs::Point arm_cmd;
 
-        // Render depth on to the first half of the screen and color on to the second
-        depth_image.render(depth, { 0,               0, app.width() / 2, app.height() });
-        color_image.render(color, { app.width() / 2, 0, app.width() / 2, app.height() });
+
+void image_callback(sensor_msgs::Image data) {
+
+  input_image = data;  
+}
+
+
+// void depth_callback(sensor_msgs::Image data) {
+//   depth_image = data;
+// }
+
+geometry_msgs::Point transform_pixel2meters(int i, int j) {
+  geometry_msgs::Point output;
+
+  int start_i = 466;
+  int start_j = 210;
+  int pixel2meter = 280; // 280 pixels == 1 meter
+  double dj, di;
+
+  di = double(i - start_i) / pixel2meter;
+  dj = double(j - start_j) / pixel2meter;
+  ROS_INFO("%d %d %d %d", i, j, start_i, start_j);
+  output.x = -dj;
+  output.y = -di;
+  output.z = -0.1;
+  // ( -dj, -di, -0.1);
+  ROS_INFO("Sending Rosie the following target: (%lg, %lg, %lg)", output.x, output.y, output.z);
+  // output << -dj, -di;
+  return output;
+}
+
+
+
+int main(int argc, char ** argv) {
+
+  // Initialize ROS node
+  ros::init(argc, argv, "vision_process");
+
+  ros::NodeHandle node;
+
+  ros::Rate loop_rate(rate_of_command);
+
+  // INPUT
+  ros::Subscriber image_subscriber = node.subscribe("/camera/color/image_raw", 60, image_callback);
+  // ros::Subscriber depth_subscriber = node.subscribe("/camera/depth/image_rect_raw", 60, depth_callback);
+  // ros::Subscriber depth_subscriber = node.subscribe("/camera/aligned_depth_to_color/image_raw", 60, depth_callback);
+
+  // OUTPUT
+  // ros::Publisher omni_publisher = node.advertise<geometry_msgs::Point>("/demo/cmd_blah", rate_of_command);
+  ros::Publisher omni_publisher = node.advertise<geometry_msgs::Point>("/demo/target", rate_of_command);
+
+  ////////////////////////////////////////////////////////////////////////////
+  ////////                   HEBI API SETUP                            ////////
+  ////////////////////////////////////////////////////////////////////////////
+
+  /******** MAIN LOOP **********/
+  bool startup_complete1 = false;
+  bool startup_complete2 = false;
+  bool handoff_done = false;
+  bool first_time = true;
+  bool publish_red = false;
+  // Eigen::VectorXd
+
+
+
+  int red_x = 0;
+  int red_y = 0;
+  int red_num = 0;
+
+  int blue_x = 0;
+  int blue_y = 0;
+  int blue_num = 0;
+
+  int green_x = 0;
+  int green_y = 0;
+  int green_num = 0;
+
+  while (ros::ok()) {
+    cv::namedWindow(OPENCV_WINDOW);
+
+    
+    try {
+      // Try to convert the sensor image into a CV matrix
+      cvImagePtr = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
+      startup_complete1 = true;
+    } catch (cv_bridge::Exception &e) {
+      // Avoid segmentation fault by not trying any later logic if emptry frames
+      // are being received.
+      startup_complete1 = false;
+      ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
-    return EXIT_SUCCESS;
-}
-catch (const rs2::error & e)
-{
-    std::cerr << "RealSense error calling " << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    " << e.what() << std::endl;
-    return EXIT_FAILURE;
-}
-catch (const std::exception& e)
-{
-    std::cerr << e.what() << std::endl;
-    return EXIT_FAILURE;
-}
+    // try {
+    //   dpImagePtr = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_16UC1);
+    //   startup_complete2 = true;
+    // } catch (cv_bridge::Exception &e) {
+    //   startup_complete2 = false;
+    //   ROS_ERROR("Depth Exception: %s", e.what());
+    // }
 
 
+    if (startup_complete1) {
+      cv::Mat &mat = cvImagePtr -> image;
+      // cv::Mat &mat2 = dpImagePtr ->image;
+      
+      if (first_time) {
+
+        /* 
+        - Scan all the pixels on the page
+        - Categorise them as red, blue, or yellow
+        - Print and test a vector of x,y pixels for the three beanbags
+        - Output the same pixels, but as meters ^_^ (will need physical set up)
+        */
+
+        height = mat.rows;
+        width = mat.cols;
+
+
+        // cv::Vec3b pixel; // = mat.at<cv::Vec3b>(i,j);
+
+        ROS_INFO("(Width: %d) (Height: %d)", width, height);
+
+        for (int i = 0; i < width; i++) {
+          for (int j = 0; j < height; j++) {
+            cv::Vec3b pixel = mat.at<cv::Vec3b>(j,i);
+            // ROS_INFO("%d %d", i, j);
+            // ROS_INFO("(%d. %d)", i, j);
+
+            // std::cout << pixel << std::endl;
+            
+            /* The input format is BGR */
+            // yellow
+            if ((pixel[2] >= 200) && (pixel[1] > 200) && (pixel[0] < 100)){
+              red_x += i;
+              red_y += j;
+              red_num += 1;
+            }
+
+            // blue 
+            else if ((pixel[2] < 60) && (pixel[1] < 100) && (pixel[0] >= 140)){
+              blue_x += i;
+              // ROS_INFO("In here");
+              blue_y += j;
+              blue_num += 1;
+            }
+            else if ((pixel[2] < 160) && (pixel[1] >= 150) && (pixel[0] < 130 )){
+              green_x += i;
+              // ROS_INFO("In here");
+              green_y += j;
+              green_num += 1;
+            }
+
+          }
+        }
+        first_time = false;
+      }
+
+      
+
+      int i = 0;
+      int j = 0;
+
+      if (red_num != 0) {
+        i = red_x / red_num;
+        j = red_y / red_num; 
+        cv::circle(mat, cv::Point(i, j), 2, CV_RGB(0,255,255), 3);
+        cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
+        // ROS_INFO(Depth)
+
+        if (!publish_red) {
+          geometry_msgs::Point red_target = transform_pixel2meters(i,j);
+          omni_publisher.publish(red_target); 
+          publish_red = true;
+        }
+
+      }
+
+
+      if (blue_num != 0) {
+        i = blue_x / blue_num;
+        j = blue_y / blue_num; 
+        // cv::circle(mat, cv::Point(i, j), 2, CV_RGB(0,255,255), 3);
+        // cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
+
+      }
+
+      // ROS_INFO("[%d, %d, %d]", green_x, green_y, green_num);
+
+      if (green_num != 0) {
+        i = green_x / green_num;
+        j = green_y / green_num; 
+        // cv::circle(mat, cv::Point(i, j), 2, CV_RGB(0,255,255), 3);
+        // cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
+        // ROS_INFO("Green is at (%d, %d)", i, j);
+
+      }
+
+      // ROS_INFO("(%d, %d)", i, j);
+
+      // int i = 639;
+      // int j = 479;
+      // cv::Vec3b pixel = mat.at<cv::Vec3b>(i,j);
+
+      cv::imshow(OPENCV_WINDOW, mat);
+
+      cv::waitKey(3);
+
+
+    }
+
+    // int width = mat.cols;
+    // int height = mat.rows;
+
+    // ROS_INFO("WAZZAUP");
+
+    ros::spinOnce();
+    loop_rate.sleep();
+    
+  }
+  return 0;
+}
 

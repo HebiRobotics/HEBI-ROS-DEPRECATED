@@ -8,6 +8,9 @@ import geometry_msgs.msg
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Point
 
+import example_nodes.msg
+from example_nodes.msg import State
+
 import sys, pygame
 
 
@@ -73,6 +76,7 @@ if __name__=="__main__":
 
 	pub = rospy.Publisher('keys/cmd_vel', Twist, queue_size = 3)
 	pub_demo = rospy.Publisher('demo/target', Point, queue_size = 3)
+	pub_grip = rospy.Publisher('demo/gripper_cmd', State, queue_size = 1);
 	rospy.init_node('key_read_node')
 	pygame.init()
 	pygame.font.init()
@@ -91,6 +95,7 @@ if __name__=="__main__":
 	demo_y = 0
 	demo_z = 0
 
+	grip_switch = False
 
 	r = rospy.Rate(100)
 
@@ -126,15 +131,31 @@ if __name__=="__main__":
 					running = False
 					rospy.on_shutdown(shutdownHook)
 
-				if event.key == pygame.K_b:
-					demo_x = 1
-					demo_y = 1
-					demo_z = 0
+				if event.key == pygame.K_c:
+					demo_x = -1
+					demo_y = 0
+					demo_z = -0.05
 
 				if event.key == pygame.K_v:
-					demo_x = -1
-					demo_y = -1
+					demo_x = 1
+					demo_y = 1
+					demo_z = -0.1
+
+				if event.key == pygame.K_b:
+					demo_x = 0
+					demo_y = 1
+					demo_z = -0.1
+
+				if event.key == pygame.K_n:
+					demo_x = 0
+					demo_y = 0
 					demo_z = 0
+
+				if event.key == pygame.K_EQUALS:
+					if grip_switch:
+						grip_switch = False
+					else:
+						grip_switch = True
 
 				if event.unicode in keyBindings.keys():
 					x = keyBindings[event.unicode][0]
@@ -147,12 +168,20 @@ if __name__=="__main__":
 						speed = speed * speedBindings[event.unicode]
 
 			if event.type == pygame.KEYUP:
+				point_demo = Point()
+				point_demo.x = demo_x
+				point_demo.y = demo_y
+				point_demo.z = demo_z
+				pub_demo.publish(point_demo)
+
 				x = 0
 				y = 0
 				z = 0
 				th = 0
 
 				demo_x = 0; demo_y = 0; demo_z = 0;
+
+				pub_grip.publish(grip_switch)
 
 
 		twist = Twist()
@@ -164,13 +193,10 @@ if __name__=="__main__":
 		twist.angular.x = 0; twist.angular.y = 0; 
 		#print(twist)
 
-		point_demo = Point()
-		point_demo.x = demo_x
-		point_demo.y = demo_y
-		point_demo.z = demo_z
+
 
 		# pub.publish(twist)
-		pub_demo.publish(point_demo)
+
 
 		r.sleep()
 

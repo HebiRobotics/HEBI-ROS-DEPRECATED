@@ -1,11 +1,10 @@
 <launch>
 
     <node pkg="example_nodes" type="omnibase_waypoint" name="omnibase_waypoint" />
-
     <node pkg="example_nodes" type="Rosie_arm_node" name="Rosie_arm_node" />
+    <node pkg="example_nodes" type="gripper_node" name="gripper_node" />
 
     <node pkg="example_nodes" type="key_read_rosie.py" name="key_read_rosie" />
-    <node pkg="example_nodes" type="old_key_read_rosie.py" name="old_key_read_rosie" />
 
     <node pkg="example_nodes" type="demo_central" name="demo_central" />
 

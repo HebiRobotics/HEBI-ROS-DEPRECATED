@@ -14,7 +14,8 @@ namespace hebi {
     // Return the joint angles to move to a given xyz location
     Eigen::VectorXd ArmKinematics::solveIK(
       const Eigen::VectorXd& initial_positions,
-      const Eigen::Vector3d& target_xyz) const
+      const Eigen::Vector3d& target_xyz, 
+      const Eigen::Vector3d& end_tip) const
     {
       // NOTE: may want to customize the IK here!
 
@@ -26,13 +27,19 @@ namespace hebi {
       //  max_positions << M_PI_2, 0, (M_PI*7)/8, M_PI*2/3;
       */
 
+       Eigen::VectorXd min_positions(6);
+       min_positions << -M_PI, 0.01, 0.01, -M_PI_2, -M_PI, -M_PI;
+       Eigen::VectorXd max_positions(6);
+       max_positions << M_PI, M_PI, (M_PI*7)/8, M_PI_2, M_PI, M_PI;
+
       // TODO: smartly handle exceptions?
       Eigen::VectorXd ik_result_joint_angles(initial_positions.size());
       model_.solveIK(
         initial_positions,
         ik_result_joint_angles,
-        robot_model::EndEffectorPositionObjective(target_xyz)
-        // robot_model::JointLimitConstraint(min_positions, max_positions)
+        robot_model::EndEffectorPositionObjective(target_xyz),
+        robot_model::EndEffectorTipAxisObjective(end_tip),
+        robot_model::JointLimitConstraint(min_positions, max_positions)
       );
       return ik_result_joint_angles;
     }

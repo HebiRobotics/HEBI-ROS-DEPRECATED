@@ -54,6 +54,9 @@ namespace hebi {
         const Eigen::MatrixXd& new_positions,
         const Eigen::MatrixXd& new_velocities,
         const Eigen::MatrixXd& new_accelerations);
+      
+      std::shared_ptr<hebi::trajectory::Trajectory> getTraj() { return trajectory_; }
+      double getTrajStartTime() { return trajectory_start_time_; }
 
     private:
       // This is private, because we want to ensure the ArmTrajectory is always

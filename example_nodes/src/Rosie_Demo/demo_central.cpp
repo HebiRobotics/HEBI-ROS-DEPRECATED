@@ -10,6 +10,9 @@
 #include "group_command.hpp"
 #include "group_feedback.hpp"
 #include "trajectory.hpp"
+#include <example_nodes/TargetWaypoints.h>
+#include <example_nodes/State.h>
+
 
 #include <ros/console.h>
 
@@ -17,62 +20,53 @@ using namespace hebi;
 
 // Global Variables
 int num_wheels = 3;
-geometry_msgs::Point target_pos;
-geometry_msgs::Twist odom_pos;
-geometry_msgs::Twist cmd_vel;
 bool keys_init = true;
 double rate_of_command = 60;
 double speed = 0.3; // m/s
 double wheelRotSpeed = M_PI/3; // (rad/s)
 
+//inputs
+geometry_msgs::Point target_pos;
+bool base_state = false;
+bool arm_state = false;
+bool gripper_state = false;
+
+//middle
+int main_state = 0;
+bool cmd_received = false;
+geometry_msgs::Point base_target;
+geometry_msgs::Point arm_target;
+double offset = 1;
+bool gripper_cmd = false; // true if closed
+ros::Time grip_start_time;
+              // grip_cmd
+
+//outputs
+geometry_msgs::Twist cmd_vel;
+example_nodes::TargetWaypoints arm_cmd;
+geometry_msgs::Point arm_handoff;
 
 
 void target_callback(geometry_msgs::Point data) {
-  std::cout << data << std::endl;
   target_pos = data;
-  keys_init = true;
+  if (target_pos.x != 0 || target_pos.y != 0 || target_pos.z != 0) {
+    cmd_received = true;
+  }
 }
 
-void odom_callback(geometry_msgs::Twist data) {
-  odom_pos = data;
+void base_state_callback(example_nodes::State data) {
+  base_state = data.state;
 }
 
-void go_to_point(geometry_msgs::Twist odom_pos, geometry_msgs::Point target_pos) {
-  ROS_INFO("%lg %lg %lg %lg", target_pos.x, odom_pos.linear.x, target_pos.y, odom_pos.linear.y);
-  
-  double dx;
-  double dy;
-
-
-
-
-  // dx = target_pos.x - odom_pos.linear.x;
-  // dy = target_pos.y - odom_pos.linear.y;
-
-  // if (std::abs(dx) > 0.01) {
-  //   if (dx >= 0) {
-  //     cmd_vel.linear.x = 1;
-  //   } else {
-  //     cmd_vel.linear.x = -1;
-  //   }
-  // } else {
-  //   cmd_vel.linear.x = 0;
-  // }
-
-
-  // if (std::abs(dy) > 0.01) {
-  //   if (dy >= 0) {
-  //     cmd_vel.linear.y = 1;
-  //   } else {
-  //     cmd_vel.linear.y = -1;
-  //   }
-  // } else {
-  //   cmd_vel.linear.y = 0;
-  // }
-
-  // ROS_INFO("We here yeee");
-
+void arm_state_callback(example_nodes::State data) {
+  arm_state = data.state;
 }
+
+void gripper_state_callback(example_nodes::State data) {
+  gripper_state = data.state;
+}
+
+
 
 
 int main(int argc, char ** argv) {
@@ -86,56 +80,31 @@ int main(int argc, char ** argv) {
 
   // INPUT
   ros::Subscriber key_subscriber = node.subscribe("/demo/target", rate_of_command, target_callback);
-  ros::Subscriber odom_subscriber = node.subscribe("omnibase_node/odometry", rate_of_command, odom_callback);
+  // ros::Subscriber odom_subscriber = node.subscribe("omnibase_node/odometry", rate_of_command, odom_callback);
+  ros::Subscriber base_state_subscriber = node.subscribe("/demo/base_state", rate_of_command, base_state_callback);
+  ros::Subscriber arm_state_subscriber = node.subscribe("/demo/arm_state", rate_of_command, arm_state_callback);
+  ros::Subscriber gripper_state_subscriber = node.subscribe("/demo/gripper_state", rate_of_command, gripper_state_callback);
 
   // OUTPUT
-  ros::Publisher cmd_publisher = node.advertise<geometry_msgs::Twist>("/demo/cmd_vel", rate_of_command);
+  ros::Publisher omni_publisher = node.advertise<geometry_msgs::Twist>("/demo/cmd_vel", rate_of_command);
+  ros::Publisher arm_publisher = node.advertise<example_nodes::TargetWaypoints>("cartesian_waypoints", rate_of_command);
+  ros::Publisher grip_publisher = node.advertise<example_nodes::State>("/demo/gripper_cmd", rate_of_command);
 
   ////////////////////////////////////////////////////////////////////////////
   ////////                   HEBI API SETUP                            ////////
   ////////////////////////////////////////////////////////////////////////////
 
-  // /* Update this with the group name for your modules */
-  // std::string group_name = "omniGroup";
-
-  // //Get a group
-  // Lookup lookup;
-  // std::shared_ptr<Group> group = lookup.getGroupFromNames({"Rosie"}, 
-  //                                 {"_Wheel1", "_Wheel2", "_Wheel3"});
-
-  // if (!group)
-  // {
-  //   std::cout << "Group not found! Shutting Down...\n";
-  //   return -1;
-  // }
-
-  // GroupCommand gains_cmd(group -> size());
-  // gains_cmd.readGains("/home/hebi/catkin_ws/src/HEBI-ROS/example_nodes/include/gains/omnibase_gains.xml");
-  // GroupCommand group_command(group -> size());
-  // GroupFeedback feedback(group -> size());
-  // group -> setFeedbackFrequencyHz(rate_of_command);
-
-  ////////////////////////////////////////////////////////////////////////////
-  ////////                   HEBI SETUP END                           ////////
-  ////////////////////////////////////////////////////////////////////////////
-
-  /******** Trajectory Setup **********/
-
-  // double rampTime = 0.33;
-  // Eigen::VectorXd omniBaseTrajTime(2);
-  // omniBaseTrajTime << 0, rampTime;
-
-  // Eigen::MatrixXd velocities = Eigen::MatrixXd::Zero(num_wheels, 2);
-  // Eigen::MatrixXd accelerations = Eigen::MatrixXd::Zero(num_wheels, 2);
-  // Eigen::MatrixXd jerks = Eigen::MatrixXd::Zero(num_wheels, 2);
-
-  // std::shared_ptr<hebi::trajectory::Trajectory> trajectory;
-  // ros::Time trajStartTime;
-
   /******** MAIN LOOP **********/
   bool startup_complete = false;
   geometry_msgs::Twist curr_pos;
-  double offset = 1;
+
+  // Control booleans
+  bool cmd_processed = false;
+  bool reached_pickup = false;
+  bool picked_up = false;
+  bool moving_to_handoff = false;
+  bool handoff_done = false;
+  bool returning_home = false;
   // geometry_msgs::Twist next_pos;
 
   while (ros::ok()) {
@@ -145,29 +114,107 @@ int main(int argc, char ** argv) {
         startup_complete = true;
       }
     } else {
-      // ROS_INFO("At least I'm looping");
-      // std::cout << "printing to be sure" << std::endl;
-      // go_to_point(odom_pos, target_pos);
-      if (target_pos.x != 0 || target_pos.y != 0) { 
-        offset = 1-(0.3/(sqrt(pow(target_pos.x,2) + pow(target_pos.y,2)))); //multiplier
-      } else {
-        offset = 1;
+
+      /* Convert Key commands into base and arm commands */
+
+      if (cmd_received) {
+        cmd_received = false;
+
+        if (target_pos.x == 0 && target_pos.y == 0) {
+        //should never happen but is happening! Somewhere in key_read_rosie I think
+          offset = 1;
+        } else {
+          offset = 1-(0.3/(sqrt(pow(target_pos.x,2) + pow(target_pos.y,2)))); 
+          //multiplier
+        }
+        cmd_vel.linear.x = target_pos.x * offset;
+        cmd_vel.linear.y = target_pos.y * offset;
+
+        omni_publisher.publish(cmd_vel);
+
+        // Looks weird because x and y are rotated from omnibase FoR
+        if (offset != 1) {
+          // arm_target.x = target_pos.x - cmd_vel.linear.x;
+          // arm_target.y = target_pos.y - cmd_vel.linear.y;
+          arm_target.x = target_pos.y - cmd_vel.linear.y;
+          arm_target.y = - (target_pos.x - cmd_vel.linear.x);
+          arm_target.z = target_pos.z;
+        }
+
+        cmd_processed = true;
       }
-      cmd_vel.linear.x = target_pos.x * offset;
-      cmd_vel.linear.y = target_pos.y * offset;
 
 
-      ROS_INFO("%lg %lg", cmd_vel.linear.x, cmd_vel.linear.y);
-      cmd_publisher.publish(cmd_vel);
+      if (cmd_processed && base_state) { // the base has finished executing
+        cmd_processed = false;
+        base_state = false;
 
-      // take the target pos
-      // calculate directional velocity from current position
-      // send that velocity until we have reached final position.
+        // ROS_INFO("%lg %lg %lg", arm_target.x, arm_target.y, arm_target.z);
 
+        arm_cmd.waypoints_vector = {arm_target};
+        arm_publisher.publish(arm_cmd);
+
+        reached_pickup = true;
+      }
+
+
+      // the arm has finished executing
+      if (reached_pickup && arm_state) { 
+        reached_pickup = false;
+        arm_state = false;
+
+        gripper_cmd = true;
+        grip_publisher.publish(gripper_cmd);
+        // grip_start_time = ros::Time::now();
+
+        picked_up = true;
+      }
+
+      // telling it to be close, and it finished closing
+      if (picked_up && gripper_state) { 
+        picked_up = false;
+        arm_handoff.x = -0.2;
+        arm_handoff.y = -0.4;
+        arm_handoff.z = 0.5;
+        arm_cmd.waypoints_vector = {arm_handoff};
+        arm_publisher.publish(arm_cmd);
+        moving_to_handoff = true;
+      }
+
+      // gripper closed, arm has moved to handoff
+      if (moving_to_handoff && gripper_state && arm_state) { 
+        moving_to_handoff = false;
+        arm_state = false;
+
+        gripper_cmd = false;
+        grip_publisher.publish(gripper_cmd);
+        handoff_done = true;
+      }
+
+      if (handoff_done && !gripper_state) {
+        handoff_done = false;
+        geometry_msgs::Point arm_reset;
+        
+        arm_reset.x = 100;
+        arm_reset.y = 100;
+        arm_reset.z = 100;
+        
+        arm_cmd.waypoints_vector = {arm_reset};
+        arm_publisher.publish(arm_cmd);
+
+        returning_home = true;
+      }
+
+      if (returning_home && arm_state) {
+        returning_home = false;
+        arm_state = false;
+      }
+
+
+    }
 
     ros::spinOnce();
     loop_rate.sleep();
-    }
   }
   return 0;
 }

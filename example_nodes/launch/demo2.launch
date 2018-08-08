@@ -1,7 +1,7 @@
 <launch>
 
-    <node pkg="example_nodes" type="omnibase_node_trajectory" name="omnibase_node_trajectory" />
-    <node pkg="example_nodes" type="omnibase_odometry" name="omnibase_odometry" />
+    <node pkg="example_nodes" type="Rosie_arm_node" name="Rosie_arm_node" />
+    <node pkg="example_nodes" type="gripper_node" name="gripper_node" />
 
     <node pkg="example_nodes" type="key_read_rosie.py" name="key_read_rosie" />
 

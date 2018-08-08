@@ -11,7 +11,8 @@ namespace hebi {
       // Return the joint angles to move to a given xyz location
       Eigen::VectorXd solveIK(
         const Eigen::VectorXd& initial_positions,
-        const Eigen::Vector3d& target_xyz) const;
+        const Eigen::Vector3d& target_xyz,
+        const Eigen::Vector3d& end_tip) const;
 
       Eigen::Vector3d FK(const Eigen::VectorXd& positions) const;
 

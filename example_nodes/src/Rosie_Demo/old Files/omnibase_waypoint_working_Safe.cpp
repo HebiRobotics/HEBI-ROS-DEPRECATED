@@ -1,3 +1,12 @@
+/**
+* Provides an implentation of user controls for a 3-wheeled omnidirectional 
+* base (omnibase). This example uses the HEBI trajectory generator to move the
+* omnibase more smoothly.
+* You can move forward/backward, left/right, or rotate in spot.
+* 
+* @author Hardik Singh < hardik@hebirobotics.com >
+* @since 13 Jul 2018
+**/
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
@@ -204,10 +213,10 @@ int main(int argc, char ** argv) {
         }
 
 
-        // if still in trajectory
+        // Get state from trajectory
         global_trajectory -> getState(t, &pos_traj, &vel_traj, &accel_traj);
 
-        // /* Convert body velocities to wheel velocities */
+        /* Convert body velocities to wheel velocities */
         updateOmniEfforts();
 
         /* Set the new positions, velocities, and efforts */

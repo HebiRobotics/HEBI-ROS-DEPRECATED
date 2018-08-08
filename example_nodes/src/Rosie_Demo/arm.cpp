@@ -44,7 +44,7 @@ namespace hebi {
       // NOTE: I don't like that start time is _before_ the "get feedback"
       // loop above...but this is only during initialization
       ArmTrajectory arm_trajectory = ArmTrajectory::create(home_position, feedback, start_time);
-      return std::unique_ptr<Arm>(new Arm(group, arm_kinematics, arm_trajectory, start_time));
+      return std::unique_ptr<Arm>(new Arm(group, arm_kinematics, arm_trajectory, start_time, home_position));
     }
 
     // Updates the feedback and sends new commands to the robot for this time
@@ -68,13 +68,20 @@ namespace hebi {
       return true;
     }
 
+
+    Eigen::Vector3d Arm::getHomePositionXYZ() {
+      return arm_kinematics_.FK(home_position_);
+    }
+
     Arm::Arm(std::shared_ptr<hebi::Group> group,
       const ArmKinematics& arm_kinematics,
       ArmTrajectory arm_trajectory,
-      double start_time)
+      double start_time,
+      const Eigen::VectorXd& home_position)
       : group_{group},
         feedback_(group->size()),
         command_(group->size()),
+        home_position_{home_position},
         pos_(Eigen::VectorXd::Zero(group->size())),
         vel_(Eigen::VectorXd::Zero(group->size())),
         accel_(Eigen::VectorXd::Zero(group->size())),

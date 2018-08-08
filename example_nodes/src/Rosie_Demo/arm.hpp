@@ -30,15 +30,19 @@ namespace hebi {
 
       std::shared_ptr<hebi::Group> getGroup() { return group_; }
 
+      Eigen::Vector3d getHomePositionXYZ();
+
     private:
       Arm(std::shared_ptr<hebi::Group> group,
         const ArmKinematics& arm_kinematics,
         ArmTrajectory arm_trajectory,
-        double start_time);
+        double start_time,
+        const Eigen::VectorXd& home_position);
 
       std::shared_ptr<hebi::Group> group_;
       hebi::GroupFeedback feedback_;
       hebi::GroupCommand command_;
+      Eigen::VectorXd home_position_;
 
       // These are just temporary variables to cache output from
       // Trajectory::getState.

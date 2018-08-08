@@ -20,6 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   actionlib
   geometry_msgs
+  OpenCV REQUIRED
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
@@ -38,6 +40,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_message_files(
   FILES
   TargetWaypoints.msg
+  State.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -55,6 +58,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  sensor_msgs
 )
 
 
@@ -103,12 +107,14 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
   include/hebi
   include/hebi/Eigen
   include/util
   include/gains
   include/librealsense2
   include/librealsense2/examples
+
 )
 
 ## Declare a C++ library
@@ -332,6 +338,33 @@ add_executable(omnibase_waypoint src/omnibase/omnibase_waypoint.cpp
 )
 add_dependencies(omnibase_waypoint ${catkin_EXPORTED_TARGETS})
 target_link_libraries(omnibase_waypoint ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+add_executable(gripper_node src/Rosie_Demo/gripper_node.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+)
+add_dependencies(gripper_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(gripper_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+
+
+add_executable(vision_process src/Rosie_Demo/vision_process.cpp)
+add_dependencies(vision_process ${catkin_EXPORTED_TARGETS})
+target_link_libraries(vision_process ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+
+
+
 
 
 #add_executable(vision_process src/Rosie_Demo/vision_process.cpp
