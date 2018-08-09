@@ -69,7 +69,7 @@ void generateWheelTrajectory() {
   double ratio = sqrt(3)/2;
   // so we have a new x and y
 
-  ROS_INFO("Rotation is: %lg", rotation);
+  // ROS_INFO("Rotation is: %lg", rotation);
   target_pos[0] = curr_pos[0] + (0.5*x + -ratio*y) * (2*M_PI);// + rotation;
   target_pos[1] = curr_pos[1] + (0.5*x + ratio*y) * (2*M_PI);// + rotation;
   target_pos[2] = curr_pos[2] + (-x) * (2*M_PI);// + rotation;
@@ -191,6 +191,7 @@ int main(int argc, char ** argv) {
         base_state = true;
 
       } else {
+        // ROS_INFO("I made it here");
         double t = std::min((ros::Time::now() - trajStartTime).toSec(),
                                             global_trajectory -> getDuration());
 

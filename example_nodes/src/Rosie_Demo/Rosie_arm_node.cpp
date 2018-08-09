@@ -128,7 +128,14 @@ Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
           if (waypoint.x == 100 && waypoint.y == 100 && waypoint.z == 100) {
             xyz = arm_.getHomePositionXYZ();
             end_tip << 1, 0, 0;
-          } else {
+          } 
+
+          else if (waypoint.x == 101 && waypoint.y == 101 && waypoint.z == 101) {
+            xyz = arm_.getHomePositionXYZ();
+            end_tip << 0, 0, -1;
+          } 
+
+          else {
             xyz << waypoint.x, waypoint.y, waypoint.z;
             end_tip = get_end_tip(xyz);
           }

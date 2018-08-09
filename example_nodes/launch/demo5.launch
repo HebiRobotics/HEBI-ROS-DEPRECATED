@@ -1,5 +1,7 @@
 <launch>
 
+    <node pkg="example_nodes" type="vision_process" name="vision_process" />
+
     <node pkg="example_nodes" type="omnibase_waypoint" name="omnibase_waypoint" />
     <node pkg="example_nodes" type="Rosie_arm_node" name="Rosie_arm_node" />
     <node pkg="example_nodes" type="gripper_node" name="gripper_node" />

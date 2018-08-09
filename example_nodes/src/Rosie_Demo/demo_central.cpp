@@ -30,6 +30,7 @@ geometry_msgs::Point target_pos;
 bool base_state = false;
 bool arm_state = false;
 bool gripper_state = false;
+geometry_msgs::Twist odometry_pos;
 
 //middle
 int main_state = 0;
@@ -39,7 +40,10 @@ geometry_msgs::Point arm_target;
 double offset = 1;
 bool gripper_cmd = false; // true if closed
 ros::Time grip_start_time;
-              // grip_cmd
+double travelled_x = 0;
+double travelled_y = 0;
+
+
 
 //outputs
 geometry_msgs::Twist cmd_vel;
@@ -66,6 +70,9 @@ void gripper_state_callback(example_nodes::State data) {
   gripper_state = data.state;
 }
 
+void odom_callback(geometry_msgs::Twist data) {
+  odometry_pos = data;
+}
 
 
 
@@ -80,7 +87,7 @@ int main(int argc, char ** argv) {
 
   // INPUT
   ros::Subscriber key_subscriber = node.subscribe("/demo/target", rate_of_command, target_callback);
-  // ros::Subscriber odom_subscriber = node.subscribe("omnibase_node/odometry", rate_of_command, odom_callback);
+  ros::Subscriber odom_subscriber = node.subscribe("omnibase_node/odometry", rate_of_command, odom_callback);
   ros::Subscriber base_state_subscriber = node.subscribe("/demo/base_state", rate_of_command, base_state_callback);
   ros::Subscriber arm_state_subscriber = node.subscribe("/demo/arm_state", rate_of_command, arm_state_callback);
   ros::Subscriber gripper_state_subscriber = node.subscribe("/demo/gripper_state", rate_of_command, gripper_state_callback);
@@ -102,8 +109,10 @@ int main(int argc, char ** argv) {
   bool cmd_processed = false;
   bool reached_pickup = false;
   bool picked_up = false;
-  bool moving_to_handoff = false;
-  bool handoff_done = false;
+  bool back_to_homePosition = false;
+  bool reached_dropoff = false;
+  bool dropoff_arm = false;
+  bool arm_is_done = false;
   bool returning_home = false;
   // geometry_msgs::Twist next_pos;
 
@@ -130,6 +139,9 @@ int main(int argc, char ** argv) {
         cmd_vel.linear.x = target_pos.x * offset;
         cmd_vel.linear.y = target_pos.y * offset;
 
+
+        travelled_x = cmd_vel.linear.x;
+        travelled_y = cmd_vel.linear.y;
         omni_publisher.publish(cmd_vel);
 
         // Looks weird because x and y are rotated from omnibase FoR
@@ -173,26 +185,66 @@ int main(int argc, char ** argv) {
       // telling it to be close, and it finished closing
       if (picked_up && gripper_state) { 
         picked_up = false;
-        arm_handoff.x = -0.2;
-        arm_handoff.y = -0.4;
-        arm_handoff.z = 0.5;
+        // arm_handoff.x = -0.2;
+        // arm_handoff.y = -0.4;
+        // arm_handoff.z = 0.5;
+        arm_handoff.x = 101;
+        arm_handoff.y = 101;
+        arm_handoff.z = 101;
         arm_cmd.waypoints_vector = {arm_handoff};
         arm_publisher.publish(arm_cmd);
-        moving_to_handoff = true;
+        back_to_homePosition = true;
       }
 
-      // gripper closed, arm has moved to handoff
-      if (moving_to_handoff && gripper_state && arm_state) { 
-        moving_to_handoff = false;
+
+      if (back_to_homePosition && arm_state && gripper_state) {
+        back_to_homePosition = false;
         arm_state = false;
 
-        gripper_cmd = false;
-        grip_publisher.publish(gripper_cmd);
-        handoff_done = true;
+        double dropoff_x = 0.85;
+        double dropoff_y = 0.66;
+
+        double new_x = dropoff_x - travelled_x;
+        double new_y = dropoff_y - travelled_y;
+
+        offset = 1-(0.3/(sqrt(pow(new_x,2) + pow(new_y,2)))); 
+
+        cmd_vel.linear.x = new_x * offset;
+        cmd_vel.linear.y = new_y * offset;
+
+        travelled_x = cmd_vel.linear.x;
+        travelled_y = cmd_vel.linear.y;
+        omni_publisher.publish(cmd_vel);
+
+        ROS_INFO("I've picked up the package and should be moving! %lg %lg", new_x, new_y);
+
+        arm_target.x = new_y - cmd_vel.linear.y;
+        arm_target.y = - (new_x - cmd_vel.linear.x);
+        arm_target.z = 0.1;
+        
+        reached_dropoff = true;
       }
 
-      if (handoff_done && !gripper_state) {
-        handoff_done = false;
+      if (reached_dropoff && base_state) {
+        reached_dropoff = false;
+        base_state = false;
+
+        arm_cmd.waypoints_vector = {arm_target};
+        arm_publisher.publish(arm_cmd);
+
+        dropoff_arm = true;
+      }
+
+      if (dropoff_arm && arm_state) {
+        arm_state = false; 
+        dropoff_arm = false;
+        gripper_cmd = false;
+        grip_publisher.publish(gripper_cmd);
+        arm_is_done = true;
+      }
+
+      if (arm_is_done && !gripper_state) {
+        arm_is_done = false;
         geometry_msgs::Point arm_reset;
         
         arm_reset.x = 100;
@@ -202,13 +254,54 @@ int main(int argc, char ** argv) {
         arm_cmd.waypoints_vector = {arm_reset};
         arm_publisher.publish(arm_cmd);
 
-        returning_home = true;
-      }
+        // double dropoff_x = 0.85;
+        // double dropoff_y = 0.66;
+        ROS_INFO("The remaining movement is: %lg %lg", -odometry_pos.linear.x, -odometry_pos.linear.y);
+        cmd_vel.linear.x = -odometry_pos.linear.x;
+        cmd_vel.linear.y = -odometry_pos.linear.y;
 
-      if (returning_home && arm_state) {
+        omni_publisher.publish(cmd_vel);
+
+        returning_home = true;
+      } 
+
+      if (returning_home && base_state && arm_state) {
         returning_home = false;
+        base_state = false;
         arm_state = false;
       }
+
+
+
+
+      // // gripper closed, arm has moved to handoff
+      // if (back_to_homePosition && gripper_state && arm_state) { 
+      //   back_to_homePosition = false;
+      //   arm_state = false;
+
+      //   gripper_cmd = false;
+      //   grip_publisher.publish(gripper_cmd);
+      //   handoff_done = true;
+      // }
+
+      // if (handoff_done && !gripper_state) {
+      //   handoff_done = false;
+      //   geometry_msgs::Point arm_reset;
+        
+      //   arm_reset.x = 100;
+      //   arm_reset.y = 100;
+      //   arm_reset.z = 100;
+        
+      //   arm_cmd.waypoints_vector = {arm_reset};
+      //   arm_publisher.publish(arm_cmd);
+
+      //   returning_home = true;
+      // }
+
+      // if (returning_home && arm_state) {
+      //   returning_home = false;
+      //   arm_state = false;
+      // }
 
 
     }

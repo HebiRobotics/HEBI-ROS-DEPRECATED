@@ -74,9 +74,10 @@ def shutdownHook():
 
 if __name__=="__main__":
 
-	pub = rospy.Publisher('keys/cmd_vel', Twist, queue_size = 3)
+	# pub = rospy.Publisher('keys/cmd_vel', Twist, queue_size = 3)
 	pub_demo = rospy.Publisher('demo/target', Point, queue_size = 3)
-	pub_grip = rospy.Publisher('demo/gripper_cmd', State, queue_size = 1);
+	pub_grip = rospy.Publisher('demo/gripper_cmd', State, queue_size = 1)
+	pub_vision = rospy.Publisher('demo/vision_cmd', State, queue_size = 1)
 	rospy.init_node('key_read_node')
 	pygame.init()
 	pygame.font.init()
@@ -96,6 +97,7 @@ if __name__=="__main__":
 	demo_z = 0
 
 	grip_switch = False
+	vision_on = False
 
 	r = rospy.Rate(100)
 
@@ -146,10 +148,9 @@ if __name__=="__main__":
 					demo_y = 1
 					demo_z = -0.1
 
-				if event.key == pygame.K_n:
-					demo_x = 0
-					demo_y = 0
-					demo_z = 0
+				if event.key == pygame.K_SPACE:
+					vision_on = True
+
 
 				if event.key == pygame.K_EQUALS:
 					if grip_switch:
@@ -181,8 +182,12 @@ if __name__=="__main__":
 
 				demo_x = 0; demo_y = 0; demo_z = 0;
 
-				pub_grip.publish(grip_switch)
-
+				if (grip_switch):
+					pub_grip.publish(grip_switch)
+					grip_switch = False
+				if (vision_on):
+					pub_vision.publish(vision_on)
+					vision_on = False
 
 		twist = Twist()
 		# important parameters

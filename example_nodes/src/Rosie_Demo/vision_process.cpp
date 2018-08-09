@@ -22,8 +22,8 @@ int rate_of_command = 60;
 //inputs
 sensor_msgs::Image input_image;
 cv_bridge::CvImagePtr cvImagePtr;
-sensor_msgs::Image depth_image;
-cv_bridge::CvImagePtr dpImagePtr;
+bool vision_on = false;
+
 //middle
 int height = 0;
 int width = 0;
@@ -38,6 +38,10 @@ void image_callback(sensor_msgs::Image data) {
   input_image = data;  
 }
 
+void key_callback(example_nodes::State data) {
+  vision_on = data.state;
+}
+
 
 // void depth_callback(sensor_msgs::Image data) {
 //   depth_image = data;
@@ -48,7 +52,7 @@ geometry_msgs::Point transform_pixel2meters(int i, int j) {
 
   int start_i = 466;
   int start_j = 210;
-  int pixel2meter = 280; // 280 pixels == 1 meter
+  int pixel2meter = 270; // 280 pixels == 1 meter
   double dj, di;
 
   di = double(i - start_i) / pixel2meter;
@@ -76,7 +80,7 @@ int main(int argc, char ** argv) {
 
   // INPUT
   ros::Subscriber image_subscriber = node.subscribe("/camera/color/image_raw", 60, image_callback);
-  // ros::Subscriber depth_subscriber = node.subscribe("/camera/depth/image_rect_raw", 60, depth_callback);
+  ros::Subscriber key_subscriber = node.subscribe("/demo/vision_cmd", 60, key_callback);
   // ros::Subscriber depth_subscriber = node.subscribe("/camera/aligned_depth_to_color/image_raw", 60, depth_callback);
 
   // OUTPUT
@@ -91,10 +95,9 @@ int main(int argc, char ** argv) {
   bool startup_complete1 = false;
   bool startup_complete2 = false;
   bool handoff_done = false;
-  bool first_time = true;
+  bool first_time = false;
   bool publish_red = false;
   // Eigen::VectorXd
-
 
 
   int red_x = 0;
@@ -109,6 +112,9 @@ int main(int argc, char ** argv) {
   int green_y = 0;
   int green_num = 0;
 
+
+
+
   while (ros::ok()) {
     cv::namedWindow(OPENCV_WINDOW);
 
@@ -121,7 +127,8 @@ int main(int argc, char ** argv) {
       // Avoid segmentation fault by not trying any later logic if emptry frames
       // are being received.
       startup_complete1 = false;
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      // ROS_ERROR("cv_bridge exception: %s", e.what());
+      ROS_INFO("Failed to load stream. Trying again...");
     }
 
     // try {
@@ -137,6 +144,12 @@ int main(int argc, char ** argv) {
       cv::Mat &mat = cvImagePtr -> image;
       // cv::Mat &mat2 = dpImagePtr ->image;
       
+      if (vision_on) {
+        vision_on = false;
+        first_time = true;
+      }
+
+
       if (first_time) {
 
         /* 
@@ -149,7 +162,18 @@ int main(int argc, char ** argv) {
         height = mat.rows;
         width = mat.cols;
 
+        red_x = 0;
+        red_y = 0;
+        red_num = 0;
 
+        blue_x = 0;
+        blue_y = 0;
+        blue_num = 0;
+
+        green_x = 0;
+        green_y = 0;
+        green_num = 0;
+        publish_red = false;
         // cv::Vec3b pixel; // = mat.at<cv::Vec3b>(i,j);
 
         ROS_INFO("(Width: %d) (Height: %d)", width, height);
@@ -197,15 +221,19 @@ int main(int argc, char ** argv) {
       if (red_num != 0) {
         i = red_x / red_num;
         j = red_y / red_num; 
+        // if (vision_on) {
         cv::circle(mat, cv::Point(i, j), 2, CV_RGB(0,255,255), 3);
         cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
-        // ROS_INFO(Depth)
-
+        
         if (!publish_red) {
           geometry_msgs::Point red_target = transform_pixel2meters(i,j);
           omni_publisher.publish(red_target); 
           publish_red = true;
         }
+        // }
+        // ROS_INFO(Depth)
+
+
 
       }
 
@@ -218,26 +246,18 @@ int main(int argc, char ** argv) {
 
       }
 
-      // ROS_INFO("[%d, %d, %d]", green_x, green_y, green_num);
 
       if (green_num != 0) {
         i = green_x / green_num;
         j = green_y / green_num; 
         // cv::circle(mat, cv::Point(i, j), 2, CV_RGB(0,255,255), 3);
         // cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
-        // ROS_INFO("Green is at (%d, %d)", i, j);
-
       }
 
-      // ROS_INFO("(%d, %d)", i, j);
-
-      // int i = 639;
-      // int j = 479;
-      // cv::Vec3b pixel = mat.at<cv::Vec3b>(i,j);
-
+      ROS_INFO("The value of vision_on is: %d", vision_on);
       cv::imshow(OPENCV_WINDOW, mat);
 
-      cv::waitKey(3);
+      cv::waitKey(1);
 
 
     }
