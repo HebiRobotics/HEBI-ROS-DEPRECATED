@@ -79,7 +79,7 @@ void odom_callback(geometry_msgs::Twist data) {
 int main(int argc, char ** argv) {
 
   // Initialize ROS node
-  ros::init(argc, argv, "omnibase_node_trajectory");
+  ros::init(argc, argv, "demo_central");
 
   ros::NodeHandle node;
 
@@ -96,9 +96,10 @@ int main(int argc, char ** argv) {
   ros::Publisher omni_publisher = node.advertise<geometry_msgs::Twist>("/demo/cmd_vel", rate_of_command);
   ros::Publisher arm_publisher = node.advertise<example_nodes::TargetWaypoints>("cartesian_waypoints", rate_of_command);
   ros::Publisher grip_publisher = node.advertise<example_nodes::State>("/demo/gripper_cmd", rate_of_command);
+  ros::Publisher ready_publisher = node.advertise<example_nodes::State>("/demo/ready_state", rate_of_command);
 
   ////////////////////////////////////////////////////////////////////////////
-  ////////                   HEBI API SETUP                            ////////
+  ////////                   MAIN LOOP SETUP                          ////////
   ////////////////////////////////////////////////////////////////////////////
 
   /******** MAIN LOOP **********/
@@ -114,24 +115,40 @@ int main(int argc, char ** argv) {
   bool dropoff_arm = false;
   bool arm_is_done = false;
   bool returning_home = false;
-  // geometry_msgs::Twist next_pos;
+
+  // edge case booleans
+  bool pickup_edge_case = false;
+  bool dropoff_edge_case = false;
 
   while (ros::ok()) {
     if ( !startup_complete ) {
       /* Ensure that we are receiving key commands */
+      /* TODO: Add a check that the vision system is online */
       if (keys_init == true) {
         startup_complete = true;
+        ready_publisher.publish(true);
       }
     } else {
 
       /* Convert Key commands into base and arm commands */
 
       if (cmd_received) {
+        ready_publisher.publish(false); // tell the vision not to send more commands
         cmd_received = false;
+
 
         if (target_pos.x == 0 && target_pos.y == 0) {
         //should never happen but is happening! Somewhere in key_read_rosie I think
           offset = 1;
+
+        // } else if (sqrt(pow(target_pos.x,2) + pow(target_pos.y,2)) < 0.35) {
+        //   ROS_INFO("At least I'm in here");
+        //   cmd_vel.linear.x = (-target_pos.x);
+        //   cmd_vel.linear.y = (-target_pos.y);
+        //   omni_publisher.publish(cmd_vel);
+        //   pickup_edge_case = true;
+        //   continue;
+
         } else {
           offset = 1-(0.3/(sqrt(pow(target_pos.x,2) + pow(target_pos.y,2)))); 
           //multiplier
@@ -139,9 +156,11 @@ int main(int argc, char ** argv) {
         cmd_vel.linear.x = target_pos.x * offset;
         cmd_vel.linear.y = target_pos.y * offset;
 
-
         travelled_x = cmd_vel.linear.x;
         travelled_y = cmd_vel.linear.y;
+
+        ROS_INFO("The base is moving to: (%lg, %lg)", cmd_vel.linear.x, cmd_vel.linear.y);
+
         omni_publisher.publish(cmd_vel);
 
         // Looks weird because x and y are rotated from omnibase FoR
@@ -157,12 +176,23 @@ int main(int argc, char ** argv) {
       }
 
 
+      // if (pickup_edge_case && base_state) {
+      //   ROS_INFO("finished handling edge case");
+      //   base_state = false;
+      //   pickup_edge_case = false;
+      //   target_pos.x = 2 * target_pos.x;
+      //   target_pos.y = 2 * target_pos.y;
+      //   // cmd_received = true;
+      //   continue;
+      // }
+
+
       if (cmd_processed && base_state) { // the base has finished executing
         cmd_processed = false;
         base_state = false;
 
         // ROS_INFO("%lg %lg %lg", arm_target.x, arm_target.y, arm_target.z);
-
+        ROS_INFO("The spot we've reached is: (%lg, %lg)", odometry_pos.linear.x, odometry_pos.linear.y);
         arm_cmd.waypoints_vector = {arm_target};
         arm_publisher.publish(arm_cmd);
 
@@ -201,22 +231,22 @@ int main(int argc, char ** argv) {
         back_to_homePosition = false;
         arm_state = false;
 
-        double dropoff_x = 0.85;
-        double dropoff_y = 0.66;
+        double dropoff_x = 1.00; //0.85;
+        double dropoff_y = 0.40; //0.66;
 
         double new_x = dropoff_x - travelled_x;
         double new_y = dropoff_y - travelled_y;
 
-        offset = 1-(0.3/(sqrt(pow(new_x,2) + pow(new_y,2)))); 
+        offset = 1-(0.4/(sqrt(pow(new_x,2) + pow(new_y,2)))); 
 
         cmd_vel.linear.x = new_x * offset;
         cmd_vel.linear.y = new_y * offset;
 
-        travelled_x = cmd_vel.linear.x;
-        travelled_y = cmd_vel.linear.y;
+        travelled_x = travelled_x + cmd_vel.linear.x;
+        travelled_y = travelled_y + cmd_vel.linear.y;
         omni_publisher.publish(cmd_vel);
 
-        ROS_INFO("I've picked up the package and should be moving! %lg %lg", new_x, new_y);
+        // ROS_INFO("I've picked up the package and should be moving! %lg %lg", new_x, new_y);
 
         arm_target.x = new_y - cmd_vel.linear.y;
         arm_target.y = - (new_x - cmd_vel.linear.x);
@@ -256,9 +286,12 @@ int main(int argc, char ** argv) {
 
         // double dropoff_x = 0.85;
         // double dropoff_y = 0.66;
-        ROS_INFO("The remaining movement is: %lg %lg", -odometry_pos.linear.x, -odometry_pos.linear.y);
+        ROS_INFO("odom vs travelled: (%lg, %lg) vs (%lg, %lg) ", -odometry_pos.linear.x, -odometry_pos.linear.y, -travelled_x, - travelled_y);
         cmd_vel.linear.x = -odometry_pos.linear.x;
         cmd_vel.linear.y = -odometry_pos.linear.y;
+
+        // cmd_vel.linear.x = -travelled_x;
+        // cmd_vel.linear.y = -travelled_y;
 
         omni_publisher.publish(cmd_vel);
 
@@ -269,6 +302,8 @@ int main(int argc, char ** argv) {
         returning_home = false;
         base_state = false;
         arm_state = false;
+        ready_publisher.publish(true); // tell the vision to send more commands
+        ROS_INFO("The ending position is: (%lg, %lg)", odometry_pos.linear.x, odometry_pos.linear.y);
       }
 
 

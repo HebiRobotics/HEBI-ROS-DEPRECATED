@@ -185,7 +185,7 @@ int main(int argc, char ** argv) {
 
 
       if (trajectory_activate) {
-        ROS_INFO("Generating the new trajectory!");
+        // ROS_INFO("Generating the new trajectory!");
         generateWheelTrajectory();
         trajectory_activate = false;
         base_state = true;

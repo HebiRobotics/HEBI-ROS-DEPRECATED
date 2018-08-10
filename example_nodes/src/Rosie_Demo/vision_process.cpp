@@ -23,10 +23,12 @@ int rate_of_command = 60;
 sensor_msgs::Image input_image;
 cv_bridge::CvImagePtr cvImagePtr;
 bool vision_on = false;
+bool ready_state = true;
 
 //middle
 int height = 0;
 int width = 0;
+
 
 
 //outputs
@@ -39,7 +41,13 @@ void image_callback(sensor_msgs::Image data) {
 }
 
 void key_callback(example_nodes::State data) {
-  vision_on = data.state;
+  // vision_on = data.state;
+}
+
+
+void ready_callback(example_nodes::State data) {
+  ready_state = data.state;
+  ROS_INFO("The ready state is: %d", ready_state);
 }
 
 
@@ -81,14 +89,14 @@ int main(int argc, char ** argv) {
   // INPUT
   ros::Subscriber image_subscriber = node.subscribe("/camera/color/image_raw", 60, image_callback);
   ros::Subscriber key_subscriber = node.subscribe("/demo/vision_cmd", 60, key_callback);
-  // ros::Subscriber depth_subscriber = node.subscribe("/camera/aligned_depth_to_color/image_raw", 60, depth_callback);
+  ros::Subscriber ready_subscriber = node.subscribe("/demo/ready_state", 60, ready_callback);
 
   // OUTPUT
   // ros::Publisher omni_publisher = node.advertise<geometry_msgs::Point>("/demo/cmd_blah", rate_of_command);
   ros::Publisher omni_publisher = node.advertise<geometry_msgs::Point>("/demo/target", rate_of_command);
 
   ////////////////////////////////////////////////////////////////////////////
-  ////////                   HEBI API SETUP                            ////////
+  ////////                   Main Loop Setup                          ////////
   ////////////////////////////////////////////////////////////////////////////
 
   /******** MAIN LOOP **********/
@@ -96,13 +104,17 @@ int main(int argc, char ** argv) {
   bool startup_complete2 = false;
   bool handoff_done = false;
   bool first_time = false;
-  bool publish_red = false;
+  bool publish_yellow = false;
+
+  ros::Time loop_start = ros::Time::now();
+  ros::Duration loop_duration (3.0); 
+
   // Eigen::VectorXd
 
 
-  int red_x = 0;
-  int red_y = 0;
-  int red_num = 0;
+  int yellow_x = 0;
+  int yellow_y = 0;
+  int yellow_num = 0;
 
   int blue_x = 0;
   int blue_y = 0;
@@ -131,19 +143,16 @@ int main(int argc, char ** argv) {
       ROS_INFO("Failed to load stream. Trying again...");
     }
 
-    // try {
-    //   dpImagePtr = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_16UC1);
-    //   startup_complete2 = true;
-    // } catch (cv_bridge::Exception &e) {
-    //   startup_complete2 = false;
-    //   ROS_ERROR("Depth Exception: %s", e.what());
-    // }
-
-
     if (startup_complete1) {
       cv::Mat &mat = cvImagePtr -> image;
       // cv::Mat &mat2 = dpImagePtr ->image;
-      
+      ros::Time t = ros::Time::now();
+
+      if (ready_state && (t - loop_start > loop_duration)) {
+        vision_on = true;
+        loop_start = ros::Time::now();
+      }
+
       if (vision_on) {
         vision_on = false;
         first_time = true;
@@ -154,7 +163,7 @@ int main(int argc, char ** argv) {
 
         /* 
         - Scan all the pixels on the page
-        - Categorise them as red, blue, or yellow
+        - Categorise them as yellow, blue, or yellow
         - Print and test a vector of x,y pixels for the three beanbags
         - Output the same pixels, but as meters ^_^ (will need physical set up)
         */
@@ -162,9 +171,9 @@ int main(int argc, char ** argv) {
         height = mat.rows;
         width = mat.cols;
 
-        red_x = 0;
-        red_y = 0;
-        red_num = 0;
+        yellow_x = 0;
+        yellow_y = 0;
+        yellow_num = 0;
 
         blue_x = 0;
         blue_y = 0;
@@ -173,7 +182,7 @@ int main(int argc, char ** argv) {
         green_x = 0;
         green_y = 0;
         green_num = 0;
-        publish_red = false;
+        publish_yellow = false;
         // cv::Vec3b pixel; // = mat.at<cv::Vec3b>(i,j);
 
         ROS_INFO("(Width: %d) (Height: %d)", width, height);
@@ -189,9 +198,9 @@ int main(int argc, char ** argv) {
             /* The input format is BGR */
             // yellow
             if ((pixel[2] >= 200) && (pixel[1] > 200) && (pixel[0] < 100)){
-              red_x += i;
-              red_y += j;
-              red_num += 1;
+              yellow_x += i;
+              yellow_y += j;
+              yellow_num += 1;
             }
 
             // blue 
@@ -218,17 +227,17 @@ int main(int argc, char ** argv) {
       int i = 0;
       int j = 0;
 
-      if (red_num != 0) {
-        i = red_x / red_num;
-        j = red_y / red_num; 
+      if (yellow_num != 0) {
+        i = yellow_x / yellow_num;
+        j = yellow_y / yellow_num; 
         // if (vision_on) {
         cv::circle(mat, cv::Point(i, j), 2, CV_RGB(0,255,255), 3);
         cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
         
-        if (!publish_red) {
-          geometry_msgs::Point red_target = transform_pixel2meters(i,j);
-          omni_publisher.publish(red_target); 
-          publish_red = true;
+        if (!publish_yellow) {
+          geometry_msgs::Point yellow_target = transform_pixel2meters(i,j);
+          omni_publisher.publish(yellow_target); 
+          publish_yellow = true;
         }
         // }
         // ROS_INFO(Depth)
@@ -254,18 +263,11 @@ int main(int argc, char ** argv) {
         // cv::circle(mat, cv::Point(i, j), 20, CV_RGB(0,255,255), 2);
       }
 
-      ROS_INFO("The value of vision_on is: %d", vision_on);
+      // ROS_INFO("The value of vision_on is: %d", vision_on);
       cv::imshow(OPENCV_WINDOW, mat);
-
-      cv::waitKey(1);
-
+      cv::waitKey(2);
 
     }
-
-    // int width = mat.cols;
-    // int height = mat.rows;
-
-    // ROS_INFO("WAZZAUP");
 
     ros::spinOnce();
     loop_rate.sleep();

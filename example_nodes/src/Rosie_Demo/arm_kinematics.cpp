@@ -26,11 +26,11 @@ namespace hebi {
       //  Eigen::VectorXd max_positions(group -> size());
       //  max_positions << M_PI_2, 0, (M_PI*7)/8, M_PI*2/3;
       */
-
-       Eigen::VectorXd min_positions(6);
-       min_positions << -M_PI, 0.01, 0.01, -M_PI_2, -M_PI, -M_PI;
-       Eigen::VectorXd max_positions(6);
-       max_positions << M_PI, M_PI, (M_PI*7)/8, M_PI_2, M_PI, M_PI;
+      /* These joint constraints are specific for the Rosie 6-DoF */
+      Eigen::VectorXd min_positions(6);
+      min_positions << -M_PI, 0.01, 0.01, -M_PI_2, -M_PI, -M_PI;
+      Eigen::VectorXd max_positions(6);
+      max_positions << M_PI, M_PI, (M_PI*6)/8, M_PI_2, M_PI, M_PI;
 
       // TODO: smartly handle exceptions?
       Eigen::VectorXd ik_result_joint_angles(initial_positions.size());

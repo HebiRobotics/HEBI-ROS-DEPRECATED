@@ -22,37 +22,17 @@ namespace hebi {
 
 Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
   Eigen::Vector3d output;
-  // if (xyz[0] == 0 && xyz[1] == -0.4 && xyz[2] == 0.40) {
-  //   output << 0, 0, -1; // or 0, -1, 0;
-  //   return output;
-  // }
-
-  // double z = xyz[2];
-  // ROS_INFO("This is the z being recieved: %lg", z);
-  // if (z == 100) {
-  //   output << 0, 0, 0;
-
-  // } else if (z <= 0.05) { // set minimum height
-  //   output << 0, 0, -1;
-
-  // } else if (z >= 0.35) { // set maximum height
-  //   output << 0, 0, 0;
-
-  // } else { // for everything in the middle
-  //   output << 1, 0, -1; 
-  // }
 
   double z = xyz[2];
-  // ROS_INFO("This is the z being recieved: %lg", z);
-  if (z <= 0.1) {
+  if (z <= 0.5) {
     output << 0, 0, -1;
   }
 
   else {
-    output << 0, -1, 0; // this is primarily for handoff in this case
+    output << 0, -1, 0; // this is pretty much only for handoff in this case
   }
 
-  ROS_INFO("Get End tip fn output: %lg %lg %lg", output[0], output[1], output[2]);
+  // ROS_INFO("Get End tip fn output: %lg %lg %lg", output[0], output[1], output[2]);
   return output;
 }
 
@@ -90,7 +70,7 @@ Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
         target_xyz_.z() += data.z / 100.0; // Converts to cm
          
         Eigen::Vector3d end_tip;
-        end_tip << 0, 0, 0;
+        end_tip << 0, 0, -1;
 
         Eigen::VectorXd ik_result_joint_angles =
           arm_.getKinematics().solveIK(arm_.getLastFeedback().getPosition(),
@@ -143,7 +123,7 @@ Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
 
           // Find the joint angles for the next waypoint, starting from the last
           // waypoint
-          ROS_INFO("End_tip: %lg %lg %lg", end_tip[0], end_tip[1], end_tip[2]);
+          // ROS_INFO("End_tip: %lg %lg %lg", end_tip[0], end_tip[1], end_tip[2]);
           last_position = arm_.getKinematics().solveIK(last_position, xyz, end_tip);
 
           // Save the waypoints

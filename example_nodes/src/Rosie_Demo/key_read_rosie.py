@@ -134,13 +134,13 @@ if __name__=="__main__":
 					rospy.on_shutdown(shutdownHook)
 
 				if event.key == pygame.K_c:
-					demo_x = -1
-					demo_y = 0
-					demo_z = -0.05
+					demo_x = -0.3
+					demo_y = 1.2
+					demo_z = -0.1
 
 				if event.key == pygame.K_v:
-					demo_x = 1
-					demo_y = 1
+					demo_x = 0.3
+					demo_y = 1.2
 					demo_z = -0.1
 
 				if event.key == pygame.K_b:
