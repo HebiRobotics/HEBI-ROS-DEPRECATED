@@ -16,10 +16,7 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   ros::init(argc, argv, "hebiros_gazebo_plugin_node");
   this->n.reset(new ros::NodeHandle);
 
-  this->add_group_srv =
-    this->n->advertiseService<AddGroupFromNamesSrv::Request, AddGroupFromNamesSrv::Response>(
-    "/hebiros_gazebo_plugin/add_group", boost::bind(
-    &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
+  this->_first_sim_iteration = true;
 
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
@@ -29,6 +26,14 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
 //Update the joints at every simulation iteration
 void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
+
+  if (this->_first_sim_iteration) {
+    this->_first_sim_iteration = false;
+    this->add_group_srv =
+      this->n->advertiseService<AddGroupFromNamesSrv::Request, AddGroupFromNamesSrv::Response>(
+      "/hebiros_gazebo_plugin/add_group", boost::bind(
+      &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
+  }
 
   ros::Time current_time = ros::Time::now();
 

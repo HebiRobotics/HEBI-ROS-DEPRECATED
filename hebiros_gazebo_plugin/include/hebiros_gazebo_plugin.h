@@ -36,6 +36,7 @@ class HebirosGazeboPlugin: public ModelPlugin {
   private:
 
     physics::ModelPtr model;
+    bool _first_sim_iteration;
     event::ConnectionPtr update_connection;
     std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
     std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
