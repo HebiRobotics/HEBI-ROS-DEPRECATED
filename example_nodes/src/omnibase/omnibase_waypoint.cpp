@@ -199,7 +199,9 @@ int main(int argc, char ** argv) {
         if (t == global_trajectory -> getDuration()) {
           curr_pos = target_pos;
           if (base_state) {
-            state_publisher.publish(base_state);
+            example_nodes::State tmp;
+            tmp.state = base_state;
+            state_publisher.publish(tmp);
             base_state = false;
           }
         }

@@ -24,7 +24,7 @@ using namespace hebi;
 // Global Variables
 double rate_of_command = 60;
 bool gripper_closed_cmd = false;
-bool close_published = false;
+example_nodes::State close_published;
 
 ros::Time gripper_close_time;
 
@@ -38,7 +38,7 @@ void cmd_callback(example_nodes::State data) {
   gripper_closed_cmd = data.state;
   if (data.state) {
     gripper_close_time = ros::Time::now();
-    close_published = true;
+    close_published.state = true;
   } else {
     gripper_open_time = ros::Time::now();
     open_published = true;
@@ -47,6 +47,8 @@ void cmd_callback(example_nodes::State data) {
 }
 
 int main(int argc, char ** argv) {
+
+  close_published.state = false;
 
   // Initialize ROS node
   ros::init(argc, argv, "gripper_node");
@@ -62,7 +64,7 @@ int main(int argc, char ** argv) {
     "/demo/gripper_state", 100);
 
   ////////////////////////////////////////////////////////////////////////////
-  ////////                   HEBI API SETUP                            ////////
+  ////////                   HEBI API SETUP                           ////////
   ////////////////////////////////////////////////////////////////////////////
 
   /* Update this with the group name for your modules */
@@ -102,16 +104,18 @@ int main(int argc, char ** argv) {
     if (gripper_closed_cmd) {
       group_command.setEffort(close_effort);
       
-      if (close_published && (ros::Time::now() - gripper_close_time).toSec() >= 0.75) {
+      if (close_published.state && (ros::Time::now() - gripper_close_time).toSec() >= 0.75) {
         state_publisher.publish(close_published);
-        close_published = false;
+        close_published.state = false;
       }
     }
     else {
       group_command.setEffort(open_effort);
 
       if (open_published && (ros::Time::now() - gripper_open_time).toSec() >= 1) {
-        state_publisher.publish(false);
+        example_nodes::State state_tmp;
+        state_tmp.state = false;
+        state_publisher.publish(state_tmp);
         open_published = false;
       }
     }

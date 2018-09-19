@@ -43,10 +43,12 @@ Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
     public:
       ArmNode(arm::Arm& arm)
         : arm_(arm)
-      { }
+      {
+        arm_state.state = false;
+      }
 
 
-      bool arm_state = false;
+      example_nodes::State arm_state;
 
       // "Jog" the target end effector location in (x,y,z) space, replanning
       // smoothly to the new location
@@ -135,7 +137,7 @@ Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
           ::ros::Time::now().toSec(),
           arm_.getLastFeedback(),
           positions);
-        arm_state = true;
+        arm_state.state = true;
       }
 
 
@@ -241,10 +243,10 @@ int main(int argc, char ** argv) {
                                       arm_traj -> getDuration());
 
     if (t_now == arm_traj -> getDuration()) {
-      if (arm_node.arm_state) {
+      if (arm_node.arm_state.state) {
         // bool output = arm_node.arm_state;
         state_publisher.publish(arm_node.arm_state);
-        arm_node.arm_state = false;
+        arm_node.arm_state.state = false;
       }
     }
 

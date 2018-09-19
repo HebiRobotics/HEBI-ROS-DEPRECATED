@@ -38,7 +38,7 @@ bool cmd_received = false;
 geometry_msgs::Point base_target;
 geometry_msgs::Point arm_target;
 double offset = 1;
-bool gripper_cmd = false; // true if closed
+example_nodes::State gripper_cmd;
 ros::Time grip_start_time;
 double travelled_x = 0;
 double travelled_y = 0;
@@ -77,6 +77,8 @@ void odom_callback(geometry_msgs::Twist data) {
 
 
 int main(int argc, char ** argv) {
+
+  gripper_cmd.state = false; // true if closed
 
   // Initialize ROS node
   ros::init(argc, argv, "demo_central");
@@ -126,14 +128,18 @@ int main(int argc, char ** argv) {
       /* TODO: Add a check that the vision system is online */
       if (keys_init == true) {
         startup_complete = true;
-        ready_publisher.publish(true);
+        example_nodes::State ready_tmp;
+        ready_tmp.state = true;
+        ready_publisher.publish(ready_tmp);
       }
     } else {
 
       /* Convert Key commands into base and arm commands */
 
       if (cmd_received) {
-        ready_publisher.publish(false); // tell the vision not to send more commands
+        example_nodes::State ready_tmp;
+        ready_tmp.state = false;
+        ready_publisher.publish(ready_tmp); // tell the vision not to send more commands
         cmd_received = false;
 
 
@@ -205,7 +211,7 @@ int main(int argc, char ** argv) {
         reached_pickup = false;
         arm_state = false;
 
-        gripper_cmd = true;
+        gripper_cmd.state = true;
         grip_publisher.publish(gripper_cmd);
         // grip_start_time = ros::Time::now();
 
@@ -268,7 +274,7 @@ int main(int argc, char ** argv) {
       if (dropoff_arm && arm_state) {
         arm_state = false; 
         dropoff_arm = false;
-        gripper_cmd = false;
+        gripper_cmd.state = false;
         grip_publisher.publish(gripper_cmd);
         arm_is_done = true;
       }
@@ -302,7 +308,9 @@ int main(int argc, char ** argv) {
         returning_home = false;
         base_state = false;
         arm_state = false;
-        ready_publisher.publish(true); // tell the vision to send more commands
+        example_nodes::State ready_tmp;
+        ready_tmp.state = true;
+        ready_publisher.publish(ready_tmp); // tell the vision to send more commands
         ROS_INFO("The ending position is: (%lg, %lg)", odometry_pos.linear.x, odometry_pos.linear.y);
       }
 

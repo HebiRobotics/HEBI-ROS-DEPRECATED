@@ -20,8 +20,11 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   actionlib
   geometry_msgs
-  OpenCV REQUIRED
   cv_bridge
+)
+
+find_package(
+  OpenCV REQUIRED
 )
 
 ## System dependencies are found with CMake's conventions
