@@ -29,9 +29,6 @@ bool gripperSrv(GripperSrv::Request& req, GripperSrv::Response& res) {
   ROS_INFO("Gripper Command Received: %d", gripper_closed_cmd);
   gripper_closed_cmd = req.closed;
 
-  // Wait for command to finish; note before this was only 0.75 for close and 1.0 for open
-  ros::Duration(1).sleep();
-
   return true;
 }
 
