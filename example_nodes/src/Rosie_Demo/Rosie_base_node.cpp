@@ -23,16 +23,19 @@ namespace ros {
 // TODO: BaseTrajectory is _almost_ identical to ArmTrajectory.  Maybe combine
 // these?
 
+// Note: base trajectory doesn't allow for smooth replanning, because that would be...difficult.  It just
+// represents relative motion in (x, y, theta)
+
 class BaseTrajectory {
 public:
-  static BaseTrajectory create(const Eigen::VectorXd& dest_positions, const GroupFeedback& feedback, double t_now)
+  static BaseTrajectory create(const Eigen::VectorXd& dest_positions, double t_now)
   {
     BaseTrajectory base_trajectory;
 
     // Set up initial trajectory
     Eigen::MatrixXd positions(3, 1);
     positions.col(0) = dest_positions;
-    base_trajectory.replan(t_now, feedback, positions);
+    base_trajectory.replan(t_now, positions);
 
     return base_trajectory;
   }
@@ -55,28 +58,16 @@ public:
   // NOTE: this call assumes feedback is populated.
   void replan(
     double t_now,
-    const GroupFeedback& feedback,
     const Eigen::MatrixXd& new_positions,
     const Eigen::MatrixXd& new_velocities,
     const Eigen::MatrixXd& new_accelerations) {
 
     int num_joints = new_positions.rows();
 
-    // If there is a current trajectory, use the commands as a starting point;
-    // if not, replan from current feedback.
+    // Start from (0, 0, 0), as this is a relative motion.
     Eigen::VectorXd curr_pos = Eigen::VectorXd::Zero(num_joints);
     Eigen::VectorXd curr_vel = Eigen::VectorXd::Zero(num_joints);
     Eigen::VectorXd curr_accel = Eigen::VectorXd::Zero(num_joints);
-    if (trajectory_) {
-      // Clip time to end of trajectory
-      double t = std::min(t_now - trajectory_start_time_,
-                          trajectory_->getDuration());
-      trajectory_->getState(t, &curr_pos, &curr_vel, &curr_accel);
-    } else {
-      curr_pos = feedback.getPosition();
-      curr_vel = feedback.getVelocity();
-      // (accelerations remain zero)
-    }
 
     int num_waypoints = new_positions.cols() + 1;
 
@@ -106,12 +97,10 @@ public:
 
   // Updates the Base State by planning a trajectory to a given set of joint
   // waypoints.  Uses the current trajectory/state if defined.
-  // NOTE: this call assumes feedback is populated.
   // NOTE: this is a wrapper around the more general replan that
   // assumes zero end velocity and acceleration.
   void replan(
     double t_now,
-    const GroupFeedback& feedback,
     const Eigen::MatrixXd& new_positions) {
 
     int num_joints = new_positions.rows();
@@ -129,7 +118,7 @@ public:
     accelerations.setConstant(nan);
     accelerations.rightCols<1>() = Eigen::VectorXd::Zero(num_joints);
 
-    replan(t_now, feedback, new_positions, velocities, accelerations);
+    replan(t_now, new_positions, velocities, accelerations);
   }
 
   // Heuristic to get the timing of the waypoints. This function can be
@@ -192,6 +181,8 @@ public:
 
     constexpr double feedback_frequency = 100;
     group->setFeedbackFrequencyHz(feedback_frequency);
+    constexpr long command_lifetime = 250;
+    group->setCommandLifetimeMs(command_lifetime);
 
     // Try to get feedback -- if we don't get a packet in the first N times,
     // something is wrong
@@ -207,8 +198,52 @@ public:
  
     // NOTE: I don't like that start time is _before_ the "get feedback"
     // loop above...but this is only during initialization
-    BaseTrajectory base_trajectory = BaseTrajectory::create(feedback.getPosition(), feedback, start_time);
+    BaseTrajectory base_trajectory = BaseTrajectory::create(Eigen::Vector3d::Zero(), start_time);
     return std::unique_ptr<OmniBase>(new OmniBase(group, base_trajectory, start_time));
+  }
+
+  // Converts a certain number of radians into radians that each wheel would turn
+  // _from theta == 0_ to obtain this rotation.
+  double convertSE2ToWheel() {
+    // NOTE: this assumes pure rotation or translation! Combined trajectories
+    // aren't really planned for yet!
+    // TODO: finish!  Assert for now?
+
+    double theta = pos_[2];
+    double dtheta = vel_[2];
+
+    double offset = 1.0;
+    double x = (pos_[0] * offset) / wheel_radius_;
+    double y = (pos_[1] * offset) / wheel_radius_;
+    double dx = (vel_[0] * offset) / wheel_radius_;
+    double dy = (vel_[1] * offset) / wheel_radius_;
+    double ratio = sqrt(3)/2;
+
+    //////////////
+    // Position:
+    //////////////
+    // Rotation
+    wheel_pos_[0] =
+    wheel_pos_[1] =
+    wheel_pos_[2] = -theta * base_radius_ / wheel_radius_;
+    // Translation
+    wheel_pos_[0] += - 0.5 * y - ratio * x;
+    wheel_pos_[1] += - 0.5 * y + ratio * x;
+    wheel_pos_[2] += y;
+    wheel_pos_ += start_wheel_pos_;
+
+    //////////////
+    // Velocity:
+    //////////////
+    // Rotation
+    wheel_vel_[0] =
+    wheel_vel_[1] =
+    wheel_vel_[2] = -dtheta * base_radius_ / wheel_radius_;
+    // Translation
+    wheel_vel_[0] += - 0.5 * dy - ratio * dx;
+    wheel_vel_[1] += - 0.5 * dy + ratio * dx;
+    wheel_vel_[2] += dy;
+
   }
 
   bool update(double time) {
@@ -218,10 +253,11 @@ public:
     // Update command from trajectory
     base_trajectory_.getState(time, pos_, vel_, accel_);
 
-    // TODO: convert from x/y/theta to wheel 1/2/3
+    // Convert from x/y/theta to wheel 1/2/3
+    convertSE2ToWheel();
 
-    //command_.setPosition(pos_);
-    //command_.setVelocity(vel_);
+    command_.setPosition(wheel_pos_);
+    command_.setVelocity(wheel_vel_);
 
     // TODO: EFFORTS SEE OMNI_SRC.CPP
 
@@ -240,6 +276,8 @@ public:
   GroupFeedback& getLastFeedback() { return feedback_; }
   BaseTrajectory& getTrajectory() { return base_trajectory_; }
 
+  void resetStart() { start_wheel_pos_ = feedback_.getPosition(); }
+
 private:
 
   OmniBase(std::shared_ptr<Group> group,
@@ -251,8 +289,16 @@ private:
       pos_(Eigen::VectorXd::Zero(group->size())),
       vel_(Eigen::VectorXd::Zero(group->size())),
       accel_(Eigen::VectorXd::Zero(group->size())),
+      start_wheel_pos_(Eigen::VectorXd::Zero(group->size())),
+      wheel_pos_(Eigen::VectorXd::Zero(group->size())),
+      wheel_vel_(Eigen::VectorXd::Zero(group->size())),
+      wheel_accel_(Eigen::VectorXd::Zero(group->size())),
       base_trajectory_{base_trajectory}
   { }
+
+  /* Declare main kinematic variables */
+  static constexpr double wheel_radius_ = 0.0762; // m
+  static constexpr double base_radius_ = 0.235; // m (center of omni to origin of base)
 
   std::shared_ptr<Group> group_;
 
@@ -264,6 +310,10 @@ private:
   Eigen::VectorXd pos_;
   Eigen::VectorXd vel_;
   Eigen::VectorXd accel_;
+  Eigen::VectorXd start_wheel_pos_;
+  Eigen::VectorXd wheel_pos_;
+  Eigen::VectorXd wheel_vel_;
+  Eigen::VectorXd wheel_accel_;
 
   BaseTrajectory base_trajectory_;
 };
@@ -271,9 +321,11 @@ private:
 class BaseNode {
 public:
   BaseNode(OmniBase& base) : base_(base) {
+    base_.resetStart();
   }
 
   void startBaseMotion(const example_nodes::BaseMotionGoalConstPtr& goal) {
+
     // Note: this is implemented right now as translation, _THEN_ rotation...
     // we can update this later.
 
@@ -287,13 +339,13 @@ public:
     ////////////////
     // Translation
     ////////////////
+    base_.resetStart();
 
     waypoints(0, 0) = goal->x;
     waypoints(1, 0) = goal->y;
     waypoints(2, 0) = 0.0;
     base_.getTrajectory().replan(
       ::ros::Time::now().toSec(),
-      base_.getLastFeedback(),
       waypoints);
 
     // Wait until the action is complete, sending status/feedback along the
@@ -334,13 +386,13 @@ public:
     /////////////
     // Rotation
     /////////////
+    base_.resetStart();
 
     waypoints(0, 0) = 0.0;
     waypoints(1, 0) = 0.0; 
     waypoints(2, 0) = goal->theta;
     base_.getTrajectory().replan(
       ::ros::Time::now().toSec(),
-      base_.getLastFeedback(),
       waypoints);
 
     success = true;
