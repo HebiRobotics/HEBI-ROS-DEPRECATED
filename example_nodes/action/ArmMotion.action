@@ -1,0 +1,12 @@
+# Goal position:
+float64 x
+float64 y
+float64 z
+float64 tipx
+float64 tipy
+float64 tipz
+---
+bool success
+---
+float64 percent_complete
+

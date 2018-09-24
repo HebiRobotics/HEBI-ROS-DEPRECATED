@@ -22,6 +22,9 @@ namespace hebi {
       // step.  Returns 'false' on a connection problem; true on success.
       bool update(double time);
 
+      double trajectoryPercentComplete(double time);
+      bool isTrajectoryComplete(double time);
+
       size_t size() { return group_->size(); }
       GroupFeedback& getLastFeedback() { return feedback_; }
 

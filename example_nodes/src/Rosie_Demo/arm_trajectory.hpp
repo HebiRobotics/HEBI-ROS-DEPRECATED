@@ -57,6 +57,7 @@ namespace hebi {
       
       std::shared_ptr<hebi::trajectory::Trajectory> getTraj() { return trajectory_; }
       double getTrajStartTime() { return trajectory_start_time_; }
+      double getTrajEndTime() { return trajectory_start_time_ + trajectory_->getDuration(); }
 
     private:
       // This is private, because we want to ensure the ArmTrajectory is always

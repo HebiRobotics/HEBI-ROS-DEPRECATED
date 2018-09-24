@@ -2,7 +2,10 @@
 #include <geometry_msgs/Point.h>
 #include <example_nodes/TargetWaypoints.h>
 #include <example_nodes/State.h>
-// #include "arm_trajectory.hpp"
+
+#include <example_nodes/ArmMotionAction.h>
+
+#include "actionlib/server/simple_action_server.h"
 
 #include "arm.hpp"
 #include "robot_model.hpp"
@@ -10,156 +13,119 @@
 
 #include <ros/console.h>
 
-
-
-
-
 namespace hebi {
+namespace ros {
 
-// Global Variables
-// Eigen::Vector3d end_tip;
-// end_tip << 0, 0, 0;
-
-Eigen::Vector3d get_end_tip(Eigen::Vector3d xyz) {
-  Eigen::Vector3d output;
-
-  double z = xyz[2];
-  if (z <= 0.5) {
-    output << 0, 0, -1;
+class ArmNode {
+public:
+  ArmNode(arm::Arm& arm)
+    : arm_(arm)
+  {
   }
 
-  else {
-    output << 0, -1, 0; // this is pretty much only for handoff in this case
-  }
+  void startArmMotion(const example_nodes::ArmMotionGoalConstPtr& goal)
+  {
 
-  // ROS_INFO("Get End tip fn output: %lg %lg %lg", output[0], output[1], output[2]);
-  return output;
-}
+    // Replan a smooth joint trajectory from the current location through a
+    // series of cartesian waypoints.
+    size_t num_waypoints = 1;
 
+    // These are the joint angles that will be added
+    Eigen::MatrixXd positions(arm_.size(), num_waypoints);
 
-  namespace ros {
+    // Plan to each subsequent point from the last position
+    // Eigen::VectorXd last_position = arm_.getLastFeedback().getPosition();
+    Eigen::VectorXd last_position = arm_.getLastFeedback().getPositionCommand();
 
-    class ArmNode {
-    public:
-      ArmNode(arm::Arm& arm)
-        : arm_(arm)
-      {
-        arm_state.state = false;
-      }
+    // Get joint angles to move to each waypoint
+    for (size_t i = 0; i < num_waypoints; ++i) {
 
+      Eigen::Vector3d xyz;
+      Eigen::Vector3d end_tip;
 
-      example_nodes::State arm_state;
+      // Special homing values...
+      if (goal->x == 100 && goal->y == 100 && goal->z == 100) {
+        xyz = arm_.getHomePositionXYZ();
+        end_tip << 1, 0, 0;
+      } 
 
-      // "Jog" the target end effector location in (x,y,z) space, replanning
-      // smoothly to the new location
-      void offsetTargetCallback(geometry_msgs::Point data) {
-        
-        // Only update if target changes!
-        if (data.x == 0 && data.y == 0 && data.z == 0)
-          return;
-
-        // Initialize target from feedback as necessary
-        if (!isTargetInitialized()) {
-          auto pos = arm_.getKinematics().FK(arm_.getLastFeedback().getPosition());
-          target_xyz_.x() = pos.x();
-          target_xyz_.y() = pos.y();
-          target_xyz_.z() = pos.z();
-        }
-
-        // Update the target point
-        target_xyz_.x() += data.x / 100.0; // Converts to cm
-        target_xyz_.y() += data.y / 100.0; // Converts to cm
-        target_xyz_.z() += data.z / 100.0; // Converts to cm
-         
-        Eigen::Vector3d end_tip;
+      else if (goal->x == 101 && goal->y == 101 && goal->z == 101) {
+        xyz = arm_.getHomePositionXYZ();
         end_tip << 0, 0, -1;
+      } 
 
-        Eigen::VectorXd ik_result_joint_angles =
-          arm_.getKinematics().solveIK(arm_.getLastFeedback().getPosition(),
-          target_xyz_, end_tip);
-
-        // Replan:
-        arm_.getTrajectory().replan(
-          ::ros::Time::now().toSec(),
-          arm_.getLastFeedback(),
-          ik_result_joint_angles);
+      else {
+        xyz << goal->x, goal->y, goal->z;
+        xyz << goal->tipx, goal->tipy, goal->tipz;
       }
 
-      // Replan a smooth joint trajectory from the current location through a
-      // series of cartesian waypoints.
-      void updateCartesianWaypoints(example_nodes::TargetWaypoints target_waypoints) {
-        size_t num_waypoints = target_waypoints.waypoints_vector.size();
+      // Find the joint angles for the next waypoint, starting from the last
+      // waypoint
+      last_position = arm_.getKinematics().solveIK(last_position, xyz, end_tip);
 
-        // These are the joint angles that will be added
-        Eigen::MatrixXd positions(arm_.size(), num_waypoints);
+      // Save the waypoints
+      positions.col(i) = last_position; 
+    }
 
-        // Plan to each subsequent point from the last position
-        // Eigen::VectorXd last_position = arm_.getLastFeedback().getPosition();
-        Eigen::VectorXd last_position = arm_.getLastFeedback().getPositionCommand();
+    // Replan:
+    arm_.getTrajectory().replan(
+      ::ros::Time::now().toSec(),
+      arm_.getLastFeedback(),
+      positions);
 
-// ROS_INFO("Here: %lg %lg %lg", last_position[0], last_position[1], last_position[2]);
+    // Wait until the action is complete, sending status/feedback along the
+    // way.
+    ::ros::Rate r(10);
+    bool success = true;
 
-        // Get joint angles to move to each waypoint
-        for (size_t i = 0; i < num_waypoints; ++i) {
-          const auto& waypoint = target_waypoints.waypoints_vector[i];
+    ROS_INFO("Executing arm motion action");
 
-          // Eigen::Vector3d xyz(waypoint.x, waypoint.y, waypoint.z);
-          Eigen::Vector3d xyz;
-          Eigen::Vector3d end_tip;
+    example_nodes::ArmMotionFeedback feedback;
 
-          if (waypoint.x == 100 && waypoint.y == 100 && waypoint.z == 100) {
-            xyz = arm_.getHomePositionXYZ();
-            end_tip << 1, 0, 0;
-          } 
-
-          else if (waypoint.x == 101 && waypoint.y == 101 && waypoint.z == 101) {
-            xyz = arm_.getHomePositionXYZ();
-            end_tip << 0, 0, -1;
-          } 
-
-          else {
-            xyz << waypoint.x, waypoint.y, waypoint.z;
-            end_tip = get_end_tip(xyz);
-          }
-
-
-          // Find the joint angles for the next waypoint, starting from the last
-          // waypoint
-          // ROS_INFO("End_tip: %lg %lg %lg", end_tip[0], end_tip[1], end_tip[2]);
-          last_position = arm_.getKinematics().solveIK(last_position, xyz, end_tip);
-
-          // Save the waypoints
-          positions.col(i) = last_position; 
-        }
-
-        // Replan:
-        arm_.getTrajectory().replan(
-          ::ros::Time::now().toSec(),
-          arm_.getLastFeedback(),
-          positions);
-        arm_state.state = true;
+    while (true) {
+      if (action_server_->isPreemptRequested() || !::ros::ok()) {
+        ROS_INFO("Preempted arm motion");
+        action_server_->setPreempted();
+        success = false;
+        break;
       }
 
+      auto t = ::ros::Time::now().toSec();
 
-    private:
-      arm::Arm& arm_;
+      // Publish progress:
+      auto& arm_traj = arm_.getTrajectory();
+      feedback.percent_complete = arm_.trajectoryPercentComplete(t);
+      action_server_->publishFeedback(feedback);
  
-      // The end effector location that this arm will target (NaN indicates
-      // unitialized state, and will be set from feedback during first offset)
-      Eigen::Vector3d target_xyz_{
-        std::numeric_limits<double>::quiet_NaN(),
-        std::numeric_limits<double>::quiet_NaN(),
-        std::numeric_limits<double>::quiet_NaN()};
-      bool isTargetInitialized() {
-        return !std::isnan(target_xyz_.x()) ||
-               !std::isnan(target_xyz_.y()) ||
-               !std::isnan(target_xyz_.z());
+      if (arm_.isTrajectoryComplete(t)) {
+        ROS_INFO("COMPLETE");
+        break;
       }
 
-    };
+      // Limit feedback rate
+      r.sleep(); 
+    }
 
+    // publish when the arm is done with a motion
+    ROS_INFO("Completed arm motion action");
+    example_nodes::ArmMotionResult result;
+    result.success = success;
+    action_server_->setSucceeded(result);
   }
-}
+
+  void setActionServer(actionlib::SimpleActionServer<example_nodes::ArmMotionAction>* action_server) {
+    action_server_ = action_server;
+  }
+  
+private:
+  arm::Arm& arm_;
+
+  actionlib::SimpleActionServer<example_nodes::ArmMotionAction>* action_server_ {nullptr};
+
+};
+
+} // namespace ros
+} // namespace hebi
 
 int main(int argc, char ** argv) {
 
@@ -174,6 +140,7 @@ int main(int argc, char ** argv) {
   using BracketType = hebi::robot_model::RobotModel::BracketType;
   using LinkType = hebi::robot_model::RobotModel::LinkType;
 
+  // TODO: LOAD FROM HRDF!!!
   hebi::robot_model::RobotModel model;
   model.addActuator(ActuatorType::X8_9);
   model.addBracket(BracketType::X5HeavyRightInside);
@@ -204,7 +171,8 @@ int main(int argc, char ** argv) {
     return -1;
   }
 
-  // Load the approriate gains file
+  // Load the appropriate gains file
+  // TODO: BETTER PACKAGE THIS FILE!!!
   hebi::GroupCommand gains_cmd(arm -> size());
   gains_cmd.readGains("/home/hebi/catkin_ws/src/HEBI-ROS/example_nodes/include/gains/6-DoF-Arm-Gains-Rosie.xml");
   arm -> getGroup() -> sendCommand(gains_cmd);
@@ -213,43 +181,28 @@ int main(int argc, char ** argv) {
    
   hebi::ros::ArmNode arm_node(*arm);
 
-  // Subscribe to lists of (x, y, z) waypoints
-  ros::Subscriber waypoint_subscriber =
-    node.subscribe<example_nodes::TargetWaypoints>("cartesian_waypoints", 50, &hebi::ros::ArmNode::updateCartesianWaypoints, &arm_node);
+  // Action server for arm motions
+  actionlib::SimpleActionServer<example_nodes::ArmMotionAction> arm_motion_action(
+    node, "/rosie/arm_motion",
+    boost::bind(&hebi::ros::ArmNode::startArmMotion, &arm_node, _1), false);
 
-  // Publish completion of waypoint movement
-  ros::Publisher state_publisher = 
-    node.advertise<example_nodes::State>("/demo/arm_state", 60);
+  arm_node.setActionServer(&arm_motion_action);
+
+  arm_motion_action.start();
 
   /////////////////// Main Loop ///////////////////
 
   double t_now;
-  std::shared_ptr<hebi::trajectory::Trajectory> arm_traj;
-  // hebi::arm::ArmTrajectory arm_traj;
 
   // Main command loop
   while (ros::ok()) {
 
+    auto t = ros::Time::now().toSec();
+
     // Update feedback, and command the arm to move along its planned path
     // (this also acts as a loop-rate limiter so no 'sleep' is needed)
-    if (!arm->update(ros::Time::now().toSec()))
+    if (!arm->update(t))
       ROS_WARN("Error Getting Feedback -- Check Connection");
-
-
-
-    /* Short bit of code to publish true when the arm is done with a motion */
-    arm_traj = (arm -> getTrajectory().getTraj());
-    t_now = std::min(ros::Time::now().toSec() - arm -> getTrajectory().getTrajStartTime(),
-                                      arm_traj -> getDuration());
-
-    if (t_now == arm_traj -> getDuration()) {
-      if (arm_node.arm_state.state) {
-        // bool output = arm_node.arm_state;
-        state_publisher.publish(arm_node.arm_state);
-        arm_node.arm_state.state = false;
-      }
-    }
-
 
     // Call any pending callbacks (note -- this may update our planned motion)
     ros::spinOnce();

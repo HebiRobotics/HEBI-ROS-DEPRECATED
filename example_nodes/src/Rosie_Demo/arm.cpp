@@ -68,6 +68,13 @@ namespace hebi {
       return true;
     }
 
+    double Arm::trajectoryPercentComplete(double time) {
+      return std::min((time - arm_trajectory_.getTrajStartTime()) / arm_trajectory_.getTraj()->getDuration(), 1.0) * 100;
+    }
+
+    bool Arm::isTrajectoryComplete(double time) {
+      return time > arm_trajectory_.getTrajEndTime();
+    }
 
     Eigen::Vector3d Arm::getHomePositionXYZ() {
       return arm_kinematics_.FK(home_position_);
