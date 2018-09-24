@@ -56,7 +56,7 @@ public:
 
       else {
         xyz << goal->x, goal->y, goal->z;
-        xyz << goal->tipx, goal->tipy, goal->tipz;
+        end_tip << goal->tipx, goal->tipy, goal->tipz;
       }
 
       // Find the joint angles for the next waypoint, starting from the last
