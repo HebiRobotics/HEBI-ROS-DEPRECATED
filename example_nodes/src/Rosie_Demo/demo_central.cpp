@@ -5,6 +5,7 @@
 #include <actionlib/client/terminal_state.h>
 
 #include <example_nodes/ArmMotionAction.h>
+#include <example_nodes/BaseMotionAction.h>
 #include <example_nodes/GripperSrv.h>
 
 // We abstract the behavior of each of the core components up here, so our
@@ -155,17 +156,56 @@ public:
     double y;
   };
 
-  Base(ros::NodeHandle& node) { }
+  Base(ros::NodeHandle& node)
+    : base_motion_("/rosie/base_motion", true) {
+    // Wait for the server to start (can wait forever)
+    base_motion_.waitForServer();
+  }
 
   bool rotate(double radians) {
-    // TODO: implement
+    base_motion_goal_.x = 0;
+    base_motion_goal_.y = 0;
+    base_motion_goal_.theta = radians; 
+
+    base_motion_.sendGoal(base_motion_goal_);
+
+    // wait for the action to return
+    bool finished_before_timeout = base_motion_.waitForResult(ros::Duration(30.0));
+
+    if (!finished_before_timeout) {
+      ROS_ERROR("Base motion action timed out");
+      return false;
+    }
+
+    auto res = base_motion_.getState();
+    ROS_INFO("Base motion action finished: %s", res.toString().c_str());
     return true;
   }
 
   bool moveTo(const Location& location) {
-    // TODO: implement
+    base_motion_goal_.x = location.x;
+    base_motion_goal_.y = location.y;
+    base_motion_goal_.theta = 0; 
+
+    base_motion_.sendGoal(base_motion_goal_);
+
+    // wait for the action to return
+    bool finished_before_timeout = base_motion_.waitForResult(ros::Duration(30.0));
+
+    if (!finished_before_timeout) {
+      ROS_ERROR("Base motion action timed out");
+      return false;
+    }
+
+    auto res = base_motion_.getState();
+    ROS_INFO("Base motion action finished: %s", res.toString().c_str());
     return true;
   }
+
+  // true causes the client to spin its own thread
+  actionlib::SimpleActionClient<example_nodes::BaseMotionAction> base_motion_;
+
+  example_nodes::BaseMotionGoal base_motion_goal_;
 };
 
 class Vision {
@@ -179,8 +219,8 @@ public:
 
   bool search(Location& found_at) {
     // TODO: implement!
-    return true;
-    //return false;
+    //return true;
+    return false;
   }
 };
 

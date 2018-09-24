@@ -1,0 +1,440 @@
+#include <ros/ros.h>
+#include <geometry_msgs/Point.h>
+
+#include <example_nodes/BaseMotionAction.h>
+
+#include "actionlib/server/simple_action_server.h"
+
+#include "lookup.hpp"
+#include "group.hpp"
+#include "group_command.hpp"
+#include "group_feedback.hpp"
+#include "trajectory.hpp"
+
+#include <ros/console.h>
+
+namespace hebi {
+namespace ros {
+
+// TODO: fix includes here and in Rosie_arm_node file!
+
+// TODO: move these classes/etc to separate header/implementation files!
+
+// TODO: BaseTrajectory is _almost_ identical to ArmTrajectory.  Maybe combine
+// these?
+
+class BaseTrajectory {
+public:
+  static BaseTrajectory create(const Eigen::VectorXd& dest_positions, const GroupFeedback& feedback, double t_now)
+  {
+    BaseTrajectory base_trajectory;
+
+    // Set up initial trajectory
+    Eigen::MatrixXd positions(3, 1);
+    positions.col(0) = dest_positions;
+    base_trajectory.replan(t_now, feedback, positions);
+
+    return base_trajectory;
+  }
+
+  void getState(
+    double t_now, 
+    Eigen::VectorXd& positions,
+    Eigen::VectorXd& velocities,
+    Eigen::VectorXd& accelerations) {
+
+    // (Cap the effective time to the end of the trajectory)
+    double t = std::min(t_now - trajectory_start_time_,
+                        trajectory_->getDuration());
+
+    trajectory_->getState(t, &positions, &velocities, &accelerations);
+  }
+
+  // Updates the Arm State by planning a trajectory to a given set of joint
+  // waypoints.  Uses the current trajectory/state if defined.
+  // NOTE: this call assumes feedback is populated.
+  void replan(
+    double t_now,
+    const GroupFeedback& feedback,
+    const Eigen::MatrixXd& new_positions,
+    const Eigen::MatrixXd& new_velocities,
+    const Eigen::MatrixXd& new_accelerations) {
+
+    int num_joints = new_positions.rows();
+
+    // If there is a current trajectory, use the commands as a starting point;
+    // if not, replan from current feedback.
+    Eigen::VectorXd curr_pos = Eigen::VectorXd::Zero(num_joints);
+    Eigen::VectorXd curr_vel = Eigen::VectorXd::Zero(num_joints);
+    Eigen::VectorXd curr_accel = Eigen::VectorXd::Zero(num_joints);
+    if (trajectory_) {
+      // Clip time to end of trajectory
+      double t = std::min(t_now - trajectory_start_time_,
+                          trajectory_->getDuration());
+      trajectory_->getState(t, &curr_pos, &curr_vel, &curr_accel);
+    } else {
+      curr_pos = feedback.getPosition();
+      curr_vel = feedback.getVelocity();
+      // (accelerations remain zero)
+    }
+
+    int num_waypoints = new_positions.cols() + 1;
+
+    Eigen::MatrixXd positions(num_joints, num_waypoints);
+    Eigen::MatrixXd velocities(num_joints, num_waypoints);
+    Eigen::MatrixXd accelerations(num_joints, num_waypoints);
+
+    // Initial state
+    positions.col(0) = curr_pos;
+    velocities.col(0) = curr_vel;
+    accelerations.col(0) = curr_accel;
+
+    // Copy new waypoints
+    positions.rightCols(num_waypoints - 1) = new_positions;
+    velocities.rightCols(num_waypoints - 1) = new_velocities;
+    accelerations.rightCols(num_waypoints - 1) = new_accelerations;
+
+    // Get waypoint times
+    Eigen::VectorXd trajTime =
+      getWaypointTimes(positions, velocities, accelerations);
+
+    // Create new trajectory
+    trajectory_ = hebi::trajectory::Trajectory::createUnconstrainedQp(
+                    trajTime, positions, &velocities, &accelerations);
+    trajectory_start_time_ = t_now;
+  }
+
+  // Updates the Base State by planning a trajectory to a given set of joint
+  // waypoints.  Uses the current trajectory/state if defined.
+  // NOTE: this call assumes feedback is populated.
+  // NOTE: this is a wrapper around the more general replan that
+  // assumes zero end velocity and acceleration.
+  void replan(
+    double t_now,
+    const GroupFeedback& feedback,
+    const Eigen::MatrixXd& new_positions) {
+
+    int num_joints = new_positions.rows();
+    int num_waypoints = new_positions.cols();
+
+    // Unconstrained velocities and accelerations during the path, but set to
+    // zero at the end.
+    double nan = std::numeric_limits<double>::quiet_NaN();
+
+    Eigen::MatrixXd velocities(num_joints, num_waypoints);
+    velocities.setConstant(nan);
+    velocities.rightCols<1>() = Eigen::VectorXd::Zero(num_joints);
+
+    Eigen::MatrixXd accelerations(num_joints, num_waypoints);
+    accelerations.setConstant(nan);
+    accelerations.rightCols<1>() = Eigen::VectorXd::Zero(num_joints);
+
+    replan(t_now, feedback, new_positions, velocities, accelerations);
+  }
+
+  // Heuristic to get the timing of the waypoints. This function can be
+  // modified to add custom waypoint timing.
+  Eigen::VectorXd getWaypointTimes(
+    const Eigen::MatrixXd& positions,
+    const Eigen::MatrixXd& velocities,
+    const Eigen::MatrixXd& accelerations) {
+
+    // TODO: make this configurable!
+    double rampTime = 1.5;
+
+    size_t num_waypoints = positions.cols();
+
+    Eigen::VectorXd times(num_waypoints);
+    for (size_t i = 0; i < num_waypoints; ++i)
+      times[i] = rampTime * (double)i;
+
+    return times;
+  }    
+
+  std::shared_ptr<hebi::trajectory::Trajectory> getTraj() { return trajectory_; }
+  double getTrajStartTime() { return trajectory_start_time_; }
+  double getTrajEndTime() { return trajectory_start_time_ + trajectory_->getDuration(); }
+
+private:
+  // This is private, because we want to ensure the BaseTrajectory is always
+  // initialized correctly after creation; use the "create" factory method
+  // instead.
+  BaseTrajectory() = default;
+      
+  std::shared_ptr<hebi::trajectory::Trajectory> trajectory_ {};
+  double trajectory_start_time_ {};
+};
+
+class OmniBase {
+public:
+  static std::unique_ptr<OmniBase> create(
+    const std::vector<std::string>& families,
+    const std::vector<std::string>& names,
+    double start_time) {
+
+    // Invalid input!  Size mismatch
+    if (names.size() != 3 || (families.size() != 1 && families.size() != 3)) {
+      assert(false);
+      return nullptr;
+    }
+
+    //Get a group
+    Lookup lookup;
+    auto group = lookup.getGroupFromNames(families, names);
+
+    if (!group)
+      return nullptr;
+
+    // Load the appropriate gains file
+    // TODO: BETTER PACKAGE THIS FILE!!!
+    GroupCommand gains_cmd(group -> size());
+    gains_cmd.readGains("/home/hebi/catkin_ws/src/HEBI-ROS/example_nodes/include/gains/omnibase_gains.xml");
+
+    constexpr double feedback_frequency = 100;
+    group->setFeedbackFrequencyHz(feedback_frequency);
+
+    // Try to get feedback -- if we don't get a packet in the first N times,
+    // something is wrong
+    int num_attempts = 0;
+    
+    // This whole "plan initial trajectory" is a little hokey...but it's better than nothing  
+    GroupFeedback feedback(group->size());
+    while (!group->getNextFeedback(feedback)) {
+      if (num_attempts++ > 20) {
+        return nullptr;
+      }
+    }
+ 
+    // NOTE: I don't like that start time is _before_ the "get feedback"
+    // loop above...but this is only during initialization
+    BaseTrajectory base_trajectory = BaseTrajectory::create(feedback.getPosition(), feedback, start_time);
+    return std::unique_ptr<OmniBase>(new OmniBase(group, base_trajectory, start_time));
+  }
+
+  bool update(double time) {
+    if (!group_->getNextFeedback(feedback_))
+      return false;
+
+    // Update command from trajectory
+    base_trajectory_.getState(time, pos_, vel_, accel_);
+
+    // TODO: convert from x/y/theta to wheel 1/2/3
+
+    //command_.setPosition(pos_);
+    //command_.setVelocity(vel_);
+
+    // TODO: EFFORTS SEE OMNI_SRC.CPP
+
+    group_->sendCommand(command_);
+
+    return true; 
+  }
+ 
+  double trajectoryPercentComplete(double time) {
+    return std::min((time - base_trajectory_.getTrajStartTime()) / base_trajectory_.getTraj()->getDuration(), 1.0) * 100;
+  }
+  bool isTrajectoryComplete(double time) {
+    return time > base_trajectory_.getTrajEndTime();
+  }
+
+  GroupFeedback& getLastFeedback() { return feedback_; }
+  BaseTrajectory& getTrajectory() { return base_trajectory_; }
+
+private:
+
+  OmniBase(std::shared_ptr<Group> group,
+    BaseTrajectory base_trajectory,
+    double start_time)
+    : group_(group),
+      feedback_(group->size()),
+      command_(group->size()),
+      pos_(Eigen::VectorXd::Zero(group->size())),
+      vel_(Eigen::VectorXd::Zero(group->size())),
+      accel_(Eigen::VectorXd::Zero(group->size())),
+      base_trajectory_{base_trajectory}
+  { }
+
+  std::shared_ptr<Group> group_;
+
+  GroupFeedback feedback_;
+  GroupCommand command_;
+
+  // These are just temporary variables to cache output from
+  // Trajectory::getState.
+  Eigen::VectorXd pos_;
+  Eigen::VectorXd vel_;
+  Eigen::VectorXd accel_;
+
+  BaseTrajectory base_trajectory_;
+};
+
+class BaseNode {
+public:
+  BaseNode(OmniBase& base) : base_(base) {
+  }
+
+  void startBaseMotion(const example_nodes::BaseMotionGoalConstPtr& goal) {
+    // Note: this is implemented right now as translation, _THEN_ rotation...
+    // we can update this later.
+
+    // We pass in the trajectory points in (x, y, theta)... 
+    size_t num_waypoints = 1;
+    Eigen::MatrixXd waypoints(3, num_waypoints);
+
+    ROS_INFO("Executing base motion action");
+    example_nodes::BaseMotionFeedback feedback;
+
+    ////////////////
+    // Translation
+    ////////////////
+
+    waypoints(0, 0) = goal->x;
+    waypoints(1, 0) = goal->y;
+    waypoints(2, 0) = 0.0;
+    base_.getTrajectory().replan(
+      ::ros::Time::now().toSec(),
+      base_.getLastFeedback(),
+      waypoints);
+
+    // Wait until the action is complete, sending status/feedback along the
+    // way.
+    ::ros::Rate r(10);
+    bool success = true;
+    while (true) {
+      if (action_server_->isPreemptRequested() || !::ros::ok()) {
+        ROS_INFO("Preempted base motion");
+        action_server_->setPreempted();
+        success = false;
+        break;
+      }
+      auto t = ::ros::Time::now().toSec();
+
+      // Publish progress:
+      auto& base_traj = base_.getTrajectory();
+      feedback.percent_complete = base_.trajectoryPercentComplete(t) / 2.0;
+      action_server_->publishFeedback(feedback);
+ 
+      if (base_.isTrajectoryComplete(t)) {
+        ROS_INFO("TRANSLATION COMPLETE");
+        break;
+      }
+
+      // Limit feedback rate
+      r.sleep(); 
+    }
+
+    if (!success) {
+      // publish when the base is done with a motion
+      ROS_INFO("Completed base motion action");
+      example_nodes::BaseMotionResult result;
+      result.success = success;
+      action_server_->setSucceeded(result); // TODO: set failed?
+    }
+
+    /////////////
+    // Rotation
+    /////////////
+
+    waypoints(0, 0) = 0.0;
+    waypoints(1, 0) = 0.0; 
+    waypoints(2, 0) = goal->theta;
+    base_.getTrajectory().replan(
+      ::ros::Time::now().toSec(),
+      base_.getLastFeedback(),
+      waypoints);
+
+    success = true;
+    while (true) {
+      if (action_server_->isPreemptRequested() || !::ros::ok()) {
+        ROS_INFO("Preempted base motion");
+        action_server_->setPreempted();
+        success = false;
+        break;
+      }
+      auto t = ::ros::Time::now().toSec();
+
+      // Publish progress:
+      auto& base_traj = base_.getTrajectory();
+      feedback.percent_complete = 50.0 + base_.trajectoryPercentComplete(t) / 2.0;
+      action_server_->publishFeedback(feedback);
+ 
+      if (base_.isTrajectoryComplete(t)) {
+        ROS_INFO("ROTATION COMPLETE");
+        break;
+      }
+
+      // Limit feedback rate
+      r.sleep(); 
+    }
+
+    // publish when the base is done with a motion
+    ROS_INFO("Completed base motion action");
+    example_nodes::BaseMotionResult result;
+    result.success = success;
+    action_server_->setSucceeded(result);
+  }
+
+  void setActionServer(actionlib::SimpleActionServer<example_nodes::BaseMotionAction>* action_server) {
+    action_server_ = action_server;
+  }
+
+private:
+  OmniBase& base_; 
+
+  actionlib::SimpleActionServer<example_nodes::BaseMotionAction>* action_server_ {nullptr};
+};
+
+} // namespace ros
+} // namespace hebi
+
+int main(int argc, char ** argv) {
+
+  // Initialize ROS node
+  ros::init(argc, argv, "Rosie_base_node");
+  ros::NodeHandle node;
+
+  /////////////////// Initialize base ///////////////////
+
+  // Create base and plan initial trajectory
+  auto base = hebi::ros::OmniBase::create(
+    {"Rosie"},                         // Family
+    {"_Wheel1", "_Wheel2", "_Wheel3"}, // Names
+    ros::Time::now().toSec());         // Starting time (for trajectory)
+  if (!base) {
+    ROS_ERROR("Could not initialize base! Check for modules on the network, and ensure good connection (e.g., check packet loss plot in Scope). Shutting down...");
+    return -1;
+  }
+
+  /////////////////// Initialize ROS interface ///////////////////
+   
+  hebi::ros::BaseNode base_node(*base);
+
+  // Action server for base motions
+  actionlib::SimpleActionServer<example_nodes::BaseMotionAction> base_motion_action(
+    node, "/rosie/base_motion",
+    boost::bind(&hebi::ros::BaseNode::startBaseMotion, &base_node, _1), false);
+
+  base_node.setActionServer(&base_motion_action);
+
+  base_motion_action.start();
+
+  /////////////////// Main Loop ///////////////////
+
+  double t_now;
+
+  // Main command loop
+  while (ros::ok()) {
+
+    auto t = ros::Time::now().toSec();
+
+    // Update feedback, and command the base to move along its planned path
+    // (this also acts as a loop-rate limiter so no 'sleep' is needed)
+    if (!base->update(t))
+      ROS_WARN("Error Getting Feedback -- Check Connection");
+
+    // Call any pending callbacks (note -- this may update our planned motion)
+    ros::spinOnce();
+  }
+
+  return 0;
+}
