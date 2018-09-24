@@ -211,12 +211,15 @@ public:
 
     double theta = pos_[2];
     double dtheta = vel_[2];
+    double ddtheta = accel_[2];
 
     double offset = 1.0;
-    double x = (pos_[0] * offset) / wheel_radius_;
-    double y = (pos_[1] * offset) / wheel_radius_;
-    double dx = (vel_[0] * offset) / wheel_radius_;
-    double dy = (vel_[1] * offset) / wheel_radius_;
+    double x = pos_[0] / wheel_radius_;
+    double y = pos_[1] / wheel_radius_;
+    double dx = vel_[0] / wheel_radius_;
+    double dy = vel_[1] / wheel_radius_;
+    double ddx = accel_[0] * wheel_radius_;
+    double ddy = accel_[1] * wheel_radius_;
     double ratio = sqrt(3)/2;
 
     //////////////
@@ -244,6 +247,20 @@ public:
     wheel_vel_[1] += - 0.5 * dy + ratio * dx;
     wheel_vel_[2] += dy;
 
+    constexpr double chassis_mass = 12; //kg
+
+    // Wheel1, front right
+/*    wheel_effort_[0] = ddx * chassis_mass * -ratio + 
+                       -ddy * chassis_mass * 0.5 + 
+                       -ddtheta * base_radius_ * wheel_radius_;
+
+    wheel_effort_[1] = ddx * chassis_mass * ratio + 
+                       -ddy * chassis_mass * 0.5 + 
+                       -ddtheta * base_radius_ * wheel_radius_;
+
+    wheel_effort_[2] = 0 +
+                       accel_[1] * chassis_mass + 
+                       -ddtheta * base_radius_ * wheel_radius_;*/
   }
 
   bool update(double time) {
@@ -258,8 +275,7 @@ public:
 
     command_.setPosition(wheel_pos_);
     command_.setVelocity(wheel_vel_);
-
-    // TODO: EFFORTS SEE OMNI_SRC.CPP
+//    command_.setEffort(wheel_effort_);
 
     group_->sendCommand(command_);
 
@@ -292,7 +308,7 @@ private:
       start_wheel_pos_(Eigen::VectorXd::Zero(group->size())),
       wheel_pos_(Eigen::VectorXd::Zero(group->size())),
       wheel_vel_(Eigen::VectorXd::Zero(group->size())),
-      wheel_accel_(Eigen::VectorXd::Zero(group->size())),
+      wheel_effort_(Eigen::VectorXd::Zero(group->size())),
       base_trajectory_{base_trajectory}
   { }
 
@@ -313,7 +329,7 @@ private:
   Eigen::VectorXd start_wheel_pos_;
   Eigen::VectorXd wheel_pos_;
   Eigen::VectorXd wheel_vel_;
-  Eigen::VectorXd wheel_accel_;
+  Eigen::VectorXd wheel_effort_;
 
   BaseTrajectory base_trajectory_;
 };
