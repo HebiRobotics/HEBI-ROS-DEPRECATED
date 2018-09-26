@@ -8,6 +8,9 @@
 #include <example_nodes/BaseMotionAction.h>
 #include <example_nodes/GripperSrv.h>
 #include <example_nodes/VisionSrv.h>
+#include <example_nodes/CalibrateSrv.h>
+
+#include "Eigen/Core"
 
 // We abstract the behavior of each of the core components up here, so our
 // main logic loop doesn't have to deal with ros services, actions, etc.
@@ -228,6 +231,11 @@ public:
   example_nodes::BaseMotionGoal base_motion_goal_;
 };
 
+// This is an "OK" solution...
+double affine_transform[2][3]
+  { { -0.0015, -0.0013,  1.5138 },
+    { -0.0007,  0.0017, -0.1990 } };
+
 class Vision {
 public:
   struct Location {
@@ -236,7 +244,8 @@ public:
   };
 
   Vision(ros::NodeHandle& node)
-    : client_(node.serviceClient<example_nodes::VisionSrv>("/rosie/vision")) {
+    : client_(node.serviceClient<example_nodes::VisionSrv>("/rosie/vision")),
+      calibrate_client_(node.serviceClient<example_nodes::CalibrateSrv>("/rosie/calibrate_vision")) {
   }
 
   bool search(Location& found_at) {
@@ -248,21 +257,53 @@ public:
     }
     return false;
   }
+
+  // Collect:
+  //   a: 3xn matrix of points in camera frame, with row of '1' at the bottom
+  //   b: 3xn matrix of points in world frame (in meters) that correspond, with row of '1' at the bottom.
+  // Compute this in MATLAB (basically, using least squares solution):
+  //   X = b / a
+  // or equivalently
+  //   X = a' \ b'
+  bool calibrate() {
+    if (calibrate_client_.call(calibrate_message_) && calibrate_message_.response.found) {
+      // Go through all points, do SVD!
+      // The 36 points should be row-by-row, given some basic testing
+      Eigen::MatrixXd camera_pts(3, 36);
+      if (calibrate_message_.response.points.size() != 36)
+        return false;
+      for (size_t i = 0; i < calibrate_message_.response.points.size(); ++i) {
+        camera_pts(0, i) = calibrate_message_.response.points[i].x;
+        camera_pts(1, i) = calibrate_message_.response.points[i].y;
+        camera_pts(0, i) = 1.0;
+      }
+
+      // The points they should match up with:
+      Eigen::MatrixXd world_pts(3, 36);
+      double spacing = 0.075; // mm between row centers
+      double top_row = 0.15 + 0.54; // 15 cm from center to front of robot, 54 cm to top row on paper.
+      double left_col = 2.5 * spacing; // 2.5 rows to the left
+      for (int row = 0; row < 6; ++row) {
+        for (int col = 0; col < 6; ++col) {
+          world_pts(0, row * 6 + col) = top_row - (double)row * spacing;
+          world_pts(1, row * 6 + col) = left_col + (double)col * spacing;
+          world_pts(2, row * 6 + col) = 1.0;
+        }
+      }
+
+      // TODO: UPDATE MATRIX USING SVD HERE!!!!
+
+      return true;
+    }
+    return false;
+  }
+
 private:
   ros::ServiceClient client_;
   example_nodes::VisionSrv message_;
+  ros::ServiceClient calibrate_client_;
+  example_nodes::CalibrateSrv calibrate_message_;
 };
-
-// Collect:
-//   a: 3xn matrix of points in camera frame, with row of '1' at the bottom
-//   b: 3xn matrix of points in world frame (in meters) that correspond, with row of '1' at the bottom.
-// Compute this in MATLAB (basically, using least squares solution):
-//   X = b / a
-// or equivalently
-//   X = a' \ b'
-double affine_transform[2][3]
-{ { -0.0015, -0.0013,  1.5138 },
-  { -0.0007,  0.0017, -0.1990 } };
 
 // Note -- could do this in a super fancy class template abstract/general way
 // with a "LocationTransformer" static template class...
