@@ -1,0 +1,13 @@
+<launch>
+
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch" /> 
+
+    <node pkg="example_nodes" type="vision_process" name="vision_process" />
+
+    <node pkg="example_nodes" type="Rosie_base_node" name="Rosie_base_node" />
+    <node pkg="example_nodes" type="Rosie_arm_node" name="Rosie_arm_node" />
+    <node pkg="example_nodes" type="gripper_node" name="gripper_node" />
+
+    <node pkg="example_nodes" type="demo_central" name="demo_central" />
+
+  </launch>
