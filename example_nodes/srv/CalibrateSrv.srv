@@ -1,0 +1,6 @@
+# Find a 6x6 grid of points
+---
+bool found
+
+# List of 36 points
+geometry_msgs/Point[] points

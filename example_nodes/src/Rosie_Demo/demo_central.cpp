@@ -57,10 +57,21 @@ public:
 
   bool canReach(const Location& location) {
     // TODO: check bounds are reasonable
-    return (
-      location.x > 0.1 && location.x < 0.4 &&
+    bool can_reach = 
+      location.x > 0.25 && location.x < 0.55 &&
       location.y > -0.2 && location.y < 0.2 &&
-      location.z > -0.11 && location.z < -0.09);
+      location.z > -0.11 && location.z < -0.09;
+    if (can_reach)
+      ROS_INFO("Can reach %f %f %f", location.x, location.y, location.z);
+    else
+      ROS_INFO("Cannot reach %f %f %f", location.x, location.y, location.z);
+    return can_reach;
+  }
+
+  bool moveHome() {
+    setGoalHome();
+    if (!moveToGoal())
+      return false;
   }
 
   bool pickup(const Location& location) {
@@ -120,7 +131,7 @@ private:
   }
 
   void setGoalHome() {
-    setGoalLocation({0.3, 0.0, 0.3});
+    setGoalLocation({0.2, -0.2, 0.3});
     //setGoalTipForward();
     setGoalTipDown();
   }
@@ -184,9 +195,17 @@ public:
   }
 
   bool moveTo(const Location& location) {
-    base_motion_goal_.x = location.x;
-    base_motion_goal_.y = location.y;
-    base_motion_goal_.theta = 0; 
+    
+    // Logic here to not just run over the friggin' thing
+    base_motion_goal_.theta = atan2(location.y, location.x);
+    double len = std::sqrt(location.x * location.x + location.y * location.y);
+    double actual_len = len - 0.3556; // stay 14 inches away
+    if (actual_len < 0)
+      actual_len = 0;
+    double frac = actual_len / len;
+    base_motion_goal_.x = location.x * frac;
+    base_motion_goal_.y = location.y * frac;
+    ROS_INFO("Base motion moving: %f %f %f", base_motion_goal_.x, base_motion_goal_.y, base_motion_goal_.theta);
 
     base_motion_.sendGoal(base_motion_goal_);
 
@@ -234,19 +253,32 @@ private:
   example_nodes::VisionSrv message_;
 };
 
+// Collect:
+//   a: 3xn matrix of points in camera frame, with row of '1' at the bottom
+//   b: 3xn matrix of points in world frame (in meters) that correspond, with row of '1' at the bottom.
+// Compute this in MATLAB (basically, using least squares solution):
+//   X = b / a
+// or equivalently
+//   X = a' \ b'
+double affine_transform[2][3]
+{ { -0.0015, -0.0013,  1.5138 },
+  { -0.0007,  0.0017, -0.1990 } };
+
 // Note -- could do this in a super fancy class template abstract/general way
 // with a "LocationTransformer" static template class...
 // for now, we just hardcode transformations from Vision to Arm and base here...
 Arm::Location transformToArm(const Vision::Location& source)
 {
-  // TODO: implement
-  return Arm::Location{0.3, 0.0, -0.1};
+  double x = source.x * affine_transform[0][0] + source.y * affine_transform[0][1] + affine_transform[0][2];
+  double y = source.x * affine_transform[1][0] + source.y * affine_transform[1][1] + affine_transform[1][2];
+  return Arm::Location{x, y, -0.1};
 }
 
 Base::Location transformToBase(const Vision::Location& source)
 {
-  // TODO: implement
-  return Base::Location{0.5, 0.0};
+  double x = source.x * affine_transform[0][0] + source.y * affine_transform[0][1] + affine_transform[0][2];
+  double y = source.x * affine_transform[1][0] + source.y * affine_transform[1][1] + affine_transform[1][2];
+  return Base::Location{x, y};
 }
 
 int main(int argc, char ** argv) {
@@ -266,6 +298,8 @@ int main(int argc, char ** argv) {
   Vision vision(node);
   Vision::Location location;
 
+  arm.moveHome();
+
   // Run main logic
   while (ros::ok()) {
     // Can't find anything? rotate and continue the search
@@ -282,7 +316,6 @@ int main(int argc, char ** argv) {
     }
 
     // Otherwise, go there with the base and then continue the search
-    // TODO: additional logic here to not just run over the friggin' thing
     base.moveTo(transformToBase(location)); 
 
     // TODO: is this even necessary if I'm just using actions and services?

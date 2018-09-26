@@ -6,6 +6,7 @@
 #include <thread>
 
 #include <example_nodes/VisionSrv.h>
+#include <example_nodes/CalibrateSrv.h>
 #include <example_nodes/State.h>
 #include <sensor_msgs/Image.h>
 
@@ -14,11 +15,13 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv/cv.h>
 #include <sensor_msgs/image_encodings.h>
+#include <opencv2/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
 
 // Globals (TODO: refactor these...)
 static const std::string OPENCV_WINDOW = "Image window";
-cv_bridge::CvImagePtr cvImagePtr;
 sensor_msgs::Image input_image;
 
 // TODO: add "register color", with color bounds; parameterize set/has/getcenter by color structure
@@ -104,7 +107,7 @@ Blobs findBlobs(const cv::Mat& mat) {
         yellow_y += j;
         yellow_num += 1;
       }
-
+/*
       // blue 
       else if ((pixel[2] < 60) && (pixel[1] < 100) && (pixel[0] >= 140)){
         blue_x += i;
@@ -117,7 +120,7 @@ Blobs findBlobs(const cv::Mat& mat) {
         green_x += i;
         green_y += j;
         green_num += 1;
-      }
+      }*/
     }
   }
 
@@ -128,15 +131,68 @@ Blobs findBlobs(const cv::Mat& mat) {
   return blobs;
 }
 
-bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv::Response& res) {
+bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::CalibrateSrv::Response& res) {
+
   cv::namedWindow(OPENCV_WINDOW);
 
+  cv_bridge::CvImagePtr cvImagePtr;
   size_t num_attempts = 5;
   size_t attempts_made = 0;
   for (attempts_made = 0; attempts_made < num_attempts; ++attempts_made) {
     try {
       // Try to convert the sensor image into a CV matrix
       cvImagePtr = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
+      break;
+    } catch (cv_bridge::Exception &e) {
+      // ROS_ERROR("cv_bridge exception: %s", e.what());
+      ROS_INFO("Failed to load stream. Trying again...");
+    }
+  }
+  // Avoid segmentation fault by not trying any later logic if empty frames
+  // are being received.
+  // (At end of for loop, iterator should equal max value...
+  if (attempts_made == num_attempts) {
+    return false;
+  }
+
+  // TODO: look into depth?
+  cv::Mat &mat = cvImagePtr -> image;
+  // cv::Mat &mat2 = dpImagePtr ->image;
+
+  res.found = true;
+  res.points.clear();
+  std::vector<cv::Point2d> pointbuf;
+  bool found = cv::findCirclesGrid(mat, cv::Size(6, 6), pointbuf);
+  ROS_INFO("Found: %d", found ? 1 : 0);
+  if (found) {
+    for (size_t i = 0; i < pointbuf.size(); ++i) {
+      cv::circle(mat, pointbuf[i], 2, CV_RGB(0,255,255), 2);
+      cv::circle(mat, pointbuf[i], 20, CV_RGB(0,255,255), 1);
+      geometry_msgs::Point pt;
+      pt.x = pointbuf[i].x;
+      pt.y = pointbuf[i].y;
+      pt.z = 0;
+      res.points.push_back(geometry_msgs::Point(pt));
+    }
+  }
+
+  cv::imshow(OPENCV_WINDOW, mat);
+  cv::waitKey(2);
+
+  return true; 
+}
+
+bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv::Response& res) {
+  cv::namedWindow(OPENCV_WINDOW);
+
+  cv_bridge::CvImagePtr cvImagePtr;
+  size_t num_attempts = 5;
+  size_t attempts_made = 0;
+  for (attempts_made = 0; attempts_made < num_attempts; ++attempts_made) {
+    try {
+      // Try to convert the sensor image into a CV matrix
+      cvImagePtr = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
+      break;
     } catch (cv_bridge::Exception &e) {
       // ROS_ERROR("cv_bridge exception: %s", e.what());
       ROS_INFO("Failed to load stream. Trying again...");
@@ -220,10 +276,15 @@ int main(int argc, char ** argv) {
   // Get camera images
   ros::Subscriber image_subscriber = node.subscribe("/camera/color/image_raw", 60, image_callback);
 
-  // React to requests for images, using last received image.
+  // React to requests for finding objects and for calibration, both
+  // using last received image.
   ros::ServiceServer vision_srv =
     node.advertiseService<example_nodes::VisionSrv::Request, example_nodes::VisionSrv::Response>(
       "/rosie/vision", &visionSrv);
+  ros::ServiceServer calibrate_srv =
+    node.advertiseService<example_nodes::CalibrateSrv::Request, example_nodes::CalibrateSrv::Response>(
+      "/rosie/calibrate_vision", &calibrateSrv);
+
 
   ros::spin();
   return 0;

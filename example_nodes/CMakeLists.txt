@@ -51,6 +51,7 @@ add_service_files(
   FILES
   GripperSrv.srv
   VisionSrv.srv
+  CalibrateSrv.srv
 )
 
 ## Generate actions in the 'action' folder
