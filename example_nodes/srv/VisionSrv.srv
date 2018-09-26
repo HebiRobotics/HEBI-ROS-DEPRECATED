@@ -1,0 +1,12 @@
+# Find an object
+---
+bool found
+
+# Centroid (in image)
+float64 x
+float64 y
+
+# Color
+uint8 r
+uint8 g
+uint8 b

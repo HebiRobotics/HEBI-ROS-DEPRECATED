@@ -50,12 +50,14 @@ add_message_files(
 add_service_files(
   FILES
   GripperSrv.srv
+  VisionSrv.srv
 )
 
 ## Generate actions in the 'action' folder
 add_action_files(
   FILES
   ArmMotion.action
+  BaseMotion.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -311,6 +313,24 @@ add_executable(Rosie_arm_node src/Rosie_Demo/Rosie_arm_node.cpp
 add_dependencies(Rosie_arm_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(Rosie_arm_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
+add_executable(Rosie_base_node src/Rosie_Demo/Rosie_base_node.cpp
+  include/hebi/command.cpp
+  include/hebi/feedback.cpp
+  include/hebi/group_command.cpp
+  include/hebi/group_feedback.cpp
+  include/hebi/group_info.cpp
+  include/hebi/group.cpp
+  include/hebi/info.cpp
+  include/hebi/robot_model.cpp
+  include/hebi/log_file.cpp
+  include/hebi/lookup.cpp
+  include/hebi/mac_address.cpp
+  include/hebi/trajectory.cpp
+
+  include/util/grav_comp.hpp
+)
+add_dependencies(Rosie_base_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(Rosie_base_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
 add_executable(demo_central src/Rosie_Demo/demo_central.cpp
   include/hebi/command.cpp

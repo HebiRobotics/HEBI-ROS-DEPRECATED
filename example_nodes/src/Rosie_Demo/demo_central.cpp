@@ -7,6 +7,7 @@
 #include <example_nodes/ArmMotionAction.h>
 #include <example_nodes/BaseMotionAction.h>
 #include <example_nodes/GripperSrv.h>
+#include <example_nodes/VisionSrv.h>
 
 // We abstract the behavior of each of the core components up here, so our
 // main logic loop doesn't have to deal with ros services, actions, etc.
@@ -163,8 +164,8 @@ public:
   }
 
   bool rotate(double radians) {
-    base_motion_goal_.x = 0;
-    base_motion_goal_.y = 0;
+    base_motion_goal_.x = 0.0;
+    base_motion_goal_.y = 0.0;
     base_motion_goal_.theta = radians; 
 
     base_motion_.sendGoal(base_motion_goal_);
@@ -215,13 +216,22 @@ public:
     double y;
   };
 
-  Vision(ros::NodeHandle& node) { }
+  Vision(ros::NodeHandle& node)
+    : client_(node.serviceClient<example_nodes::VisionSrv>("/rosie/vision")) {
+  }
 
   bool search(Location& found_at) {
-    // TODO: implement!
-    //return true;
+    // Got a success back?
+    if (client_.call(message_) && message_.response.found) {
+      found_at.x = message_.response.x;
+      found_at.y = message_.response.y;
+      return true;
+    }
     return false;
   }
+private:
+  ros::ServiceClient client_;
+  example_nodes::VisionSrv message_;
 };
 
 // Note -- could do this in a super fancy class template abstract/general way
@@ -232,10 +242,11 @@ Arm::Location transformToArm(const Vision::Location& source)
   // TODO: implement
   return Arm::Location{0.3, 0.0, -0.1};
 }
+
 Base::Location transformToBase(const Vision::Location& source)
 {
   // TODO: implement
-  return Base::Location{0.3, 0.0};
+  return Base::Location{0.5, 0.0};
 }
 
 int main(int argc, char ** argv) {
