@@ -267,47 +267,54 @@ public:
   // or equivalently
   //   X = a' \ b'
   bool calibrate() {
+    ROS_WARN("CALIBRATION STARTED");
     if (calibrate_client_.call(calibrate_message_) && calibrate_message_.response.found) {
       // Go through all points, do SVD!
       // The 36 points should be row-by-row, given some basic testing
-      Eigen::MatrixXd camera_pts(3, 36);
-      if (calibrate_message_.response.points.size() != 36)
+      Eigen::MatrixXd camera_pts(3, 30);
+      if (calibrate_message_.response.points.size() != 30)
         return false;
       for (size_t i = 0; i < calibrate_message_.response.points.size(); ++i) {
         camera_pts(0, i) = calibrate_message_.response.points[i].x;
         camera_pts(1, i) = calibrate_message_.response.points[i].y;
-        camera_pts(0, i) = 1.0;
+        camera_pts(2, i) = 1.0;
       }
 
       // The points they should match up with:
-      Eigen::MatrixXd world_pts(3, 36);
+      Eigen::MatrixXd world_pts(3, 30);
       double spacing = 0.075; // mm between row centers
       double top_row = 0.15 + 0.54; // 15 cm from center to front of robot, 54 cm to top row on paper.
-      double left_col = 2.5 * spacing; // 2.5 rows to the left
-      for (int row = 0; row < 6; ++row) {
+      double right_col = -2.5 * spacing; // 2.5 rows to the right
+      for (int row = 0; row < 5; ++row) {
         for (int col = 0; col < 6; ++col) {
-          world_pts(0, row * 6 + col) = top_row - (double)row * spacing;
-          world_pts(1, row * 6 + col) = left_col + (double)col * spacing;
-          world_pts(2, row * 6 + col) = 1.0;
+          world_pts(0, col * 5 + row) = top_row - (double)row * spacing;
+          world_pts(1, col * 5 + row) = right_col + (double)col * spacing;
+          world_pts(2, col * 5 + row) = 1.0;
         }
       }
 
-      Eigen::JacobiSVD<Eigen::MatrixXd> svd(camera_pts, Eigen::ComputeThinU | Eigen::ComputeThinV);
-      auto calibrate_matrix = svd.solve(world_pts);
+      Eigen::JacobiSVD<Eigen::MatrixXd> svd(camera_pts.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
+      auto calibrate_matrix = svd.solve(world_pts.transpose());
+      ROS_WARN("CALIBRATION SUCCESS");
+      ROS_INFO("Size %d %d",
+        (int)calibrate_matrix.rows(), (int)calibrate_matrix.cols());
       ROS_INFO("My Matrix! %f %f %f %f %f %f %f %f %f",
         calibrate_matrix(0, 0), calibrate_matrix(0, 1), calibrate_matrix(0, 2),
         calibrate_matrix(1, 0), calibrate_matrix(1, 1), calibrate_matrix(1, 2),
         calibrate_matrix(2, 0), calibrate_matrix(2, 1), calibrate_matrix(2, 2));
+      ROS_INFO_STREAM("Camera\n" << camera_pts);
+      ROS_INFO_STREAM("World\n" << world_pts);
 
       affine_transform[0][0] = calibrate_matrix(0, 0);
-      affine_transform[0][1] = calibrate_matrix(0, 1);
-      affine_transform[0][2] = calibrate_matrix(0, 2);
-      affine_transform[1][0] = calibrate_matrix(1, 0);
+      affine_transform[0][1] = calibrate_matrix(1, 0);
+      affine_transform[0][2] = calibrate_matrix(2, 0);
+      affine_transform[1][0] = calibrate_matrix(0, 1);
       affine_transform[1][1] = calibrate_matrix(1, 1);
-      affine_transform[1][2] = calibrate_matrix(1, 2);
+      affine_transform[1][2] = calibrate_matrix(2, 1);
 
       return true;
     }
+    ROS_WARN("FAILED CALIBRATION");
     return false;
   }
 
@@ -353,6 +360,22 @@ int main(int argc, char ** argv) {
   Vision::Location location;
 
   arm.moveHome();
+
+  // TODO: figure out initialization!
+  // TODO: load calibration!
+  // Wait for calibration:
+  // TODO
+//  while (ros::ok()) {
+//    ros::spinOnce();
+//  }
+   
+//  vision.calibrate();
+
+  // Wait for go:
+  // TODO
+//  while (ros::ok()) {
+//    ros::spinOnce();
+//  }
 
   // Run main logic
   while (ros::ok()) {

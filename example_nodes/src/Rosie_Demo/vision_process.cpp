@@ -162,7 +162,7 @@ bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::Cali
   res.found = true;
   res.points.clear();
   std::vector<cv::Point2d> pointbuf;
-  bool found = cv::findCirclesGrid(mat, cv::Size(6, 6), pointbuf);
+  bool found = cv::findCirclesGrid(mat, cv::Size(5, 6), pointbuf);
   ROS_INFO("Found: %d", found ? 1 : 0);
   if (found) {
     for (size_t i = 0; i < pointbuf.size(); ++i) {
