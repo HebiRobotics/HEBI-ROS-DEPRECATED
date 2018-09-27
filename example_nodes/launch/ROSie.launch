@@ -6,8 +6,8 @@
 
     <node pkg="example_nodes" type="Rosie_base_node" name="Rosie_base_node" />
     <node pkg="example_nodes" type="Rosie_arm_node" name="Rosie_arm_node" />
-    <node pkg="example_nodes" type="gripper_node" name="gripper_node" />
+    <node pkg="example_nodes" type="gripper_node" name="gripper_node" /> 
 
-    <node pkg="example_nodes" type="demo_central" name="demo_central" />
+    <node pkg="example_nodes" type="demo_central" name="demo_central" output="screen" required="true"/>
 
   </launch>

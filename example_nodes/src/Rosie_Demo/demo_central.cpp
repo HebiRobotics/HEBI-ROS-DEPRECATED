@@ -1,3 +1,5 @@
+#include <memory>
+
 #include <ros/ros.h>
 #include <ros/console.h>
 
@@ -16,6 +18,7 @@
 #include "group.hpp"
 #include "group_feedback.hpp"
 #include "lookup.hpp"
+
 
 // We abstract the behavior of each of the core components up here, so our
 // main logic loop doesn't have to deal with ros services, actions, etc.
@@ -349,55 +352,59 @@ Base::Location transformToBase(const Vision::Location& source)
 // Direct (non-ROS) connection to the iPad.
 class IPad {
 public:
-  static IPad create(const std::string& family, const std::string& name) {
+  static std::unique_ptr<IPad> create(const std::string& family, const std::string& name) {
     hebi::Lookup lookup;
     std::shared_ptr<hebi::Group> group;
     while (!group) {
       ROS_INFO("Looking for iPad");
       group = lookup.getGroupFromNames({ family }, { name });
     }
-    return IPad(group);
+    return std::unique_ptr<IPad>(new IPad(group));
   }
-
-  IPad(std::shared_ptr<hebi::Group> group) : _group(group), _feedback(new hebi::GroupFeedback(1)) {}
 
   enum class Mode {
     Pause,
     Calibrate,
     Drive,
-    Autonomous
+    Autonomous,
+    Quit
   };
 
   struct State {
-    Mode to_mode;
-    float drive_forward; // [-1 to 1]
-    float drive_left; // [-1 to 1]
+    Mode to_mode{Mode::Pause};
+    float drive_forward{0}; // [-1 to 1]
+    float drive_left{0}; // [-1 to 1]
   };
 
-  void updateState(State& state) {
-    _group->getNextFeedback(*_feedback, 0);
-    auto& fbk = (*_feedback)[0];
-    if (fbk.io().b().hasInt(1) && fbk.io().b().getInt(1) == 1) {
-      state.to_mode = Mode::Pause;
-    }
-    if (fbk.io().b().hasInt(2) && fbk.io().b().getInt(2) == 1) {
-      state.to_mode = Mode::Autonomous;
-    }
-    if (fbk.io().b().hasInt(3) && fbk.io().b().getInt(3) == 1) {
-      state.to_mode = Mode::Calibrate;
-    }
-    if (fbk.io().b().hasInt(4) && fbk.io().b().getInt(4) == 1) {
-      state.to_mode = Mode::Drive;
-    }
+  const State& getState() const {
+    return _state;
   }
 
-  // TODO: check if this is connected, too?
+private:
+  IPad(std::shared_ptr<hebi::Group> group) : _group(group)
+  {
+    _group->addFeedbackHandler([this] (const hebi::GroupFeedback& feedback) {
+      auto& fbk = feedback[0];
+      if (fbk.io().b().hasInt(1) && fbk.io().b().getInt(1) == 1) {
+        _state.to_mode = Mode::Pause;
+      }
+      if (fbk.io().b().hasInt(2) && fbk.io().b().getInt(2) == 1) {
+        _state.to_mode = Mode::Autonomous;
+      }
+      if (fbk.io().b().hasInt(3) && fbk.io().b().getInt(3) == 1) {
+        _state.to_mode = Mode::Calibrate;
+      }
+      if (fbk.io().b().hasInt(4) && fbk.io().b().getInt(4) == 1) {
+        _state.to_mode = Mode::Drive;
+      }
+      if (fbk.io().b().hasInt(5) && fbk.io().b().getInt(5) == 1) {
+        _state.to_mode = Mode::Quit;
+      }
+    });
+  }
 
-  // TODO: set feedback in background loop...
-
-private: 
   std::shared_ptr<hebi::Group> _group;
-  std::unique_ptr<hebi::GroupFeedback> _feedback;
+  State _state;
 };
 
 int main(int argc, char ** argv) {
@@ -412,7 +419,7 @@ int main(int argc, char ** argv) {
   constexpr double rotate_increment = M_PI / 3.0; // 1/6 of a full rotation
 
   // Initialize abstracted components and their ROS interfaces
-  IPad ipad = IPad::create("HEBI", "Virtual IO"); // This blocks forever...
+  auto ipad = IPad::create("HEBI", "Virtual IO"); // This blocks forever...
   Arm arm(node);
   Base base(node);
   Vision vision(node);
@@ -422,14 +429,15 @@ int main(int argc, char ** argv) {
 
   // TODO: load calibration!
 
-  IPad::State state;
-  state.to_mode = IPad::Mode::Pause;
+  const IPad::State& state = ipad->getState(); // Note -- this updates in the background!
   ros::Duration pause_wait(1);
+  bool calibrate_latch = false;
 
   // Run main logic
   while (ros::ok()) {
     if (state.to_mode == IPad::Mode::Autonomous)
     {
+      calibrate_latch = false; // reset latch
       // Can't find anything? rotate and continue the search
       if (!vision.search(location)) {
         base.rotate(rotate_increment);
@@ -450,16 +458,18 @@ int main(int argc, char ** argv) {
       // Otherwise, go there with the base and then continue the search
       base.moveTo(transformToBase(location)); 
     } else if (state.to_mode == IPad::Mode::Pause) {
+      calibrate_latch = false; // reset latch
       pause_wait.sleep();
-    } else if (state.to_mode == IPad::Mode::Calibrate) {
+    } else if (state.to_mode == IPad::Mode::Calibrate && !calibrate_latch) {
       vision.calibrate();
-      pause_wait.sleep();
-      pause_wait.sleep(); // Note -- a slight race condition; if button is still held down iPad might update state again...
-      state.to_mode = IPad::Mode::Pause;
+      calibrate_latch = true; // don't re-calibrate once we've done it once!
+    } else if (state.to_mode == IPad::Mode::Drive) {
+      calibrate_latch = false; // reset latch
+      // TODO: drive
+    } else if (state.to_mode == IPad::Mode::Quit) {
+      break;
     }
-    // TODO: drive
 
-    ipad.updateState(state);
     // TODO: is this even necessary if I'm just using actions and services?
     ros::spinOnce();
   }

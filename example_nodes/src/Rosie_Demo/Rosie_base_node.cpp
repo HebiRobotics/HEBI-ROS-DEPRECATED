@@ -129,7 +129,7 @@ public:
     const Eigen::MatrixXd& accelerations) {
 
     // TODO: make this configurable!
-    double rampTime = 1.5;
+    double rampTime = 2.0;
 
     size_t num_waypoints = positions.cols();
 
