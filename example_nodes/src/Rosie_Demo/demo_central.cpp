@@ -13,6 +13,10 @@
 #include "Eigen/Core"
 #include <Eigen/SVD>
 
+#include "group.hpp"
+#include "group_feedback.hpp"
+#include "lookup.hpp"
+
 // We abstract the behavior of each of the core components up here, so our
 // main logic loop doesn't have to deal with ros services, actions, etc.
 
@@ -234,8 +238,8 @@ public:
 
 // This is an "OK" solution...
 double affine_transform[2][3]
-  { { -0.0015, -0.0013,  1.5138 },
-    { -0.0007,  0.0017, -0.1990 } };
+  { { -0.001356, -0.001167,  1.347606 },
+    { -0.000797,  0.001273, -0.007661 } };
 
 class Vision {
 public:
@@ -342,6 +346,60 @@ Base::Location transformToBase(const Vision::Location& source)
   return Base::Location{x, y};
 }
 
+// Direct (non-ROS) connection to the iPad.
+class IPad {
+public:
+  static IPad create(const std::string& family, const std::string& name) {
+    hebi::Lookup lookup;
+    std::shared_ptr<hebi::Group> group;
+    while (!group) {
+      ROS_INFO("Looking for iPad");
+      group = lookup.getGroupFromNames({ family }, { name });
+    }
+    return IPad(group);
+  }
+
+  IPad(std::shared_ptr<hebi::Group> group) : _group(group), _feedback(new hebi::GroupFeedback(1)) {}
+
+  enum class Mode {
+    Pause,
+    Calibrate,
+    Drive,
+    Autonomous
+  };
+
+  struct State {
+    Mode to_mode;
+    float drive_forward; // [-1 to 1]
+    float drive_left; // [-1 to 1]
+  };
+
+  void updateState(State& state) {
+    _group->getNextFeedback(*_feedback, 0);
+    auto& fbk = (*_feedback)[0];
+    if (fbk.io().b().hasInt(1) && fbk.io().b().getInt(1) == 1) {
+      state.to_mode = Mode::Pause;
+    }
+    if (fbk.io().b().hasInt(2) && fbk.io().b().getInt(2) == 1) {
+      state.to_mode = Mode::Autonomous;
+    }
+    if (fbk.io().b().hasInt(3) && fbk.io().b().getInt(3) == 1) {
+      state.to_mode = Mode::Calibrate;
+    }
+    if (fbk.io().b().hasInt(4) && fbk.io().b().getInt(4) == 1) {
+      state.to_mode = Mode::Drive;
+    }
+  }
+
+  // TODO: check if this is connected, too?
+
+  // TODO: set feedback in background loop...
+
+private: 
+  std::shared_ptr<hebi::Group> _group;
+  std::unique_ptr<hebi::GroupFeedback> _feedback;
+};
+
 int main(int argc, char ** argv) {
 
   ros::init(argc, argv, "demo_central");
@@ -354,6 +412,7 @@ int main(int argc, char ** argv) {
   constexpr double rotate_increment = M_PI / 3.0; // 1/6 of a full rotation
 
   // Initialize abstracted components and their ROS interfaces
+  IPad ipad = IPad::create("HEBI", "Virtual IO"); // This blocks forever...
   Arm arm(node);
   Base base(node);
   Vision vision(node);
@@ -361,40 +420,42 @@ int main(int argc, char ** argv) {
 
   arm.moveHome();
 
-  // TODO: figure out initialization!
   // TODO: load calibration!
-  // Wait for calibration:
-  // TODO
-//  while (ros::ok()) {
-//    ros::spinOnce();
-//  }
-   
-//  vision.calibrate();
 
-  // Wait for go:
-  // TODO
-//  while (ros::ok()) {
-//    ros::spinOnce();
-//  }
+  IPad::State state;
+  state.to_mode = IPad::Mode::Pause;
+  ros::Duration pause_wait(1);
 
   // Run main logic
   while (ros::ok()) {
-    // Can't find anything? rotate and continue the search
-    if (!vision.search(location)) {
-      base.rotate(rotate_increment);
-      continue;
+    if (state.to_mode == IPad::Mode::Autonomous)
+    {
+      // Can't find anything? rotate and continue the search
+      if (!vision.search(location)) {
+        base.rotate(rotate_increment);
+        continue;
+      }
+
+      // Can the arm reach this? If so, retrieve, then continue the search
+      auto arm_location = transformToArm(location);
+      if (arm.canReach(arm_location)) {
+        arm.pickup(arm_location);
+        continue;
+      }
+
+      // Otherwise, go there with the base and then continue the search
+      base.moveTo(transformToBase(location)); 
+    } else if (state.to_mode == IPad::Mode::Pause) {
+      pause_wait.sleep();
+    } else if (state.to_mode == IPad::Mode::Calibrate) {
+      vision.calibrate();
+      pause_wait.sleep();
+      pause_wait.sleep(); // Note -- a slight race condition; if button is still held down iPad might update state again...
+      state.to_mode = IPad::Mode::Pause;
     }
+    // TODO: drive
 
-    // Can the arm reach this? If so, retrieve, then continue the search
-    auto arm_location = transformToArm(location);
-    if (arm.canReach(arm_location)) {
-      arm.pickup(arm_location);
-      continue;
-    }
-
-    // Otherwise, go there with the base and then continue the search
-    base.moveTo(transformToBase(location)); 
-
+    ipad.updateState(state);
     // TODO: is this even necessary if I'm just using actions and services?
     ros::spinOnce();
   }
