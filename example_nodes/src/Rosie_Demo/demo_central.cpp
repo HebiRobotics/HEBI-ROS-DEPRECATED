@@ -435,6 +435,8 @@ int main(int argc, char ** argv) {
         base.rotate(rotate_increment);
         continue;
       }
+      if (state.to_mode == IPad::Mode::Pause)
+        continue;
 
       // Can the arm reach this? If so, retrieve, then continue the search
       auto arm_location = transformToArm(location);
@@ -442,6 +444,8 @@ int main(int argc, char ** argv) {
         arm.pickup(arm_location);
         continue;
       }
+      if (state.to_mode == IPad::Mode::Pause)
+        continue;
 
       // Otherwise, go there with the base and then continue the search
       base.moveTo(transformToBase(location)); 
