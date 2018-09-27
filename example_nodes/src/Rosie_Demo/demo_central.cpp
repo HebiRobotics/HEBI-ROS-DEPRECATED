@@ -11,6 +11,7 @@
 #include <example_nodes/CalibrateSrv.h>
 
 #include "Eigen/Core"
+#include <Eigen/SVD>
 
 // We abstract the behavior of each of the core components up here, so our
 // main logic loop doesn't have to deal with ros services, actions, etc.
@@ -291,7 +292,19 @@ public:
         }
       }
 
-      // TODO: UPDATE MATRIX USING SVD HERE!!!!
+      Eigen::JacobiSVD<Eigen::MatrixXd> svd(camera_pts, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      auto calibrate_matrix = svd.solve(world_pts);
+      ROS_INFO("My Matrix! %f %f %f %f %f %f %f %f %f",
+        calibrate_matrix(0, 0), calibrate_matrix(0, 1), calibrate_matrix(0, 2),
+        calibrate_matrix(1, 0), calibrate_matrix(1, 1), calibrate_matrix(1, 2),
+        calibrate_matrix(2, 0), calibrate_matrix(2, 1), calibrate_matrix(2, 2));
+
+      affine_transform[0][0] = calibrate_matrix(0, 0);
+      affine_transform[0][1] = calibrate_matrix(0, 1);
+      affine_transform[0][2] = calibrate_matrix(0, 2);
+      affine_transform[1][0] = calibrate_matrix(1, 0);
+      affine_transform[1][1] = calibrate_matrix(1, 1);
+      affine_transform[1][2] = calibrate_matrix(1, 2);
 
       return true;
     }
