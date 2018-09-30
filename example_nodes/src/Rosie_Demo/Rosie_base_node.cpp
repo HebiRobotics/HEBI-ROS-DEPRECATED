@@ -26,6 +26,15 @@ namespace ros {
 // Note: base trajectory doesn't allow for smooth replanning, because that would be...difficult.  It just
 // represents relative motion in (x, y, theta)
 
+struct Color {
+  Color() = default;
+  Color(uint8_t r, uint8_t g, uint8_t b) : set_color_(true), r_(r), g_(g), b_(b) {}
+  bool set_color_{false};
+  uint8_t r_{0}; 
+  uint8_t g_{0}; 
+  uint8_t b_{0}; 
+};
+
 class BaseTrajectory {
 public:
   static BaseTrajectory create(const Eigen::VectorXd& dest_positions, double t_now)
@@ -260,6 +269,14 @@ public:
     // Use velocity from trajectory, converted from x/y/theta into wheel velocities above.
     command_.setVelocity(wheel_vel_);
 
+    for (int i = 0; i < 3; ++i) {
+      if (color_.set_color_ == false) 
+        command_[i].led().set(hebi::Color(0, 0, 0, 0));
+      else
+        command_[i].led().set(hebi::Color(
+          color_.r_, color_.g_, color_.b_));
+    }
+
     group_->sendCommand(command_);
 
     last_time_ = time;
@@ -277,11 +294,18 @@ public:
   GroupFeedback& getLastFeedback() { return feedback_; }
   BaseTrajectory& getTrajectory() { return base_trajectory_; }
 
-  void resetStart()
+  void resetStart(Color& color)
   {
     start_wheel_pos_ = feedback_.getPosition();
     last_wheel_pos_ = start_wheel_pos_;
     last_time_ = -1;
+    color_ = color;
+  }
+
+  void clearColor()
+  {
+    Color c;
+    color_ = c;
   }
 
 private:
@@ -325,12 +349,15 @@ private:
   BaseTrajectory base_trajectory_;
 
   double last_time_{-1};
+
+  Color color_;
 };
 
 class BaseNode {
 public:
   BaseNode(OmniBase& base) : base_(base) {
-    base_.resetStart();
+    Color c;
+    base_.resetStart(c);
   }
 
   void startBaseMotion(const example_nodes::BaseMotionGoalConstPtr& goal) {
@@ -348,7 +375,10 @@ public:
     ////////////////
     // Translation
     ////////////////
-    base_.resetStart();
+    Color color;
+    if (goal->set_color)
+      color = Color(goal->r, goal->g, goal->b);
+    base_.resetStart(color);
 
     waypoints(0, 0) = goal->x;
     waypoints(1, 0) = goal->y;
@@ -383,6 +413,8 @@ public:
       // Limit feedback rate
       r.sleep(); 
     }
+
+    base_.clearColor();
 
     // publish when the base is done with a motion
     ROS_INFO("Completed base motion action");
