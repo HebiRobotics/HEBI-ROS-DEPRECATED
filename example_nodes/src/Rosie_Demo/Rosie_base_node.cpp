@@ -129,7 +129,7 @@ public:
     const Eigen::MatrixXd& accelerations) {
 
     // TODO: make this configurable!
-    double rampTime = 2.0;
+    double rampTime = 4.0;
 
     size_t num_waypoints = positions.cols();
 
@@ -204,40 +204,26 @@ public:
 
   // Converts a certain number of radians into radians that each wheel would turn
   // _from theta == 0_ to obtain this rotation.
+  // Note: we only do this for velocities in order to combine rotations and translations without doing gnarly
+  // integrations.
   double convertSE2ToWheel() {
-    // NOTE: this assumes pure rotation or translation! Combined trajectories
-    // aren't really planned for yet!
-    // TODO: finish!  Assert for now?
 
     double theta = pos_[2];
     double dtheta = vel_[2];
-    double ddtheta = accel_[2];
 
     double offset = 1.0;
-    double x = pos_[0] / wheel_radius_;
-    double y = pos_[1] / wheel_radius_;
-    double dx = vel_[0] / wheel_radius_;
-    double dy = vel_[1] / wheel_radius_;
-    double ddx = accel_[0] * wheel_radius_;
-    double ddy = accel_[1] * wheel_radius_;
+    double ctheta = std::cos(-theta);
+    double stheta = std::sin(-theta);
+    double dx = vel_[0] * ctheta - vel_[1] * stheta;
+    double dy = vel_[0] * stheta + vel_[1] * ctheta;
+    dx /= wheel_radius_;
+    dy /= wheel_radius_;
     double ratio = sqrt(3)/2;
-
-    //////////////
-    // Position:
-    //////////////
-    // Rotation
-    wheel_pos_[0] =
-    wheel_pos_[1] =
-    wheel_pos_[2] = -theta * base_radius_ / wheel_radius_;
-    // Translation
-    wheel_pos_[0] += - 0.5 * y - ratio * x;
-    wheel_pos_[1] += - 0.5 * y + ratio * x;
-    wheel_pos_[2] += y;
-    wheel_pos_ += start_wheel_pos_;
 
     //////////////
     // Velocity:
     //////////////
+
     // Rotation
     wheel_vel_[0] =
     wheel_vel_[1] =
@@ -247,23 +233,17 @@ public:
     wheel_vel_[1] += - 0.5 * dy + ratio * dx;
     wheel_vel_[2] += dy;
 
-    constexpr double chassis_mass = 12; //kg
-
-    // Wheel1, front right
-/*    wheel_effort_[0] = ddx * chassis_mass * -ratio + 
-                       -ddy * chassis_mass * 0.5 + 
-                       -ddtheta * base_radius_ * wheel_radius_;
-
-    wheel_effort_[1] = ddx * chassis_mass * ratio + 
-                       -ddy * chassis_mass * 0.5 + 
-                       -ddtheta * base_radius_ * wheel_radius_;
-
-    wheel_effort_[2] = 0 +
-                       accel_[1] * chassis_mass + 
-                       -ddtheta * base_radius_ * wheel_radius_;*/
   }
 
   bool update(double time) {
+  
+    double dt = 0; 
+    if (last_time_ < 0) { // Sentinal value set when we restart...
+      last_time_ = time;
+    } else {
+      dt = time - last_time_;
+    }
+ 
     if (!group_->getNextFeedback(feedback_))
       return false;
 
@@ -273,11 +253,16 @@ public:
     // Convert from x/y/theta to wheel 1/2/3
     convertSE2ToWheel();
 
-    command_.setPosition(wheel_pos_);
+    // Integrate position using wheel velocities.
+    last_wheel_pos_ += wheel_vel_ * dt;
+    command_.setPosition(last_wheel_pos_);
+
+    // Use velocity from trajectory, converted from x/y/theta into wheel velocities above.
     command_.setVelocity(wheel_vel_);
-//    command_.setEffort(wheel_effort_);
 
     group_->sendCommand(command_);
+
+    last_time_ = time;
 
     return true; 
   }
@@ -292,7 +277,12 @@ public:
   GroupFeedback& getLastFeedback() { return feedback_; }
   BaseTrajectory& getTrajectory() { return base_trajectory_; }
 
-  void resetStart() { start_wheel_pos_ = feedback_.getPosition(); }
+  void resetStart()
+  {
+    start_wheel_pos_ = feedback_.getPosition();
+    last_wheel_pos_ = start_wheel_pos_;
+    last_time_ = -1;
+  }
 
 private:
 
@@ -306,7 +296,7 @@ private:
       vel_(Eigen::VectorXd::Zero(group->size())),
       accel_(Eigen::VectorXd::Zero(group->size())),
       start_wheel_pos_(Eigen::VectorXd::Zero(group->size())),
-      wheel_pos_(Eigen::VectorXd::Zero(group->size())),
+      last_wheel_pos_(Eigen::VectorXd::Zero(group->size())),
       wheel_vel_(Eigen::VectorXd::Zero(group->size())),
       wheel_effort_(Eigen::VectorXd::Zero(group->size())),
       base_trajectory_{base_trajectory}
@@ -327,11 +317,14 @@ private:
   Eigen::VectorXd vel_;
   Eigen::VectorXd accel_;
   Eigen::VectorXd start_wheel_pos_;
-  Eigen::VectorXd wheel_pos_;
+  Eigen::VectorXd last_wheel_pos_;
+//  Eigen::VectorXd wheel_pos_;
   Eigen::VectorXd wheel_vel_;
   Eigen::VectorXd wheel_effort_;
 
   BaseTrajectory base_trajectory_;
+
+  double last_time_{-1};
 };
 
 class BaseNode {
@@ -359,7 +352,7 @@ public:
 
     waypoints(0, 0) = goal->x;
     waypoints(1, 0) = goal->y;
-    waypoints(2, 0) = 0.0;
+    waypoints(2, 0) = goal->theta;
     base_.getTrajectory().replan(
       ::ros::Time::now().toSec(),
       waypoints);
@@ -391,55 +384,11 @@ public:
       r.sleep(); 
     }
 
-    if (!success) {
-      // publish when the base is done with a motion
-      ROS_INFO("Completed base motion action");
-      example_nodes::BaseMotionResult result;
-      result.success = success;
-      action_server_->setSucceeded(result); // TODO: set failed?
-    }
-
-    /////////////
-    // Rotation
-    /////////////
-    base_.resetStart();
-
-    waypoints(0, 0) = 0.0;
-    waypoints(1, 0) = 0.0; 
-    waypoints(2, 0) = goal->theta;
-    base_.getTrajectory().replan(
-      ::ros::Time::now().toSec(),
-      waypoints);
-
-    success = true;
-    while (true) {
-      if (action_server_->isPreemptRequested() || !::ros::ok()) {
-        ROS_INFO("Preempted base motion");
-        action_server_->setPreempted();
-        success = false;
-        break;
-      }
-      auto t = ::ros::Time::now().toSec();
-
-      // Publish progress:
-      auto& base_traj = base_.getTrajectory();
-      feedback.percent_complete = 50.0 + base_.trajectoryPercentComplete(t) / 2.0;
-      action_server_->publishFeedback(feedback);
- 
-      if (base_.isTrajectoryComplete(t)) {
-        ROS_INFO("ROTATION COMPLETE");
-        break;
-      }
-
-      // Limit feedback rate
-      r.sleep(); 
-    }
-
     // publish when the base is done with a motion
     ROS_INFO("Completed base motion action");
     example_nodes::BaseMotionResult result;
     result.success = success;
-    action_server_->setSucceeded(result);
+    action_server_->setSucceeded(result); // TODO: set failed?
   }
 
   void setActionServer(actionlib::SimpleActionServer<example_nodes::BaseMotionAction>* action_server) {
