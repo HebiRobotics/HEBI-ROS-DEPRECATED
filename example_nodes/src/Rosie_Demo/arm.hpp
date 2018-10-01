@@ -5,6 +5,15 @@
 namespace hebi {
   namespace arm {
 
+    struct Color {
+      Color() = default;
+      Color(uint8_t r, uint8_t g, uint8_t b) : set_color_(true), r_(r), g_(g), b_(b) {}
+      bool set_color_{false};
+      uint8_t r_{0};
+      uint8_t g_{0};
+      uint8_t b_{0};
+    };
+
     // A high-level abstraction of a robot arm, coordinating kinematics, control,
     // and basic motion planning.
     class Arm {
@@ -21,6 +30,9 @@ namespace hebi {
       // Updates the feedback and sends new commands to the robot for this time
       // step.  Returns 'false' on a connection problem; true on success.
       bool update(double time);
+
+      // Update the color to set on the robot
+      void setColor(const Color& c);
 
       double trajectoryPercentComplete(double time);
       bool isTrajectoryComplete(double time);
@@ -53,9 +65,11 @@ namespace hebi {
       Eigen::VectorXd vel_;
       Eigen::VectorXd accel_;
 
+      // The current color to set on the robot
+      hebi::arm::Color color_;
+
       const ArmKinematics& arm_kinematics_;
       ArmTrajectory arm_trajectory_;
-
     };
   } // namespace arm_node
 } // namespace hebi

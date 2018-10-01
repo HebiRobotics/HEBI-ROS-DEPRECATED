@@ -60,12 +60,26 @@ namespace hebi {
 
       // Add grav-comp efforts
       command_.setEffort(arm_kinematics_.gravCompEfforts(feedback_));
-
       // TODO: add dynamic-comp efforts
+
+      // Set color based on current command
+      
+      for (int i = 0; i < command_.size(); ++i) {
+        if (color_.set_color_ == false) 
+          command_[i].led().set(hebi::Color(0, 0, 0, 0));
+        else
+          command_[i].led().set(hebi::Color(
+            color_.r_, color_.g_, color_.b_));
+      }
 
       group_->sendCommand(command_);
 
       return true;
+    }
+
+
+    void Arm::setColor(const Color& c) {
+      color_ = c;
     }
 
     double Arm::trajectoryPercentComplete(double time) {

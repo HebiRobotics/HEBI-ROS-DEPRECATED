@@ -72,6 +72,10 @@ public:
       ::ros::Time::now().toSec(),
       arm_.getLastFeedback(),
       positions);
+    arm::Color color;
+    if (goal->set_color)
+      color = arm::Color(goal->r, goal->g, goal->b);
+    arm_.setColor(color);
 
     // Wait until the action is complete, sending status/feedback along the
     // way.
@@ -105,6 +109,9 @@ public:
       // Limit feedback rate
       r.sleep(); 
     }
+    // Clear color:
+    color = arm::Color();
+    arm_.setColor(color);
 
     // publish when the arm is done with a motion
     ROS_INFO("Completed arm motion action");

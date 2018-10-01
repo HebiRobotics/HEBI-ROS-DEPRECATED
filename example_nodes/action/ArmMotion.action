@@ -5,6 +5,12 @@ float64 z
 float64 tipx
 float64 tipy
 float64 tipz
+
+# Optionally, set a color when doing the move; otherwise, clear the color.
+bool set_color
+uint8 r
+uint8 g
+uint8 b
 ---
 bool success
 ---
