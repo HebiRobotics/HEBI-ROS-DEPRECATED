@@ -23,6 +23,12 @@
 // We abstract the behavior of each of the core components up here, so our
 // main logic loop doesn't have to deal with ros services, actions, etc.
 
+struct Color {
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+};
+
 class Gripper {
 public:
   Gripper(ros::NodeHandle& node)
@@ -85,34 +91,49 @@ public:
       return false;
   }
 
-  bool pickup(const Location& location) {
+  bool pickup(const Location& location, const Color& color) {
+    setColor(color);
     // Call service to move to pick up location, facing down:
     setGoalLocation(location);
     setGoalTipDown();
-    if (!moveToGoal())
+    if (!moveToGoal()) {
+      clearColor();
       return false;
+    }
 
     // Pick up with gripper
-    if (!gripper_.close())
+    if (!gripper_.close()) {
+      clearColor();
       return false;
+    }
 
     // TODO: smooth these motions into a single action! Need additional functionality from RosieArmNode...
     // Call service to move home
     setGoalHome();
-    if (!moveToGoal())
+    if (!moveToGoal()) {
+      clearColor();
       return false;
+    }
     // Call service to move to drop position
     setGoalDrop();
-    if (!moveToGoal())
+    if (!moveToGoal()) {
+      clearColor();
       return false;
+    }
 
-    if (!gripper_.open())
+    if (!gripper_.open()) {
+      clearColor();
       return false;
+    }
 
     // Call service to move home
     setGoalHome();
-    if (!moveToGoal())
+    if (!moveToGoal()) {
+      clearColor();
       return false;
+    }
+
+    return true;
   }
 
 private:
@@ -164,6 +185,17 @@ private:
     arm_motion_goal_.tipz = 0;
   }
 
+  void setColor(const Color& c) {
+    arm_motion_goal_.set_color = true;
+    arm_motion_goal_.r = c.r;
+    arm_motion_goal_.g = c.g;
+    arm_motion_goal_.b = c.b;
+  }
+
+  void clearColor() {
+    arm_motion_goal_.set_color = false;
+  }
+
   Gripper gripper_;
 
   // true causes the client to spin its own thread
@@ -185,7 +217,16 @@ public:
     base_motion_.waitForServer();
   }
 
-  bool rotate(double radians) {
+  bool rotate(double radians, const Color* color) {
+    if (color) {
+      base_motion_goal_.set_color = true;
+      base_motion_goal_.r = color->r;
+      base_motion_goal_.g = color->g;
+      base_motion_goal_.b = color->b;
+    } else {
+      base_motion_goal_.set_color = false;
+    }
+    
     base_motion_goal_.x = 0.0;
     base_motion_goal_.y = 0.0;
     base_motion_goal_.theta = radians; 
@@ -205,12 +246,21 @@ public:
     return true;
   }
 
-  bool moveTo(const Location& location) {
+  bool moveTo(const Location& location, const Color* color) {
+
+    if (color) {
+      base_motion_goal_.set_color = true;
+      base_motion_goal_.r = color->r;
+      base_motion_goal_.g = color->g;
+      base_motion_goal_.b = color->b;
+    } else {
+      base_motion_goal_.set_color = false;
+    }
     
     // Logic here to not just run over the friggin' thing
     base_motion_goal_.theta = atan2(location.y, location.x);
     double len = std::sqrt(location.x * location.x + location.y * location.y);
-    double actual_len = len - 0.3556; // stay 14 inches away
+    double actual_len = len - 0.45; // stay .45 m away from the robot center.
     if (actual_len < 0)
       actual_len = 0;
     double frac = actual_len / len;
@@ -237,12 +287,20 @@ public:
   actionlib::SimpleActionClient<example_nodes::BaseMotionAction> base_motion_;
 
   example_nodes::BaseMotionGoal base_motion_goal_;
+
+  // TODO: ADD SET COLOR SERVICE HERE!!!
 };
 
 // This is an "OK" solution...
 double affine_transform[2][3]
-  { { -0.001356, -0.001167,  1.347606 },
-    { -0.000797,  0.001273, -0.007661 } };
+//  { { -0.001356, -0.001167,  1.347606 },
+//    { -0.000797,  0.001273, -0.007661 } };
+
+//    { { -0.001372, -0.00111, 1.225248 },
+//      { -0.000770, 0.001244, -0.074991 } };
+
+{ { -0.001378, -0.001062, 1.120516 },
+  { -0.000731, 0.001270, -0.079267 } };
 
 class Vision {
 public:
@@ -256,11 +314,14 @@ public:
       calibrate_client_(node.serviceClient<example_nodes::CalibrateSrv>("/rosie/calibrate_vision")) {
   }
 
-  bool search(Location& found_at) {
+  bool search(Location& found_at, Color& found_color) {
     // Got a success back?
     if (client_.call(message_) && message_.response.found) {
       found_at.x = message_.response.x;
       found_at.y = message_.response.y;
+      found_color.r = message_.response.r;
+      found_color.g = message_.response.g;
+      found_color.b = message_.response.b;
       return true;
     }
     return false;
@@ -424,6 +485,7 @@ int main(int argc, char ** argv) {
   Base base(node);
   Vision vision(node);
   Vision::Location location;
+  Color color;
 
   arm.moveHome();
 
@@ -439,8 +501,8 @@ int main(int argc, char ** argv) {
     {
       calibrate_latch = false; // reset latch
       // Can't find anything? rotate and continue the search
-      if (!vision.search(location)) {
-        base.rotate(rotate_increment);
+      if (!vision.search(location, color)) {
+        base.rotate(rotate_increment, nullptr);
         continue;
       }
       if (state.to_mode == IPad::Mode::Pause)
@@ -449,14 +511,14 @@ int main(int argc, char ** argv) {
       // Can the arm reach this? If so, retrieve, then continue the search
       auto arm_location = transformToArm(location);
       if (arm.canReach(arm_location)) {
-        arm.pickup(arm_location);
+        arm.pickup(arm_location, color);
         continue;
       }
       if (state.to_mode == IPad::Mode::Pause)
         continue;
 
       // Otherwise, go there with the base and then continue the search
-      base.moveTo(transformToBase(location)); 
+      base.moveTo(transformToBase(location), &color); 
     } else if (state.to_mode == IPad::Mode::Pause) {
       calibrate_latch = false; // reset latch
       pause_wait.sleep();

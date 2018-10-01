@@ -142,6 +142,12 @@ public:
     double dist = std::pow(positions(0, 1) - positions(0, 0), 2) + 
                   std::pow(positions(1, 1) - positions(1, 0), 2);
     dist = std::sqrt(dist);
+
+    static constexpr double base_radius = 0.235; // m (center of omni to origin of base)
+    double rot_dist = std::abs(positions(2, 1) - positions(2, 0)) * base_radius;
+
+    dist += rot_dist;
+
     rampTime *= dist;
     rampTime = std::max(rampTime, 1.5);
 
