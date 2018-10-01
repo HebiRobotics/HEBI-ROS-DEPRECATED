@@ -138,7 +138,12 @@ public:
     const Eigen::MatrixXd& accelerations) {
 
     // TODO: make this configurable!
-    double rampTime = 4.0;
+    double rampTime = 4.0; // Per meter
+    double dist = std::pow(positions(0, 1) - positions(0, 0), 2) + 
+                  std::pow(positions(1, 1) - positions(1, 0), 2);
+    dist = std::sqrt(dist);
+    rampTime *= dist;
+    rampTime = std::max(rampTime, 1.5);
 
     size_t num_waypoints = positions.cols();
 
