@@ -24,53 +24,6 @@
 static const std::string OPENCV_WINDOW = "Image window";
 sensor_msgs::Image input_image;
 
-// TODO: add "register color", with color bounds; parameterize set/has/getcenter by color structure
-class Blobs {
-public:
-  Blobs() = default;
-
-  void setYellow(int x, int y, int num) {
-    yellow_x = x;
-    yellow_y = y;
-    yellow_num = num;
-  }
-  void setBlue(int x, int y, int num) {
-    blue_x = x;
-    blue_y = y;
-    blue_num = num;
-  }
-  void setGreen(int x, int y, int num) {
-    green_x = x;
-    green_y = y;
-    green_num = num;
-  }
-  bool hasYellow() { return yellow_num != 0; }
-  bool hasBlue() { return blue_num != 0; }
-  bool hasGreen() { return green_num != 0; }
-  cv::Point getYellow() {
-    return cv::Point(yellow_x / yellow_num, yellow_y / yellow_num);
-  }
-  cv::Point getBlue() {
-    return cv::Point(blue_x / blue_num, blue_y / blue_num);
-  }
-  cv::Point getGreen() {
-    return cv::Point(green_x / green_num, green_y / green_num);
-  }
-
-private:
-  int yellow_x = 0;
-  int yellow_y = 0;
-  int yellow_num = 0;
-
-  int blue_x = 0;
-  int blue_y = 0;
-  int blue_num = 0;
-
-  int green_x = 0;
-  int green_y = 0;
-  int green_num = 0;
-};
-
 int findBiggestBlob(const std::vector<cv::KeyPoint>& keypoints) {
   int max_idx = -1;
   int max_size = 0;
@@ -83,20 +36,42 @@ int findBiggestBlob(const std::vector<cv::KeyPoint>& keypoints) {
   return max_idx;
 }
 
+struct ColorParams {
+  // LED display
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  // Thresholds
+  int lowR;
+  int highR;
+  int lowG;
+  int highG;
+  int lowB;
+  int highB;
+};
+
+const ColorParams YellowParams
+{
+  255, 255, 0,
+  120,
+  200,
+  60,
+  120,
+  0,
+  95
+};
+
+class Blob {
+public:
+  Blob(int x, int y) : x_(x), y_(y), has_blob_(true) {}
+  Blob() = default;
+  int x_ {0};
+  int y_ {0};
+  bool has_blob_{false};
+};
+
 // Count pixels of each color
-Blobs findBlobs(const cv::Mat& mat, cv::Mat& img_thresh) {
-  int yellow_x = 0;
-  int yellow_y = 0;
-  int yellow_num = 0;
-
-  int blue_x = 0;
-  int blue_y = 0;
-  int blue_num = 0;
-
-  int green_x = 0;
-  int green_y = 0;
-  int green_num = 0;
-
+Blob getBlob(const cv::Mat& mat, cv::Mat& img_thresh, const ColorParams& color_params) {
   /* 
   - Scan all the pixels on the page
   - Categorise them as yellow, blue, or yellow
@@ -106,14 +81,11 @@ Blobs findBlobs(const cv::Mat& mat, cv::Mat& img_thresh) {
   int width = mat.cols;
 
   ROS_INFO("(Width: %d) (Height: %d)", width, height);
-      
-  int lowR = 120;
-  int highR = 200;
-  int lowG = 60;
-  int highG = 120;
-  int lowB = 0;
-  int highB = 95;
-  cv::inRange(mat, cv::Scalar(lowB, lowG, lowR), cv::Scalar(highB, highG, highR), img_thresh);
+  
+  // Yellow:    
+  cv::inRange(mat,
+    cv::Scalar(color_params.lowB, color_params.lowG, color_params.lowR),
+    cv::Scalar(color_params.highB, color_params.highG, color_params.highR), img_thresh);
 
   // Remove small crap
   cv::erode(img_thresh, img_thresh, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
@@ -136,46 +108,11 @@ Blobs findBlobs(const cv::Mat& mat, cv::Mat& img_thresh) {
   std::vector<cv::KeyPoint> keypoints;
   blobber->detect(img_thresh, keypoints);
 
-/*  for (int i = 0; i < width; i++) {
-    for (int j = 0; j < height; j++) {
-      cv::Vec3b pixel = mat.at<cv::Vec3b>(j,i);
-      
-      // The input format is BGR
-      
-      // yellow
-      if ((pixel[2] >= lowR && pixel[2] <= 200) && (pixel[1] > 60 && pixel[1] < 120) && (pixel[0] > 0 && pixel[0] < 95)){
-        yellow_x += i;
-        yellow_y += j;
-        yellow_num += 1;
-      }
-
-      // blue 
-      else if ((pixel[2] < 60) && (pixel[1] < 100) && (pixel[0] >= 140)){
-        blue_x += i;
-        blue_y += j;
-        blue_num += 1;
-      }*/
-/*
-      // green
-      else if ((pixel[2] < 160) && (pixel[1] >= 150) && (pixel[0] < 130 )){
-        green_x += i;
-        green_y += j;
-        green_num += 1;
-      }
-    }
-  }*/
-
-  Blobs blobs;
   int best_blob = findBiggestBlob(keypoints);
-  if (best_blob >= 0) {
-    yellow_x = keypoints[best_blob].pt.x;
-    yellow_y = keypoints[best_blob].pt.y;
-    yellow_num = 1;
-  }
-  blobs.setYellow(yellow_x, yellow_y, yellow_num);
-  blobs.setBlue(blue_x, blue_y, blue_num);
-  blobs.setGreen(green_x, green_y, green_num);
-  return blobs;
+  if (best_blob >= 0)
+    return Blob(keypoints[best_blob].pt.x, keypoints[best_blob].pt.y);
+  
+  return Blob();
 }
 
 bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::CalibrateSrv::Response& res) {
@@ -257,53 +194,26 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
   // cv::Mat &mat2 = dpImagePtr ->image;
 
   cv::Mat img_thresh;
-  Blobs blobs = findBlobs(mat, img_thresh);
+  Blob blob = getBlob(mat, img_thresh, YellowParams);
 
   // TODO: with new color structure, iterate through following options...even get
   // "best" (biggest, right number of pixels), and then just do that?
-  if (blobs.hasYellow()) {
-    auto yellow = blobs.getYellow();        
+  if (blob.has_blob_) {
+    cv::Point2d yellow(blob.x_, blob.y_);
     cv::circle(img_thresh, yellow, 2, CV_RGB(0,255,255), 3);
     cv::circle(img_thresh, yellow, 20, CV_RGB(0,255,255), 2);
     res.x = yellow.x;
     res.y = yellow.y;
-    // TODO: part of new "color" structure?
-    res.r = 255;
-    res.g = 255;
-    res.b = 0;
+    res.r = YellowParams.r;
+    res.g = YellowParams.g;
+    res.b = YellowParams.b;
     // TODO: is this duplicate with return value?
     res.found = true;
-  }
-/*
-  else if (blobs.hasBlue()) {
-    auto blue = blobs.getBlue();        
-    cv::circle(mat, blue, 2, CV_RGB(0,255,255), 3);
-    cv::circle(mat, blue, 20, CV_RGB(0,255,255), 2);
-    res.x = blue.x;
-    res.y = blue.y;
-    // TODO: part of new "color" structure?
-    res.r = 0;
-    res.g = 0;
-    res.b = 255;
-    // TODO: is this duplicate with return value?
-    res.found = true;
+    cv::imshow(OPENCV_WINDOW, img_thresh);
+  } else {
+    cv::imshow(OPENCV_WINDOW, img_thresh);
   }
 
-  else if (blobs.hasGreen()) {
-    auto green = blobs.getGreen();        
-    cv::circle(mat, green, 2, CV_RGB(0,255,255), 3);
-    cv::circle(mat, green, 20, CV_RGB(0,255,255), 2);
-    res.x = green.x;
-    res.y = green.y;
-    // TODO: part of new "color" structure?
-    res.r = 0;
-    res.g = 255;
-    res.b = 0;
-    // TODO: is this duplicate with return value?
-    res.found = true;
-  }*/
-
-  cv::imshow(OPENCV_WINDOW, img_thresh);
   cv::waitKey(2);
 
   return true; 
