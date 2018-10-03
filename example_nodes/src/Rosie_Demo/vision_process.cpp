@@ -50,15 +50,25 @@ struct ColorParams {
   int highB;
 };
 
-const ColorParams YellowParams
-{
+const ColorParams YellowParams {
   255, 255, 0,
-  120,
-  200,
-  60,
-  120,
-  0,
-  95
+  120, 200,
+  60, 120,
+  0, 95
+};
+
+const ColorParams GreenParams {
+  0, 255, 0,
+  0, 66,
+  55, 101,
+  37, 101
+};
+
+const ColorParams RedParams {
+  255, 0, 0,
+  103, 255,
+  0, 47,
+  0, 64
 };
 
 class Blob {
@@ -101,7 +111,7 @@ Blob getBlob(const cv::Mat& mat, cv::Mat& img_thresh, const ColorParams& color_p
   params.filterByColor = false;
   params.filterByConvexity = false;
   params.filterByInertia = false;
-  params.minArea = 50;
+  params.minArea = 1000;
   params.maxArea = 20000;
   cv::Ptr<cv::SimpleBlobDetector> blobber = cv::SimpleBlobDetector::create(params);
 
@@ -194,25 +204,34 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
   // cv::Mat &mat2 = dpImagePtr ->image;
 
   cv::Mat img_thresh;
-  Blob blob = getBlob(mat, img_thresh, YellowParams);
+  auto params = YellowParams;
+  Blob blob = getBlob(mat, img_thresh, params);
 
-  // TODO: with new color structure, iterate through following options...even get
-  // "best" (biggest, right number of pixels), and then just do that?
+//  if (!blob.has_blob_) {
+//    params = GreenParams;
+//    blob = getBlob(mat, img_thresh, params);
+//  }
+
+  if (!blob.has_blob_) {
+    params = RedParams;
+    blob = getBlob(mat, img_thresh, params);
+  }
+
   if (blob.has_blob_) {
-    cv::Point2d yellow(blob.x_, blob.y_);
-    cv::circle(img_thresh, yellow, 2, CV_RGB(0,255,255), 3);
-    cv::circle(img_thresh, yellow, 20, CV_RGB(0,255,255), 2);
-    res.x = yellow.x;
-    res.y = yellow.y;
-    res.r = YellowParams.r;
-    res.g = YellowParams.g;
-    res.b = YellowParams.b;
+    cv::Point2d pt(blob.x_, blob.y_);
+    cv::circle(img_thresh, pt, 2, CV_RGB(0,255,255), 3);
+    cv::circle(img_thresh, pt, 20, CV_RGB(0,255,255), 2);
+
+    res.x = pt.x;
+    res.y = pt.y;
+    res.r = params.r;
+    res.g = params.g;
+    res.b = params.b;
     // TODO: is this duplicate with return value?
     res.found = true;
-    cv::imshow(OPENCV_WINDOW, img_thresh);
-  } else {
-    cv::imshow(OPENCV_WINDOW, img_thresh);
   }
+
+  cv::imshow(OPENCV_WINDOW, img_thresh);
 
   cv::waitKey(2);
 

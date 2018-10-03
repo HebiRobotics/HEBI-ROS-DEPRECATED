@@ -391,6 +391,10 @@ add_executable(vision_process src/Rosie_Demo/vision_process.cpp)
 add_dependencies(vision_process ${catkin_EXPORTED_TARGETS})
 target_link_libraries(vision_process ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
+add_executable(vision_threshold src/Rosie_Demo/vision_threshold.cpp)
+add_dependencies(vision_threshold ${catkin_EXPORTED_TARGETS})
+target_link_libraries(vision_threshold ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
 
 
 

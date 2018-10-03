@@ -136,6 +136,38 @@ public:
     return true;
   }
 
+  bool deployBags() {
+    setGoalDrop();
+    setGoalTipDown();
+    if (!moveToGoal())
+      return false;
+
+    setGoalBox();
+    setGoalTipDown();
+    if (!moveToGoal())
+      return false;
+
+    // Pick up with gripper
+    if (!gripper_.close())
+      return false;
+
+    setGoalDrop();
+    setGoalTipDown();
+    if (!moveToGoal())
+      return false;
+
+    // Call service to move home
+    setGoalThrow();
+    if (!moveToGoal())
+      return false;
+
+    if (!gripper_.open())
+      return false;
+
+    return true;
+    
+  }
+
 private:
 
   // TODO: could refactor so this takes in argument, and "setGoal" etc. functions
@@ -168,8 +200,19 @@ private:
     setGoalTipDown();
   }
 
+  void setGoalThrow() {
+    setGoalLocation({0.3, -0.3, 0.3});
+    //setGoalTipForward();
+    setGoalTipDown();
+  }
+
   void setGoalDrop() {
     setGoalLocation({-0.1, -0.2, 0.3});
+    setGoalTipDown();
+  }
+
+  void setGoalBox() {
+    setGoalLocation({-0.1, -0.17, -0.04});
     setGoalTipDown();
   }
 
@@ -261,8 +304,8 @@ public:
     base_motion_goal_.theta = atan2(location.y, location.x);
     double len = std::sqrt(location.x * location.x + location.y * location.y);
     double actual_len = len - 0.45; // stay .45 m away from the robot center.
-    if (actual_len < 0)
-      actual_len = 0;
+//    if (actual_len < 0)
+//      actual_len = 0;
     double frac = actual_len / len;
     base_motion_goal_.x = location.x * frac;
     base_motion_goal_.y = location.y * frac;
@@ -427,6 +470,7 @@ public:
     Pause,
     Calibrate,
     Drive,
+    Deploy,
     Autonomous,
     Quit
   };
@@ -456,8 +500,9 @@ private:
         _state.to_mode = Mode::Calibrate;
       }
       if (fbk.io().b().hasInt(4) && fbk.io().b().getInt(4) == 1) {
-        _state.to_mode = Mode::Drive;
+        _state.to_mode = Mode::Deploy;
       }
+      // TODO: Drive
       if (fbk.io().b().hasInt(5) && fbk.io().b().getInt(5) == 1) {
         _state.to_mode = Mode::Quit;
       }
@@ -528,6 +573,10 @@ int main(int argc, char ** argv) {
     } else if (state.to_mode == IPad::Mode::Drive) {
       calibrate_latch = false; // reset latch
       // TODO: drive
+    } else if (state.to_mode == IPad::Mode::Deploy) {
+      calibrate_latch = false; // reset latch
+      arm.deployBags();
+      base.rotate(rotate_increment, nullptr);
     } else if (state.to_mode == IPad::Mode::Quit) {
       break;
     }

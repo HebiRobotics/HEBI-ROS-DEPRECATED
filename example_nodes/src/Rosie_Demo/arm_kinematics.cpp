@@ -30,7 +30,7 @@ namespace hebi {
       Eigen::VectorXd min_positions(6);
       min_positions << -M_PI, 0.01, 0.01, -M_PI_2, -M_PI, -M_PI;
       Eigen::VectorXd max_positions(6);
-      max_positions << M_PI, M_PI, (M_PI*6)/8, M_PI_2, M_PI, M_PI;
+      max_positions << M_PI, M_PI, (M_PI*6)/8, M_PI_2, M_PI, 0;
 
       // TODO: smartly handle exceptions?
       Eigen::VectorXd ik_result_joint_angles(initial_positions.size());
