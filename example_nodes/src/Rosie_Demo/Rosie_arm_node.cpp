@@ -28,7 +28,9 @@ public:
 
     // Replan a smooth joint trajectory from the current location through a
     // series of cartesian waypoints.
-    size_t num_waypoints = 1;
+    // TODO: use a single struct instead of 6 single vectors of the same length;
+    // but how do we do hierarchial actions?
+    size_t num_waypoints = goal->x.size();
 
     // These are the joint angles that will be added
     Eigen::MatrixXd positions(arm_.size(), num_waypoints);
@@ -44,19 +46,19 @@ public:
       Eigen::Vector3d end_tip;
 
       // Special homing values...
-      if (goal->x == 100 && goal->y == 100 && goal->z == 100) {
+      if (goal->x[i] == 100 && goal->y[i] == 100 && goal->z[i] == 100) {
         xyz = arm_.getHomePositionXYZ();
         end_tip << 1, 0, 0;
       } 
 
-      else if (goal->x == 101 && goal->y == 101 && goal->z == 101) {
+      else if (goal->x[i] == 101 && goal->y[i] == 101 && goal->z[i] == 101) {
         xyz = arm_.getHomePositionXYZ();
         end_tip << 0, 0, -1;
       } 
 
       else {
-        xyz << goal->x, goal->y, goal->z;
-        end_tip << goal->tipx, goal->tipy, goal->tipz;
+        xyz << goal->x[i], goal->y[i], goal->z[i];
+        end_tip << goal->tipx[i], goal->tipy[i], goal->tipz[i];
       }
 
       // Find the joint angles for the next waypoint, starting from the last

@@ -73,9 +73,8 @@ public:
   }
 
   bool canReach(const Location& location) {
-    // TODO: check bounds are reasonable
     bool can_reach = 
-      location.x > 0.25 && location.x < 0.55 &&
+      location.x > 0.25 && location.x < 0.5 &&
       location.y > -0.2 && location.y < 0.2 &&
       location.z > -0.11 && location.z < -0.09;
     if (can_reach)
@@ -94,8 +93,8 @@ public:
   bool pickup(const Location& location, const Color& color) {
     setColor(color);
     // Call service to move to pick up location, facing down:
-    setGoalLocation(location);
-    setGoalTipDown();
+    clearLocations();
+    setGoalLocation(location, true);
     if (!moveToGoal()) {
       clearColor();
       return false;
@@ -108,13 +107,9 @@ public:
     }
 
     // TODO: smooth these motions into a single action! Need additional functionality from RosieArmNode...
-    // Call service to move home
+    // Call service to move home and then move to drop position
+    clearLocations();
     setGoalHome();
-    if (!moveToGoal()) {
-      clearColor();
-      return false;
-    }
-    // Call service to move to drop position
     setGoalDrop();
     if (!moveToGoal()) {
       clearColor();
@@ -127,6 +122,7 @@ public:
     }
 
     // Call service to move home
+    clearLocations();
     setGoalHome();
     if (!moveToGoal()) {
       clearColor();
@@ -137,13 +133,10 @@ public:
   }
 
   bool deployBags() {
+    clearColor();
+    clearLocations();
     setGoalDrop();
-    setGoalTipDown();
-    if (!moveToGoal())
-      return false;
-
     setGoalBox();
-    setGoalTipDown();
     if (!moveToGoal())
       return false;
 
@@ -151,12 +144,8 @@ public:
     if (!gripper_.close())
       return false;
 
+    clearLocations();
     setGoalDrop();
-    setGoalTipDown();
-    if (!moveToGoal())
-      return false;
-
-    // Call service to move home
     setGoalThrow();
     if (!moveToGoal())
       return false;
@@ -188,44 +177,45 @@ private:
     return true;
   }
 
-  void setGoalLocation(const Location& location) {
-    arm_motion_goal_.x = location.x;
-    arm_motion_goal_.y = location.y;
-    arm_motion_goal_.z = location.z;
+  void clearLocations() {
+    arm_motion_goal_.x.clear();
+    arm_motion_goal_.y.clear();
+    arm_motion_goal_.z.clear();
+    arm_motion_goal_.tipx.clear();
+    arm_motion_goal_.tipy.clear();
+    arm_motion_goal_.tipz.clear();
+  }
+
+  // If not down, assume forward:
+  void setGoalLocation(const Location& location, bool is_down) {
+    arm_motion_goal_.x.push_back(location.x);
+    arm_motion_goal_.y.push_back(location.y);
+    arm_motion_goal_.z.push_back(location.z);
+    if (is_down) {
+      arm_motion_goal_.tipx.push_back(0);
+      arm_motion_goal_.tipy.push_back(0);
+      arm_motion_goal_.tipz.push_back(-1);
+    } else {
+      arm_motion_goal_.tipx.push_back(1);
+      arm_motion_goal_.tipy.push_back(0);
+      arm_motion_goal_.tipz.push_back(0);
+    }
   }
 
   void setGoalHome() {
-    setGoalLocation({0.2, -0.2, 0.3});
-    //setGoalTipForward();
-    setGoalTipDown();
+    setGoalLocation({0.2, -0.2, 0.3}, true);
   }
 
   void setGoalThrow() {
-    setGoalLocation({0.3, -0.3, 0.3});
-    //setGoalTipForward();
-    setGoalTipDown();
+    setGoalLocation({0.3, -0.3, 0.3}, true);
   }
 
   void setGoalDrop() {
-    setGoalLocation({-0.1, -0.2, 0.3});
-    setGoalTipDown();
+    setGoalLocation({-0.1, -0.2, 0.3}, true);
   }
 
   void setGoalBox() {
-    setGoalLocation({-0.1, -0.17, -0.04});
-    setGoalTipDown();
-  }
-
-  void setGoalTipDown() {
-    arm_motion_goal_.tipx = 0;
-    arm_motion_goal_.tipy = 0;
-    arm_motion_goal_.tipz = -1;
-  }
-
-  void setGoalTipForward() {
-    arm_motion_goal_.tipx = 1;
-    arm_motion_goal_.tipy = 0;
-    arm_motion_goal_.tipz = 0;
+    setGoalLocation({-0.1, -0.17, -0.04}, true);
   }
 
   void setColor(const Color& c) {
@@ -481,7 +471,7 @@ public:
     float drive_left{0}; // [-1 to 1]
   };
 
-  const State& getState() const {
+  State& getState() {
     return _state;
   }
 
@@ -536,9 +526,12 @@ int main(int argc, char ** argv) {
 
   // TODO: load calibration!
 
-  const IPad::State& state = ipad->getState(); // Note -- this updates in the background!
+  IPad::State& state = ipad->getState(); // Note -- this updates in the background!
   ros::Duration pause_wait(1);
   bool calibrate_latch = false;
+
+  int spin_count = 0;
+  int arm_count = 0;
 
   // Run main logic
   while (ros::ok()) {
@@ -548,8 +541,15 @@ int main(int argc, char ** argv) {
       // Can't find anything? rotate and continue the search
       if (!vision.search(location, color)) {
         base.rotate(rotate_increment, nullptr);
+        ++spin_count;
+        if (spin_count >= 6) {
+          state.to_mode = IPad::Mode::Deploy;
+          arm_count = 0;
+          spin_count = 0;
+        } 
         continue;
       }
+      spin_count = 0;
       if (state.to_mode == IPad::Mode::Pause)
         continue;
 
@@ -565,17 +565,31 @@ int main(int argc, char ** argv) {
       // Otherwise, go there with the base and then continue the search
       base.moveTo(transformToBase(location), &color); 
     } else if (state.to_mode == IPad::Mode::Pause) {
+      arm_count = 0;
+      spin_count = 0;
       calibrate_latch = false; // reset latch
       pause_wait.sleep();
     } else if (state.to_mode == IPad::Mode::Calibrate && !calibrate_latch) {
+      arm_count = 0;
+      spin_count = 0;
       vision.calibrate();
       calibrate_latch = true; // don't re-calibrate once we've done it once!
     } else if (state.to_mode == IPad::Mode::Drive) {
+      arm_count = 0;
+      spin_count = 0;
       calibrate_latch = false; // reset latch
       // TODO: drive
     } else if (state.to_mode == IPad::Mode::Deploy) {
       calibrate_latch = false; // reset latch
       arm.deployBags();
+      ++arm_count;
+      if (arm_count >= 3) {
+        base.moveTo(
+          Base::Location{0.65, 0.25}, nullptr);
+        state.to_mode = IPad::Mode::Autonomous;
+        arm_count = 0;
+        spin_count = 0;
+      } 
       base.rotate(rotate_increment, nullptr);
     } else if (state.to_mode == IPad::Mode::Quit) {
       break;
