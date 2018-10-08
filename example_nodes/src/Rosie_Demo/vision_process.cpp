@@ -50,11 +50,18 @@ struct ColorParams {
   int highB;
 };
 
-const ColorParams YellowParams {
+const ColorParams YellowParamsRGB {
   255, 255, 0,
   120, 200,
   60, 120,
   0, 95
+};
+
+const ColorParams YellowParamsHSV {
+  255, 255, 0,
+  122, 213,
+  72, 213,
+  0, 75
 };
 
 const ColorParams GreenParams {
@@ -64,11 +71,25 @@ const ColorParams GreenParams {
   37, 101
 };
 
-const ColorParams RedParams {
+const ColorParams RedParamsRGB {
   255, 0, 0,
   103, 255,
   0, 47,
   0, 64
+};
+// HSV
+const ColorParams RedParamsHSV {
+  255, 0, 0,
+  103, 181,
+  136, 255,
+  145, 205
+};
+
+const ColorParams PurpleParams {
+  255, 0, 255,
+  12, 79,
+  12, 40,
+  42, 86
 };
 
 class Blob {
@@ -151,7 +172,6 @@ bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::Cali
 
   // TODO: look into depth?
   cv::Mat &mat = cvImagePtr -> image;
-  // cv::Mat &mat2 = dpImagePtr ->image;
 
   res.found = true;
   res.points.clear();
@@ -201,20 +221,16 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
 
   // TODO: look into depth?
   cv::Mat &mat = cvImagePtr -> image;
-  // cv::Mat &mat2 = dpImagePtr ->image;
+  cv::Mat img_hsv;
+  cv::cvtColor(mat, img_hsv, cv::COLOR_BGR2HSV); // convert from rgb to hsv
 
   cv::Mat img_thresh;
-  auto params = YellowParams;
-  Blob blob = getBlob(mat, img_thresh, params);
-
-//  if (!blob.has_blob_) {
-//    params = GreenParams;
-//    blob = getBlob(mat, img_thresh, params);
-//  }
+  auto params = YellowParamsHSV;
+  Blob blob = getBlob(img_hsv, img_thresh, params);
 
   if (!blob.has_blob_) {
-    params = RedParams;
-    blob = getBlob(mat, img_thresh, params);
+    params = RedParamsHSV;
+    blob = getBlob(img_hsv, img_thresh, params);
   }
 
   if (blob.has_blob_) {
