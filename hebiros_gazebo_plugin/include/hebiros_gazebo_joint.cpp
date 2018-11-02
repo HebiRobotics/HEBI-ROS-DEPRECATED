@@ -10,7 +10,7 @@ HebirosGazeboJoint::HebirosGazeboJoint(std::string name,
   this->name = name;
 
   this->imu_subscriber = n->subscribe<sensor_msgs::Imu>(
-    "/hebiros_gazebo_plugin/imu/"+name,
+    "hebiros_gazebo_plugin/imu/"+name,
     100, boost::bind(&HebirosGazeboJoint::SubIMU, this, _1));
 
 }
