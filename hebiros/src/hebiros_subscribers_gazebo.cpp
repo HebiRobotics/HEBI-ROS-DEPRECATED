@@ -7,18 +7,18 @@ using namespace hebiros;
 
 void HebirosSubscribersGazebo::registerGroupSubscribers(std::string group_name) {
 
-  subscribers["/hebiros/"+group_name+"/command"] = 
-    HebirosNode::n_ptr->subscribe<CommandMsg>("/hebiros/"+group_name+"/command", 100,
+  subscribers["hebiros/"+group_name+"/command"] =
+    HebirosNode::n_ptr->subscribe<CommandMsg>("hebiros/"+group_name+"/command", 100,
     boost::bind(&HebirosSubscribersGazebo::command, this, _1, group_name));
 
-  subscribers["/hebiros/"+group_name+"/command/joint_state"] = 
+  subscribers["hebiros/"+group_name+"/command/joint_state"] =
     HebirosNode::n_ptr->subscribe<sensor_msgs::JointState>(
-    "/hebiros/"+group_name+"/command/joint_state", 100,
+    "hebiros/"+group_name+"/command/joint_state", 100,
     boost::bind(&HebirosSubscribersGazebo::jointCommand, this, _1, group_name));
 
-  subscribers["/hebiros_gazebo_plugin/feedback/"+group_name] = 
+  subscribers["hebiros_gazebo_plugin/feedback/"+group_name] =
     HebirosNode::n_ptr->subscribe<FeedbackMsg>(
-    "/hebiros_gazebo_plugin/feedback/"+group_name, 100,
+    "hebiros_gazebo_plugin/feedback/"+group_name, 100,
     boost::bind(&HebirosSubscribersGazebo::feedback, this, _1, group_name));
 }
 

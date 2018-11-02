@@ -29,12 +29,12 @@ HebirosNode::HebirosNode (int argc, char **argv) {
   }
 
   if (use_gazebo) {
-    HebirosParameters::setBool("/use_sim_time", true);
+    HebirosParameters::setBool("use_sim_time", true);
     services_gazebo.registerNodeServices();
     clients.registerNodeClients();
   }
   else {
-    HebirosParameters::setBool("/use_sim_time", false);
+    HebirosParameters::setBool("use_sim_time", false);
     services_physical.registerNodeServices();
   }
 
@@ -47,7 +47,7 @@ void HebirosNode::cleanup() {
 }
 
 void HebirosNode::loop() {
-  ros::Rate loop_rate(HebirosParameters::getInt("/hebiros/node_frequency"));
+  ros::Rate loop_rate(HebirosParameters::getInt("hebiros/node_frequency"));
 
   while(ros::ok()) {
     ros::spinOnce();

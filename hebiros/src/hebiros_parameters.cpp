@@ -4,27 +4,27 @@
 
 
 std::map<std::string, bool> HebirosParameters::bool_parameters_default =
-  {{"/use_sim_time", false}};
+  {{"use_sim_time", false}};
 std::map<std::string, bool> HebirosParameters::bool_parameters;
 std::map<std::string, int> HebirosParameters::int_parameters_default =
-  {{"/hebiros/node_frequency", 200},
-   {"/hebiros/action_frequency", 200},
-   {"/hebiros/feedback_frequency", 100},
-   {"/hebiros/command_lifetime", 100}};
+  {{"hebiros/node_frequency", 200},
+   {"hebiros/action_frequency", 200},
+   {"hebiros/feedback_frequency", 100},
+   {"hebiros/command_lifetime", 100}};
 std::map<std::string, int> HebirosParameters::int_parameters;
 
 void HebirosParameters::setNodeParameters() {
 
-  loadInt("/hebiros/node_frequency");
-  loadInt("/hebiros/action_frequency");
-  loadInt("/hebiros/feedback_frequency");
-  loadInt("/hebiros/command_lifetime");
+  loadInt("hebiros/node_frequency");
+  loadInt("hebiros/action_frequency");
+  loadInt("hebiros/feedback_frequency");
+  loadInt("hebiros/command_lifetime");
 
   ROS_INFO("Parameters:");
-  ROS_INFO("/hebiros/node_frequency=%d", getInt("/hebiros/node_frequency"));
-  ROS_INFO("/hebiros/action_frequency=%d", getInt("/hebiros/action_frequency"));
-  ROS_INFO("/hebiros/feedback_frequency=%d", getInt("/hebiros/feedback_frequency"));
-  ROS_INFO("/hebiros/command_lifetime=%d", getInt("/hebiros/command_lifetime"));
+  ROS_INFO("hebiros/node_frequency=%d", getInt("hebiros/node_frequency"));
+  ROS_INFO("hebiros/action_frequency=%d", getInt("hebiros/action_frequency"));
+  ROS_INFO("hebiros/feedback_frequency=%d", getInt("hebiros/feedback_frequency"));
+  ROS_INFO("hebiros/command_lifetime=%d", getInt("hebiros/command_lifetime"));
 }
 
 void HebirosParameters::loadBool(std::string name) {

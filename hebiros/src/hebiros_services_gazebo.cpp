@@ -6,42 +6,42 @@
 
 void HebirosServicesGazebo::registerNodeServices() {
 
-  services["/hebiros/entry_list"] = HebirosNode::n_ptr->advertiseService(
-    "/hebiros/entry_list", &HebirosServicesGazebo::entryList, this);
+  services["hebiros/entry_list"] = HebirosNode::n_ptr->advertiseService(
+    "hebiros/entry_list", &HebirosServicesGazebo::entryList, this);
 
-  services["/hebiros/add_group_from_names"] = HebirosNode::n_ptr->advertiseService(
-    "/hebiros/add_group_from_names", &HebirosServicesGazebo::addGroupFromNames, this);
+  services["hebiros/add_group_from_names"] = HebirosNode::n_ptr->advertiseService(
+    "hebiros/add_group_from_names", &HebirosServicesGazebo::addGroupFromNames, this);
 
-  services["/hebiros/add_group_from_urdf"] = HebirosNode::n_ptr->advertiseService(
-    "/hebiros/add_group_from_urdf", &HebirosServicesGazebo::addGroupFromURDF, this);
+  services["hebiros/add_group_from_urdf"] = HebirosNode::n_ptr->advertiseService(
+    "hebiros/add_group_from_urdf", &HebirosServicesGazebo::addGroupFromURDF, this);
 
-  services["/hebiros/add_model_from_urdf"] = HebirosNode::n_ptr->advertiseService(
-    "/hebiros/add_model_from_urdf", &HebirosServicesGazebo::addModelFromURDF, this);
+  services["hebiros/add_model_from_urdf"] = HebirosNode::n_ptr->advertiseService(
+    "hebiros/add_model_from_urdf", &HebirosServicesGazebo::addModelFromURDF, this);
 }
 
 void HebirosServicesGazebo::registerGroupServices(std::string group_name) {
 
-  services["/hebiros/"+group_name+"/size"] =
+  services["hebiros/"+group_name+"/size"] =
     HebirosNode::n_ptr->advertiseService<SizeSrv::Request, SizeSrv::Response>(
-    "/hebiros/"+group_name+"/size",
+    "hebiros/"+group_name+"/size",
     boost::bind(&HebirosServicesGazebo::size, this, _1, _2, group_name));
 
-  services["/hebiros/"+group_name+"/set_feedback_frequency"] =
+  services["hebiros/"+group_name+"/set_feedback_frequency"] =
     HebirosNode::n_ptr->advertiseService<SetFeedbackFrequencySrv::Request,
     SetFeedbackFrequencySrv::Response>(
-    "/hebiros/"+group_name+"/set_feedback_frequency",
+    "hebiros/"+group_name+"/set_feedback_frequency",
     boost::bind(&HebirosServicesGazebo::setFeedbackFrequency, this, _1, _2, group_name));
 
-  services["/hebiros/"+group_name+"/set_command_lifetime"] =
+  services["hebiros/"+group_name+"/set_command_lifetime"] =
     HebirosNode::n_ptr->advertiseService<SetCommandLifetimeSrv::Request,
     SetCommandLifetimeSrv::Response>(
-    "/hebiros/"+group_name+"/set_command_lifetime",
+    "hebiros/"+group_name+"/set_command_lifetime",
     boost::bind(&HebirosServicesGazebo::setCommandLifetime, this, _1, _2, group_name));
 
-  services["/hebiros/"+group_name+"/send_command_with_acknowledgement"] =
+  services["hebiros/"+group_name+"/send_command_with_acknowledgement"] =
     HebirosNode::n_ptr->advertiseService<SendCommandWithAcknowledgementSrv::Request,
     SendCommandWithAcknowledgementSrv::Response>(
-    "/hebiros/"+group_name+"/send_command_with_acknowledgement",
+    "hebiros/"+group_name+"/send_command_with_acknowledgement",
     boost::bind(&HebirosServicesGazebo::sendCommandWithAcknowledgement, this, _1, _2, group_name));
 }
 
