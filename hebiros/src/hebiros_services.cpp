@@ -8,9 +8,9 @@
 std::map<std::string, ros::ServiceServer> HebirosServices::services;
 
 void HebirosServices::registerModelServices(const std::string& model_name) {
-  services["/hebiros/"+model_name+"/fk"] =
+  services["hebiros/"+model_name+"/fk"] =
     HebirosNode::n_ptr->advertiseService<ModelFkSrv::Request, ModelFkSrv::Response>(
-    "/hebiros/"+model_name+"/fk",
+    "hebiros/"+model_name+"/fk",
     boost::bind(&HebirosServices::fk, this, _1, _2, model_name));
 }
 
@@ -124,13 +124,13 @@ bool HebirosServices::size(
   if (!registry.hasGroup(group_name))
   {
     res.size = -1;
-    ROS_INFO("/hebiros/%s not found; could not get size", group_name.c_str());
+    ROS_INFO("hebiros/%s not found; could not get size", group_name.c_str());
     return false;
   }
 
   res.size = registry.getGroup(group_name)->size;
 
-  ROS_INFO("/hebiros/%s size=%d", group_name.c_str(), res.size);
+  ROS_INFO("hebiros/%s size=%d", group_name.c_str(), res.size);
 
   return true;
 }
@@ -139,7 +139,7 @@ bool HebirosServices::setFeedbackFrequency(
   SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res,
   std::string group_name) {
 
-  ROS_INFO("/hebiros/%s feedback_frequency=%d", group_name.c_str(), req.feedback_frequency);
+  ROS_INFO("hebiros/%s feedback_frequency=%d", group_name.c_str(), req.feedback_frequency);
 
   return true;
 }
@@ -148,7 +148,7 @@ bool HebirosServices::setCommandLifetime(
   SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res,
   std::string group_name) {
 
-  ROS_INFO("/hebiros/%s command_lifetime=%d", group_name.c_str(), req.command_lifetime);
+  ROS_INFO("hebiros/%s command_lifetime=%d", group_name.c_str(), req.command_lifetime);
 
   return true;
 }

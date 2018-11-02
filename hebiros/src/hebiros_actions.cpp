@@ -14,7 +14,7 @@ void HebirosActions::registerGroupActions(std::string group_name) {
 
   trajectory_actions[group_name] = std::make_shared<
     actionlib::SimpleActionServer<TrajectoryAction>>(
-    *HebirosNode::n_ptr, "/hebiros/"+group_name+"/trajectory",
+    *HebirosNode::n_ptr, "hebiros/"+group_name+"/trajectory",
     boost::bind(&HebirosActions::trajectory, this, _1, group_name), false);
 
   trajectory_actions[group_name]->start();
@@ -75,7 +75,7 @@ void HebirosActions::trajectory(const TrajectoryGoalConstPtr& goal, std::string 
   double loop_duration;
   TrajectoryFeedback feedback;
 
-  ros::Rate loop_rate(HebirosParameters::getInt("/hebiros/action_frequency"));
+  ros::Rate loop_rate(HebirosParameters::getInt("hebiros/action_frequency"));
 
   ROS_INFO("Group [%s]: Executing trajectory", group_name.c_str());
   previous_time = ros::Time::now().toSec();
