@@ -162,7 +162,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   hebiros_group->feedback.gyro.resize(size);
 
   hebiros_group->feedback_pub = this->n->advertise<FeedbackMsg>(
-    "/hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
+    "hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
 
   hebiros_group->group_added = true;
 
