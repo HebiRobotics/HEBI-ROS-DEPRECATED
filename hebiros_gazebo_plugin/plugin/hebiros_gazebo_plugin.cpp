@@ -14,12 +14,20 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   int argc = 0;
   char **argv = NULL;
   ros::init(argc, argv, "hebiros_gazebo_plugin_node");
-  this->n.reset(new ros::NodeHandle);
 
-  this->add_group_srv =
-    this->n->advertiseService<AddGroupFromNamesSrv::Request, AddGroupFromNamesSrv::Response>(
-    "/hebiros_gazebo_plugin/add_group", boost::bind(
-    &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
+  this->robot_namespace = "";
+  if (_sdf->HasElement("robotNamespace")) {
+    this->robot_namespace = _sdf->GetElement("robotNamespace")->Get<std::string>();
+  }
+  if (this->robot_namespace == "") {
+    this->n.reset(new ros::NodeHandle);
+  } else {
+    this->n.reset(new ros::NodeHandle(this->robot_namespace));
+  }
+  ROS_INFO("this->robot_namespace = %s", this->robot_namespace.c_str());
+  std::string ns = ros::this_node::getNamespace();
+  ROS_INFO("ros::this_node::getNamespace = %s", ns.c_str());
+  this->first_sim_iteration = true;
 
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));

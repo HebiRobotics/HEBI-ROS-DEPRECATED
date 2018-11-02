@@ -40,6 +40,7 @@ class HebirosGazeboPlugin: public ModelPlugin {
     std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
     std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
 
+    std::string robot_namespace;
     std::shared_ptr<ros::NodeHandle> n;
     ros::Subscriber command_sub;
     ros::ServiceServer add_group_srv;
