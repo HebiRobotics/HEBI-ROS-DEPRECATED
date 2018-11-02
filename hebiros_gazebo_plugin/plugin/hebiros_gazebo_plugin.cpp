@@ -25,8 +25,6 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     this->n.reset(new ros::NodeHandle(this->robot_namespace));
   }
 
-  this->first_sim_iteration = true;
-
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
 
