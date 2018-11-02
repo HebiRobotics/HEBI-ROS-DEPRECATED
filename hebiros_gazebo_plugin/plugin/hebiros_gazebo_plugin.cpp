@@ -24,9 +24,7 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   } else {
     this->n.reset(new ros::NodeHandle(this->robot_namespace));
   }
-  ROS_INFO("this->robot_namespace = %s", this->robot_namespace.c_str());
-  std::string ns = ros::this_node::getNamespace();
-  ROS_INFO("ros::this_node::getNamespace = %s", ns.c_str());
+
   this->first_sim_iteration = true;
 
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
