@@ -35,10 +35,11 @@ class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoin
 
     ros::Subscriber imu_subscriber;
 
-    HebirosGazeboJoint(std::string name, std::shared_ptr<ros::NodeHandle> n);
+    HebirosGazeboJoint(const std::string& name, const std::string& model_name, bool is_x8, std::shared_ptr<ros::NodeHandle> n);
     ~HebirosGazeboJoint();
     void SubIMU(const boost::shared_ptr<sensor_msgs::Imu const> data);
 
+    bool isX8() const;
 };
 
 
