@@ -515,7 +515,7 @@ int main(int argc, char ** argv) {
   constexpr double rotate_increment = M_PI / 3.0; // 1/6 of a full rotation
 
   // Initialize abstracted components and their ROS interfaces
-  auto ipad = IPad::create("HEBI", "Virtual IO"); // This blocks forever...
+  auto ipad = IPad::create("HEBI", "Mobile IO"); // This blocks forever...
   Arm arm(node);
   Base base(node);
   Vision vision(node);
