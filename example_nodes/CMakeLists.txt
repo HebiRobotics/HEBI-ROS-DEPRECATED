@@ -210,87 +210,6 @@ install(FILES
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-
-add_executable(omnibase_node src/omnibase/omnibase_node.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-)
-add_dependencies(omnibase_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(omnibase_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-
-
-add_executable(omnibase_node_trajectory src/omnibase/omnibase_node_trajectory.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-)
-add_dependencies(omnibase_node_trajectory ${catkin_EXPORTED_TARGETS})
-target_link_libraries(omnibase_node_trajectory ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-
-
-add_executable(omnibase_odometry src/omnibase/omnibase_odometry.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-)
-add_dependencies(omnibase_odometry ${catkin_EXPORTED_TARGETS})
-target_link_libraries(omnibase_odometry ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-
-add_executable(arm_node src/arm_node/arm_node.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-
-  include/util/grav_comp.hpp
-
-  src/arm_node/arm_kinematics.cpp
-  src/arm_node/arm_trajectory.cpp
-  src/arm_node/arm.cpp
-)
-add_dependencies(arm_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(arm_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-
 add_executable(Rosie_arm_node src/Rosie_Demo/Rosie_arm_node.cpp
   include/hebi/command.cpp
   include/hebi/feedback.cpp
@@ -349,24 +268,6 @@ add_executable(demo_central src/Rosie_Demo/demo_central.cpp
 )
 add_dependencies(demo_central ${catkin_EXPORTED_TARGETS})
 target_link_libraries(demo_central ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
-
-
-add_executable(omnibase_waypoint src/omnibase/omnibase_waypoint.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-)
-add_dependencies(omnibase_waypoint ${catkin_EXPORTED_TARGETS})
-target_link_libraries(omnibase_waypoint ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
 
 
 add_executable(gripper_node src/Rosie_Demo/gripper_node.cpp

@@ -1,9 +1,0 @@
-controller_list:
-  - name: fake_Arm_controller
-    joints:
-      - HEBI/base
-      - HEBI/shoulder
-      - HEBI/elbow
-  - name: fake_End_controller
-    joints:
-      []

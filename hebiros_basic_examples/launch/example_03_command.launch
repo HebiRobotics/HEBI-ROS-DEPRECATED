@@ -1,6 +1,0 @@
-<launch>
-  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" respawn="false" output="screen"/>
-
-  <node name="example_03_command_node" pkg="hebiros_basic_examples" type="example_03_command_node" respawn="false" output="screen"/>
-
-</launch>

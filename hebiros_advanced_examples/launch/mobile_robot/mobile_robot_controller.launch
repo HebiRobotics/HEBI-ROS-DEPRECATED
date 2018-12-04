@@ -1,3 +1,0 @@
-<launch>
-  <node name="example_mobile_robot_node" pkg="hebiros" type="example_mobile_robot_node"/>
-</launch>

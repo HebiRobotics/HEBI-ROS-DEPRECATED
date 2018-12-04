@@ -1,7 +1,0 @@
-hebiros/WaypointMsg[] waypoints
-float64[] times
----
-sensor_msgs/JointState final_state
----
-float64 percent_complete
-

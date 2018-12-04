@@ -1,8 +1,0 @@
-<launch>
-  <param name="robot_description" command="cat $(find hebiros_description)/urdf/x_demo.urdf"/>
-
-  <node name="hebiros_node" pkg="hebiros" type="hebiros_node" respawn="false" output="screen"/>
-
-  <node name="example_05_kinematics_node" pkg="hebiros_basic_examples" type="example_05_kinematics_node" respawn="false" output="screen"/>
-
-</launch>
