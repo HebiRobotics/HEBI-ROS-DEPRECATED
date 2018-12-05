@@ -52,9 +52,9 @@ struct ColorParams {
 
 const ColorParams YellowParamsRGB {
   255, 255, 0,
-  120, 200,
-  60, 120,
-  0, 95
+  186, 255,
+  137, 255,
+  37, 116
 };
 
 const ColorParams YellowParamsHSV {
@@ -73,9 +73,9 @@ const ColorParams GreenParams {
 
 const ColorParams RedParamsRGB {
   255, 0, 0,
-  103, 255,
-  0, 47,
-  0, 64
+  217, 255,
+  0, 71,
+  0, 134
 };
 // HSV
 const ColorParams RedParamsHSV {
@@ -149,6 +149,7 @@ Blob getBlob(const cv::Mat& mat, cv::Mat& img_thresh, const ColorParams& color_p
 bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::CalibrateSrv::Response& res) {
 
   cv::namedWindow(OPENCV_WINDOW);
+  res.found = false;
 
   cv_bridge::CvImagePtr cvImagePtr;
   size_t num_attempts = 5;
@@ -169,14 +170,37 @@ bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::Cali
   if (attempts_made == num_attempts) {
     return false;
   }
+  ROS_INFO("Got Stream");
 
   // TODO: look into depth?
   cv::Mat &mat = cvImagePtr -> image;
 
-  res.found = true;
   res.points.clear();
   std::vector<cv::Point2d> pointbuf;
-  bool found = cv::findCirclesGrid(mat, cv::Size(5, 6), pointbuf);
+
+  // Note: if detection isn't working particularly well, you can tweak these
+  // values to ensure the blocks are appearing:
+  cv::SimpleBlobDetector::Params params;
+//  params.minArea = 20;
+//  params.filterByColor = false;
+//  params.filterByCircularity = false;
+//  params.filterByConvexity = false;
+  cv::Ptr<cv::SimpleBlobDetector> blobber = cv::SimpleBlobDetector::create(params);
+
+  // DEBUGGING - see what blobs are actually being detected + fed into
+  // findCirclesGrid; draw with purple circles.
+  std::vector<cv::KeyPoint> keypoints;
+  blobber->detect(mat, keypoints);
+  for (size_t i = 0; i < keypoints.size(); ++i) {
+    cv::circle(mat, keypoints[i].pt, 10, CV_RGB(255,0,255), 2);   
+  }
+  ROS_WARN_STREAM("Keypoints size: " << keypoints.size());
+
+  // Now, actually find the point cloud.  "CB_CLUSTERING" is better with
+  // distortion, but more susceptible to noise.
+  bool found = cv::findCirclesGrid(mat, cv::Size(5, 6), pointbuf,
+    cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobber);
+  res.found = found;
   ROS_INFO("Found: %d", found ? 1 : 0);
   if (found) {
     for (size_t i = 0; i < pointbuf.size(); ++i) {
@@ -224,13 +248,18 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
   cv::Mat img_hsv;
   cv::cvtColor(mat, img_hsv, cv::COLOR_BGR2HSV); // convert from rgb to hsv
 
+  // We check for each color we want to consider here, in a priority order.
+  // Note that you can switch in or add other colors here if you like.
+  // Currently, this looks for yellow, and then red if it can't find it.
+  // If you are using an HSV color space, use the "img_hsv" as the parameter to
+  // "getBlob" instead of "mat".
   cv::Mat img_thresh;
-  auto params = YellowParamsHSV;
-  Blob blob = getBlob(img_hsv, img_thresh, params);
+  auto params = YellowParamsRGB;
+  Blob blob = getBlob(mat, img_thresh, params);
 
   if (!blob.has_blob_) {
-    params = RedParamsHSV;
-    blob = getBlob(img_hsv, img_thresh, params);
+    params = RedParamsRGB;
+    blob = getBlob(mat, img_thresh, params);
   }
 
   if (blob.has_blob_) {

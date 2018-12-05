@@ -324,6 +324,19 @@ public:
   // TODO: ADD SET COLOR SERVICE HERE!!!
 };
 
+// Note: to set startup value, take printout from calibration and
+// place in matrices below, ignoring the [0, 0, 1] row. Read
+// columnwise from the printout, and write to these matrices
+// row-wise.  Example -- the following output:
+
+// -0.000339 -0.001367 -0.000000 -0.001718 0.000496 -0.000000 1.117905 0.425470 1.000000
+
+// would generate the following matrix:
+
+// { { -0.000339, -0.001718, 1.117905 },
+//   { -0.001367, 0.000496, 0.425470 } };
+
+
 // This is an "OK" solution...
 double affine_transform[2][3]
 //  { { -0.001356, -0.001167,  1.347606 },
@@ -332,8 +345,12 @@ double affine_transform[2][3]
 //    { { -0.001372, -0.00111, 1.225248 },
 //      { -0.000770, 0.001244, -0.074991 } };
 
-{ { -0.001378, -0.001062, 1.120516 },
-  { -0.000731, 0.001270, -0.079267 } };
+// { { -0.001378, -0.001062, 1.120516 },
+//   { -0.000731, 0.001270, -0.079267 } };
+
+{ { -0.000339, -0.001718, 1.117905 },
+  { -0.001367, 0.000496, 0.425470 } };
+
 
 class Vision {
 public:
@@ -370,15 +387,50 @@ public:
   bool calibrate() {
     ROS_WARN("CALIBRATION STARTED");
     if (calibrate_client_.call(calibrate_message_) && calibrate_message_.response.found) {
-      // Go through all points, do SVD!
-      // The 36 points should be row-by-row, given some basic testing
-      Eigen::MatrixXd camera_pts(3, 30);
+
       if (calibrate_message_.response.points.size() != 30)
         return false;
-      for (size_t i = 0; i < calibrate_message_.response.points.size(); ++i) {
-        camera_pts(0, i) = calibrate_message_.response.points[i].x;
-        camera_pts(1, i) = calibrate_message_.response.points[i].y;
-        camera_pts(2, i) = 1.0;
+
+      // Go through all points, do SVD!
+      int last_pt = 29; // 30 points, 0 indexed
+      // The 30 points should be col-by-col, but L/R and U/D ordering may differ.
+
+      // First and last col average x values:
+      float avg_x_left = 0;
+      float avg_x_right = 0;
+      for (size_t i = 0; i < 5; ++i) {
+        avg_x_left += calibrate_message_.response.points[i].x;
+        avg_x_right += calibrate_message_.response.points[last_pt - i].x;
+      }
+      // The world point we hardcode go from positive to negative x:
+      bool flip_x = avg_x_left < avg_x_right;
+      // This means [0] <-> [last_pt - 4], [1] <-> [last_pt - 3], ... [4] <-> [last_pt]
+
+      // First and last row average y values:
+      float avg_y_top = 0;
+      float avg_y_bot = 0;
+      for (size_t i = 0; i < 6; ++i) {
+        avg_y_top += calibrate_message_.response.points[i * 5].y;
+        avg_y_bot += calibrate_message_.response.points[last_pt - i * 5].y;
+      }
+      // The world point we hardcode go from far away (top) to close (bottom):
+      bool flip_y = avg_y_top > avg_y_bot;
+      // This means [0] <-> [4], [1] <-> [3], ... [last_pt - 4] <-> [last_pt]
+
+      Eigen::MatrixXd camera_pts(3, 30);
+      size_t rows = 5;
+      size_t cols = 6;
+      for (size_t row = 0; row < rows; ++row) {
+        int source_row = flip_y ? (rows - 1 - row) : row;
+        for (size_t col = 0; col < cols; ++col) {
+          int source_col = flip_x ? (cols - 1 - col) : col;
+          int dest_i = row + col * rows;
+          int source_i = source_row + source_col * rows;
+          
+          camera_pts(0, dest_i) = calibrate_message_.response.points[source_i].x;
+          camera_pts(1, dest_i) = calibrate_message_.response.points[source_i].y;
+          camera_pts(2, dest_i) = 1.0;
+        }
       }
 
       // The points they should match up with:
@@ -395,7 +447,8 @@ public:
       }
 
       Eigen::JacobiSVD<Eigen::MatrixXd> svd(camera_pts.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
-      auto calibrate_matrix = svd.solve(world_pts.transpose());
+     
+      Eigen::MatrixXd calibrate_matrix = svd.solve(world_pts.transpose());
       ROS_WARN("CALIBRATION SUCCESS");
       ROS_INFO("Size %d %d",
         (int)calibrate_matrix.rows(), (int)calibrate_matrix.cols());
