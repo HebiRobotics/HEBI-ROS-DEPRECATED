@@ -519,7 +519,7 @@ public:
   };
 
   struct State {
-    Mode to_mode{Mode::Pause};
+    Mode to_mode{Mode::Quit}; // Placeholder! Initialize to quit, and wait until "pause" to start.
     float drive_forward{0}; // [-1 to 1]
     float drive_left{0}; // [-1 to 1]
   };
@@ -574,12 +574,18 @@ int main(int argc, char ** argv) {
   Vision vision(node);
   Vision::Location location;
   Color color;
+  IPad::State& state = ipad->getState(); // Note -- this updates in the background!
 
+  // Wait for iPad start before continuing!
+  while (ros::ok())
+  {
+    if (state.to_mode == IPad::Mode::Pause)
+      break;
+  }
   arm.moveHome();
 
   // TODO: load calibration!
 
-  IPad::State& state = ipad->getState(); // Note -- this updates in the background!
   ros::Duration pause_wait(1);
   bool calibrate_latch = false;
 
