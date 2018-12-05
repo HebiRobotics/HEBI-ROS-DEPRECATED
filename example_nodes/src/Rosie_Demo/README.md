@@ -10,11 +10,10 @@ After installing the necessary Intel Realsense drivers and ROS packages, compile
 
 The demo is controlled via the HEBI Mobile I/O app.  Several buttons control the main modes of the demo:
 
-B1 - pause
-B2 - continue autonomous mode
-B3 - calibrate
-
-B8 - quit
+* B1 - pause
+* B2 - continue autonomous mode
+* B3 - calibrate
+* B5 - quit
 
 # Camera to world calibration
 
