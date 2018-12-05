@@ -189,7 +189,7 @@ public:
 
     //Get a group
     Lookup lookup;
-    auto group = lookup.getGroupFromNames(families, names);
+    auto group = lookup.getGroupFromNames(families, names, 10000);
 
     if (!group)
       return nullptr;

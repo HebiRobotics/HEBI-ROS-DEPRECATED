@@ -22,7 +22,7 @@ namespace hebi {
       }
 
       Lookup lookup;
-      auto group = lookup.getGroupFromNames(family_name, module_names);
+      auto group = lookup.getGroupFromNames(family_name, module_names, 10000);
       if (!group)
         return nullptr;
 

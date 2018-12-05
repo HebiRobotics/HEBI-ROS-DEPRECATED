@@ -42,7 +42,7 @@ int main(int argc, char ** argv) {
 
   // Get a group
   Lookup lookup;
-  std::shared_ptr<Group> group = lookup.getGroupFromNames({"Rosie"}, {"Spool"});
+  std::shared_ptr<Group> group = lookup.getGroupFromNames({"Rosie"}, {"Spool"}, 10000);
 
   if (!group) {
     ROS_ERROR("Group not found! Shutting Down...\n");
