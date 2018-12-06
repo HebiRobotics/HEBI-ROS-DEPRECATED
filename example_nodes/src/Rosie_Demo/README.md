@@ -16,6 +16,29 @@ If you have not yet run the demo on this robot, or the control gains may have be
 
 Next, select the remaining Rosie modules (base, elbow, shoulder, spool, wrist1, wrist2, and wrist3), and click the "send file" button again.  This time, select the `rosie_arm_gains.xml` file from the ROSie source directory, and click "ok" to configure these modules.
 
+# Color calibration for object detection
+
+**Color detection thresholds should be tuned for each object that is being recognized each time the lighting conditions change significantly**
+
+You may need to tune the RGB or HSV values in order to pick up colored objects in the particular lighting conditions you run this demo in.  To do so, we have included a ROS node and launch file that allows you to drag sliders to adjust these values.  Note that you currently need to change the source to adjust to GUI to show the effect of different RGB value thresholds.
+
+To run the GUI, run:
+```roslaunch example_nodes VisionThreshold.launch```
+
+Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note min/max for each channel.
+
+Once you have ranges for each of these parameters, you can add set these in the `vision_process.cpp` file as the various "color" objects that you are looking for.  Change or add the color structure for your identified object here:
+
+https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L53
+
+And then enable it in the logic that is actually searching for blobs here:
+
+https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L251
+
+After making these changes, run `catkin_make` in your workspace to have these values used next time the code is run.
+
+(Advanced note -- you can tweak the source of the vision threshold and vision process programs to allow HSV as well.)
+
 # Starting the demo
 
 Before running, ensure that the all modules in the arm (Base, shoulder, elbow, and wrists) are near 0 (especially the base module).  When you start the program, the robot will move into a "home" position with the end effector in front of the robot, and if the modules and a large motion could cause the robot arm to collide with the mast holding the realsense up.
@@ -44,11 +67,11 @@ Several buttons control the main modes of the demo:
 * B4 - deploy bean bags (so they can be picked up again)
 * B5 - quit
 
-*Important: camera + vision calibration should be completed before attempting autonomous mode!!!*
+**Important: camera + vision calibration should be completed before attempting autonomous mode!!!**
 
 Camera to robot calibration should be completed each time the camera changes position/angle relative to the robot, or is added/removed from the robot (E.g., for packing).  See below for instructions.
 
-Vision thresholds should be tuned for each object that is being recognized each time the lighting conditions change significantly.  The current classifier is a simple image thresholding + blob detection approach; more sophisticated methods could be added if desired.  See below for instructions.
+Color detection thresholds should be tuned for each object that is being recognized each time the lighting conditions change significantly.  The current classifier is a simple image thresholding + blob detection approach; more sophisticated methods could be added if desired.  See above for instructions.
 
 ## Basic autonomous functionality
 
@@ -74,30 +97,9 @@ _If the calibration fails_, press "B1" to "pause" the control again, then press 
 
 If the captured image does not show up, trying 3-4 more times will usually work to help visualize the image.
 
-*Important:* Note that this calibration only applies for the current run of the robot; to set this as the default starting camera calibration, save these values in the source code at the location below, and be sure to recompile by running `catkin_make` in your workspace to have these values used next time the code is run. 
+**Important: Note that this calibration only applies for the current run of the robot; to set this as the default starting camera calibration, save these values in the source code at the location below, and be sure to recompile by running `catkin_make` in your workspace to have these values used next time the code is run. **
 
 https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/demo_central.cpp#L327
-
-# Color calibration
-
-You may need to tune the RGB or HSV values in order to pick up colored objects in the particular lighting conditions you run this demo in.  To do so, we have included a ros program that allows you to drag sliders to adjust these values.  Note that you currently need to change the source to adjust to GUI to show the effect of different RGB value thresholds.
-
-To run the GUI, run:
-```roslaunch example_nodes VisionThreshold.launch```
-
-Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note min/max for each channel.
-
-Once you have ranges for each of these parameters, you can add set these in the `vision_process.cpp` file as the various "color" objects that you are looking for.  Change or add the color structure for your identified object here:
-
-https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L53
-
-And then enable it in the logic that is actually searching for blobs here:
-
-https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L251
-
-After making these changes, run `catkin_make` in your workspace to have these values used next time the code is run.
-
-(Advanced note -- you can tweak the source of the vision threshold and vision process programs to allow HSV as well.)
 
 # Code structure
 
