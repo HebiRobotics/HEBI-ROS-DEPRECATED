@@ -85,9 +85,10 @@ When in autonomous mode, the LEDs on the system can be used for visial diagnosti
 
 Note that there are four .svg files in their directory.  These should be printed out and taped together with the red dots in the center.  Be careful that these printouts are full scale on 8 1/2 x 11" paper.
 
-Once the demo is paused, the complete 4-page calibration sheet should be centered on the floor at the front of the robot, with the blank space adjacent to the robot.
+Once the demo is paused, the complete 4-page calibration sheet should be centered on the floor at the front of the robot, with the blank space adjacent to the robot.  Carefully center the calibration sheet in the middle of the robot, and ensure the close edge of the paper is flush with the vertical front panel of the robot:
 
-(TODO: photo of calibration setup)
+![Side view of calibration](calibration_side.jpg)
+![Front view of calibration](calibration_front.jpg)
 
 Then B3 can be pressed, at which time the screen should show the captured image of the calibration sheet, including the recognized circles (these will show up as bright concentric circles -- there are also purple circles which may show up, but these are a diagnostic that just indicate all of the circular blobs were found in the image.
 
