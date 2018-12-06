@@ -72,6 +72,8 @@ Note with some combinations of realsense drivers and openCV, you may need mutipl
 
 _If the calibration fails_, press "B1" to "pause" the control again, then press B3 to calibrate again.
 
+If the captured image does not show up, trying 3-4 more times will usually work to help visualize the image.
+
 # Color calibration
 
 You may need to tune the RGB or HSV values in order to pick up colored objects in the particular lighting conditions you run this demo in.  To do so, we have included a ros program that allows you to drag sliders to adjust these values.  Note that you currently need to change the source to adjust to GUI between RGB and HSV values.
