@@ -30,7 +30,8 @@ rosdep update
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 
-sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential```
+sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential
+```
 
 # (4) Create ros workspace + install ros realsense package
 
@@ -44,7 +45,8 @@ cd src```
 
 ```wget https://github.com/intel-ros/realsense/archive/2.1.1.tar.gz
 tar -xzvf 2.1.1.tar.gz
-rm 2.1.1.tar.gz```
+rm 2.1.1.tar.gz
+```
 
 Patches needed for V2.1.1 of the ROS wrapper in combination with v2.17 of the librealsense2 drivers:
 * https://github.com/intel-ros/realsense/pull/523/files
@@ -56,18 +58,20 @@ catkin_make clean
 catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
 catkin_make install
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-source ~/.bashrc```
+source ~/.bashrc
+```
 
 # (5) Download code
 
 ```cd src
 git clone https://github.com/HebiRobotics/HEBI-ROS.git
 cd HEBI-ROS
-git checkout iamtesch/ROSie```
-
+git checkout iamtesch/ROSie
+```
 
 # (6) Build
 
 ```cd ../..
 catkin_make example_nodes_generate_messages
-catkin_make```
+catkin_make
+```
