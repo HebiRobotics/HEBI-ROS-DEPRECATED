@@ -41,9 +41,24 @@ Several buttons control the main modes of the demo:
 * B1 - initialize on boot, pause while running
 * B2 - continue autonomous mode
 * B3 - calibrate
+* B4 - deploy bean bags (so they can be picked up again)
 * B5 - quit
 
-# Camera to world calibration
+*Important: camera + vision calibration should be completed before attempting autonomous mode!!!*
+
+Camera to robot calibration should be completed each time the camera changes position/angle relative to the robot, or is added/removed from the robot (E.g., for packing).  See below for instructions.
+
+Vision thresholds should be tuned for each object that is being recognized each time the lighting conditions change significantly.  The current classifier is a simple image thresholding + blob detection approach; more sophisticated methods could be added if desired.  See below for instructions.
+
+## Basic autonomous functionality
+
+When "B2" is pressed, the robot will transition to "autonomous mode".  When in this mode, the robot will scan the area immediately around it for colored beanbags.  If it sees one it can reach, the robot grabs it and places it in its basket.  If it cannot reach, it moves towards the object.  If it cannot find an object, it will continue searching.
+
+When it has cleaned up the entire area around it, it will "redeploy" its beanbags by tossing them on the floor, then moving to a slightly different starting point.
+
+When in autonomous mode, the LEDs on the system can be used for visial diagnostic of the autonomous algorithm.  If the arm is picking a yellow beanbag, the LEDs on the arm will turn yellow.  If the base is moving towards a red beanbag, the LEDs on the three wheel modules will turn red.
+
+# Camera to robot calibration
 
 Note that there are four .svg files in their directory.  These should be printed out and taped together with the red dots in the center.  Be careful that these printouts are full scale on 8 1/2 x 11" paper.
 
@@ -51,7 +66,11 @@ Once the demo is paused, the complete 4-page calibration sheet should be centere
 
 (TODO: photo of calibration setup)
 
-Then B3 can be pressed, at which time the screen should show the captured image of the calibration sheet, including the recognized circles.
+Then B3 can be pressed, at which time the screen should show the captured image of the calibration sheet, including the recognized circles (these will show up as bright concentric circles -- there are also purple circles which may show up, but these are a diagnostic that just indicate all of the circular blobs were found in the image.
+
+Note with some combinations of realsense drivers and openCV, you may need mutiple calibration attempts before one finally matches.  Also, the displayed image may not be shown on the first time.  However, the content in the terminal should clearly state whether or not the calibration succeeded.
+
+_If the calibration fails_, press "B1" to "pause" the control again, then press B3 to calibrate again.
 
 # Color calibration
 
