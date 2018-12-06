@@ -2,15 +2,43 @@
 
 This code was run at IROS 2018 in Madrid, and is designed to be run with a HEBI Rosie robot kit, including a Intel Realsense camera mounted on a vertical pole and a basket to catch bean bags that are picked up by the robot.
 
+# Install dependencies 
+
+See [Install Instructions](INSTALL.md)
+
 # Compiling
 
-After installing the necessary Intel Realsense drivers and ROS packages, compile via `catkin_make` in your ROS workspace.
+After installing the necessary Intel Realsense drivers and ROS packages, compile via `catkin_make` in your ROS workspace (~/rosie_workspace if you have followed the installation instructions above).
+
+# Configuring the robot
+
+If you have not yet run the demo on this robot, or the control gains may have been changed since you last ran the program, open the Scope diagnostic program.  First, select the three wheel modules in the left pane (they should be in order, 1-3).  Then go to the "gains" tab, ensure the "persist sends" toggle is turned on, and then click the "send file" button.  Select the `rosie_wheel_gains.xml` file from the ROSie source directory, and click "ok" to configure these modules.
+
+Next, select the remaining Rosie modules (base, elbow, shoulder, spool, wrist1, wrist2, and wrist3), and click the "send file" button again.  This time, select the `rosie_arm_gains.xml` file from the ROSie source directory, and click "ok" to configure these modules.
+
+# Starting the demo
+
+Before running, ensure that the all modules in the arm (Base, shoulder, elbow, and wrists) are near 0 (especially the base module).  When you start the program, the robot will move into a "home" position with the end effector in front of the robot, and if the modules and a large motion could cause the robot arm to collide with the mast holding the realsense up.
+
+To begin the program, launch ROSie.launch from the example_nodes package.  Note: you must be in the catkin workspace you set up for this to work (e.g., the `~/rosie_workspace` directory):
+
+```roslaunch example_nodes ROSie.launch```
+
+After starting the program, the robot should move to its base position.  At this time, ensure there is no red text on the screen (this indicates a problem with one of the nodes -- either the gripper, base, or arm modules cannot be found, or the computer cannot connect to the realsense).  If the modules cannot be found, <ctrl-C>, then check the connections between modules and try to restart the program.  If the realsense cannot be found, then <ctrl-C>, unplug and replug the realsense, and relaunch the program.
+  
+Once a successful launch occurs, the program will be waiting for a Mobile IO device to appear on the robot's network.  This can be an android or iPhone, with the HEBI Mobile IO app installed.  This will be used to control the robot.
+
+If this cannot be found, ensure that the device running the Mobile IO app is connected the the `hebi_robot` wifi network, with a password of `hebi123411`.
+- If not set correctly, set the app name to "Mobile IO" and family to "HEBI".  Test from Scope on the robot to ensure the app is visible from the robot's PC.  In the iOS app, you can set this from the app settings; in Android, this is settable via Scope.
+- Ensure the app is connected to the `hebi_robot` robot!
+
+After the Mobile IO app is found, *you must press (1) on the app to begin the rest of the program!*
 
 # Running the demo
 
-The demo is controlled via the HEBI Mobile I/O app.  Several buttons control the main modes of the demo:
+Several buttons control the main modes of the demo:
 
-* B1 - pause
+* B1 - initialize on boot, pause while running
 * B2 - continue autonomous mode
 * B3 - calibrate
 * B5 - quit
