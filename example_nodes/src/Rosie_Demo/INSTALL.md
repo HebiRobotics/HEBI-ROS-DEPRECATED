@@ -6,15 +6,15 @@ This process can be used if running ROSie code on a HEBI Rosie kit.
 
 ## Dependency Installation:
 
-# (1) Install Ubuntu 18.04
+### (1) Install Ubuntu 18.04
 
-# (2) Install librealsense drivers (v2.17)
+### (2) Install librealsense drivers (v2.17)
 
 To do this, follow Step 1 at https://github.com/intel-ros/realsense/#installation-instructions
 
 We used v2.17, although see notes on ROS realsense wrapper installation for necessary workarounds.  Other versions may work as well.
 
-# (3) Install ROS (Melodic)
+### (3) Install ROS (Melodic)
 
 (Below instructions taken from http://wiki.ros.org/melodic/Installation/Ubuntu)
 
@@ -33,7 +33,7 @@ source ~/.bashrc
 sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool build-essential
 ```
 
-# (4) Create ros workspace + install ros realsense package
+### (4) Create ros workspace + install ros realsense package
 
 (Below instructions adapted from https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
@@ -61,7 +61,7 @@ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-# (5) Download code
+### (5) Download code
 
 ```cd src
 git clone https://github.com/HebiRobotics/HEBI-ROS.git
@@ -69,7 +69,7 @@ cd HEBI-ROS
 git checkout iamtesch/ROSie
 ```
 
-# (6) Build
+### (6) Build
 
 ```cd ../..
 catkin_make example_nodes_generate_messages
