@@ -506,6 +506,7 @@ public:
       ROS_INFO("Looking for iPad");
       group = lookup.getGroupFromNames({ family }, { name });
     }
+    ROS_INFO("iPad found!");
     return std::unique_ptr<IPad>(new IPad(group));
   }
 
