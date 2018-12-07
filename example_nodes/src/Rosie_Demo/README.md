@@ -19,9 +19,19 @@ You may need to tune the RGB or HSV values in order to pick up colored objects i
 To run the GUI, run:
 ```roslaunch example_nodes VisionThreshold.launch```
 
-Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note min/max for each channel.
+If the realsense cannot be found, then <ctrl-C>, unplug and replug the realsense, and relaunch the program.  This will be indicated by a red text error message in the terminal.
 
-Once you have ranges for each of these parameters, you can add set these in the `vision_process.cpp` file as the various "color" objects that you are looking for.  Change or add the color structure for your identified object here:
+You will see an image such as the following:
+
+![Initial color thresholding screen](vision_start.png)
+
+Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note that you will have to adjust the min and the max for each channel.  When complete, you should have something like:
+
+![Color thresholds providing good segmentation](vision_segmented.png)
+
+The cleaner and more robust the segmentation is, the better results you will have with the demonstration.
+
+Once you have ranges for each of these parameters, note these values so you can add set these in the `vision_process.cpp` file as the various "color" objects that you are looking for, and then "ctrl-C" in the terminal to quit the thresholding GUI. Change or add the color structure for your identified object here:
 
 https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L53
 
@@ -35,13 +45,17 @@ After making these changes, run `catkin_make` in your workspace to have these va
 
 # Starting the demo
 
-Before running, ensure that the all modules in the arm (Base, shoulder, elbow, and wrists) are near 0 (especially the base module).  When you start the program, the robot will move into a "home" position with the end effector in front of the robot, and if the modules and a large motion could cause the robot arm to collide with the mast holding the realsense up.
+**Important:**  Note that there is an "e-stop" button located on the base of the robot.  If anything goes wrong, press this button and the robot arm will lock into its current position; the wheels will be set to a "motor off" strategy to allow you to move the base.  If you have pressed the E-stop, you will need to restart the program to continue operation of the robot.  First stop the program, then release the E-stop, and then restart the program.
+
+Before running, ensure that the all modules in the arm (Base, shoulder, elbow, and wrists) are within pi/2 radians of 0 (especially the base module).  To do this, open the Scope GUI, select the module, go to the "monitoring" tab, and press the "position" plot button to view the current position.  Note that the encoders are multiturn absolute, and so visually inspecting the position of the system is not sufficient!
+
+When you start the program, the robot will move into a "home" position with the end effector in front of the robot, and if the modules are not near zero, a large motion could cause the robot arm to collide with the mast holding the realsense up.
 
 To begin the program, launch ROSie.launch from the example_nodes package.  Note: you must be in the catkin workspace you set up for this to work (e.g., the `~/rosie_workspace` directory):
 
 ```roslaunch example_nodes ROSie.launch```
 
-After starting the program, the robot should move to its base position.  At this time, ensure there is no red text on the screen (this indicates a problem with one of the nodes -- either the gripper, base, or arm modules cannot be found, or the computer cannot connect to the realsense).  If the modules cannot be found, <ctrl-C>, then check the connections between modules and try to restart the program.  If the realsense cannot be found, then <ctrl-C>, unplug and replug the realsense, and relaunch the program.
+After starting the program, the robot should move to its base position.  At this time, ensure there is no red text on the screen (this indicates a problem with one of the nodes -- either the gripper, base, or arm modules cannot be found, or the computer cannot connect to the realsense).  If the modules cannot be found, <ctrl-C>, then check the connections between modules and try to restart the program.  If the realsense cannot be found, then <ctrl-C>, unplug and replug the realsense, and relaunch the program.  Note that there are a lot of information messages, and so the error message may get lost in the output quickly.  Scroll up and look for any red text.
   
 Once a successful launch occurs, the program will be waiting for a Mobile IO device to appear on the robot's network.  This can be an android or iPhone, with the HEBI Mobile IO app installed.  This will be used to control the robot.
 
@@ -84,17 +98,25 @@ Once the demo is paused, the complete 4-page calibration sheet should be centere
 ![Side view of calibration](calibration_side.jpg)
 ![Front view of calibration](calibration_front.jpg)
 
-Then B3 can be pressed, at which time the screen should show the captured image of the calibration sheet, including the recognized circles (these will show up as bright concentric circles -- there are also purple circles which may show up, but these are a diagnostic that just indicate all of the circular blobs were found in the image.
+Then B3 can be pressed, at which time the screen should show the captured image of the calibration sheet, including the recognized circles:
 
-Note with some combinations of realsense drivers and openCV, you may need mutiple calibration attempts before one finally matches.  Also, the displayed image may not be shown on the first time.  However, the content in the terminal should clearly state whether or not the calibration succeeded.
+![Successful calibration](calibration_success.png)
+
+Note that a successful calibration with have the purple circles (indicating the detected blobs) _and_ the cyan dots and circles (indicating the actual detected grid); if both of these do not show up the calibration was not a success.
+
+Note with some combinations of realsense drivers and openCV, you may need multiple calibration attempts before one finally matches.  Also, the displayed image may not be shown on the first time.  However, the content in the terminal should state whether or not the calibration succeeded.
 
 _If the calibration fails_, press "B1" to "pause" the control again, then press B3 to calibrate again.
 
 If the captured image does not show up, trying 3-4 more times will usually work to help visualize the image.
 
-**Important: Note that this calibration only applies for the current run of the robot; to set this as the default starting camera calibration, save these values in the source code at the location below, and be sure to recompile by running `catkin_make` in your workspace to have these values used next time the code is run. **
+**Important: Note that this calibration only applies for the current run of the robot; to set this as the default starting camera calibration, save these values in the source code at the location below, and be sure to recompile by running `catkin_make` in your workspace to have these values used next time the code is run. **  The source code linked below has comments describing how to transform this data.
 
 https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/demo_central.cpp#L327
+
+The values that you need to use for this will be output to the screen (see the highlighted red box indicating where these values can be found):
+
+![Calibration output](matrix_output.png)
 
 # Code structure
 
