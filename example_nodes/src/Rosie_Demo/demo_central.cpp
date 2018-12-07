@@ -348,8 +348,8 @@ double affine_transform[2][3]
 // { { -0.001378, -0.001062, 1.120516 },
 //   { -0.000731, 0.001270, -0.079267 } };
 
-{ { -0.000339, -0.001718, 1.117905 },
-  { -0.001367, 0.000496, 0.425470 } };
+{ { -0.000410, -0.001728, 1.124043 },
+  { -0.001381, 0.000553, 0.326743 } };
 
 
 class Vision {
@@ -532,6 +532,8 @@ public:
 private:
   IPad(std::shared_ptr<hebi::Group> group) : _group(group)
   {
+    // Since we are polling, let's do this a little more quickly!
+    _group->setFeedbackFrequencyHz(250);
     _group->addFeedbackHandler([this] (const hebi::GroupFeedback& feedback) {
       auto& fbk = feedback[0];
       if (fbk.io().b().hasInt(1) && fbk.io().b().getInt(1) == 1) {
