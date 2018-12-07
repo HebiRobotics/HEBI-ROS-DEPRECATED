@@ -25,7 +25,7 @@ You will see an image such as the following:
 
 ![Initial color thresholding screen](vision_start.png)
 
-Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note that you will have to adjust the min and the max for each channel.  When complete, you should have something like:
+Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note that you will have to adjust the min and the max for each channel.  When complete, you should have something like the following (there are two identified bean bags in this image):
 
 ![Color thresholds providing good segmentation](vision_segmented.png)
 
