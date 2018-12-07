@@ -12,6 +12,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O2")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  roslib
   std_msgs
   sensor_msgs
   urdf
@@ -194,8 +195,19 @@ install(FILES
   launch/odometry.launch
   launch/arm_node.launch
   launch/demo1.launch
+  src/Rosie_Demo/rosie_arm_gains.xml
+  src/Rosie_Demo/rosie_base_gains.xml
+  src/Rosie_Demo/rosie_gripper_gains.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+## I don't think this is the _right_ way to do this, but it works...
+file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/Rosie_Demo/rosie_arm_gains.xml
+      DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION})
+file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/Rosie_Demo/rosie_base_gains.xml
+      DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION})
+file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/Rosie_Demo/rosie_gripper_gains.xml
+      DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION})
 
 #############
 ## Testing ##

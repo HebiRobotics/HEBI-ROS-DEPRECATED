@@ -12,6 +12,7 @@
 #include "group_command.hpp"
 
 #include <ros/console.h>
+#include <ros/package.h>
 
 namespace hebi {
 namespace ros {
@@ -181,10 +182,24 @@ int main(int argc, char ** argv) {
   }
 
   // Load the appropriate gains file
-  // TODO: BETTER PACKAGE THIS FILE!!!
-  hebi::GroupCommand gains_cmd(arm -> size());
-  gains_cmd.readGains("/home/hebi/catkin_ws/src/HEBI-ROS/example_nodes/include/gains/6-DoF-Arm-Gains-Rosie.xml");
-  arm -> getGroup() -> sendCommand(gains_cmd);
+  {
+    hebi::GroupCommand gains_cmd(arm -> size());
+    std::string resource_path = ros::package::getPath("example_nodes") + "/src/Rosie_Demo/";
+    bool success = gains_cmd.readGains(resource_path + std::string("/rosie_arm_gains.xml"));
+    if (!success)
+      ROS_ERROR("Could not load arm gains file!");
+    else
+    {
+      for (size_t i = 0; i < 5; ++i)
+      {
+        success = arm->getGroup()->sendCommandWithAcknowledgement(gains_cmd);
+        if (success)
+          break;
+      }
+      if (!success)
+        ROS_ERROR("Could not set arm gains!");
+    }
+  }
 
   /////////////////// Initialize ROS interface ///////////////////
    

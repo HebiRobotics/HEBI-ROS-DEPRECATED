@@ -7,6 +7,7 @@
 
 #include <ros/ros.h>
 #include <ros/console.h>
+#include <ros/package.h>
 
 #include <iostream>
 #include <chrono>
@@ -47,6 +48,29 @@ int main(int argc, char ** argv) {
   if (!group) {
     ROS_ERROR("Group not found! Shutting Down...\n");
     return -1;
+  }
+
+  {
+    // Load the appropriate gains file
+    hebi::GroupCommand gains_cmd(group->size());
+    std::string resource_path = ros::package::getPath("example_nodes") + "/src/Rosie_Demo/";
+    bool success = gains_cmd.readGains(resource_path + std::string("rosie_gripper_gains.xml"));
+    if (!success)
+    {
+      ROS_ERROR("Could not load gripper gains file!");
+      ROS_ERROR_STREAM(resource_path << std::string("rosie_gripper_gains.xml"));
+    }
+    else
+    {
+      for (size_t i = 0; i < 5; ++i)
+      {
+        success = group->sendCommandWithAcknowledgement(gains_cmd);
+        if (success)
+          break;
+      }
+      if (!success)
+        ROS_ERROR("Could not set gripper gains!");
+    }
   }
 
   GroupCommand group_command(group -> size());

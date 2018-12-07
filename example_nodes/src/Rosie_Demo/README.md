@@ -10,12 +10,6 @@ See [Install Instructions](INSTALL.md)
 
 After installing the necessary Intel Realsense drivers and ROS packages, compile via `catkin_make` in your ROS workspace (~/rosie_workspace if you have followed the installation instructions above).
 
-# Configuring the robot
-
-If you have not yet run the demo on this robot, or the control gains may have been changed since you last ran the program, open the Scope diagnostic program.  First, select the three wheel modules in the left pane (they should be in order, 1-3).  Then go to the "gains" tab, ensure the "persist sends" toggle is turned on, and then click the "send file" button.  Select the `rosie_wheel_gains.xml` file from the ROSie source directory, and click "ok" to configure these modules.
-
-Next, select the remaining Rosie modules (base, elbow, shoulder, spool, wrist1, wrist2, and wrist3), and click the "send file" button again.  This time, select the `rosie_arm_gains.xml` file from the ROSie source directory, and click "ok" to configure these modules.
-
 # Color calibration for object detection
 
 **Color detection thresholds should be tuned for each object that is being recognized each time the lighting conditions change significantly**

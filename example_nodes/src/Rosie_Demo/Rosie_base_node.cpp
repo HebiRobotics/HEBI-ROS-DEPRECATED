@@ -12,6 +12,7 @@
 #include "trajectory.hpp"
 
 #include <ros/console.h>
+#include <ros/package.h>
 
 namespace hebi {
 namespace ros {
@@ -195,9 +196,24 @@ public:
       return nullptr;
 
     // Load the appropriate gains file
-    // TODO: BETTER PACKAGE THIS FILE!!!
-    GroupCommand gains_cmd(group -> size());
-    gains_cmd.readGains("/home/hebi/catkin_ws/src/HEBI-ROS/example_nodes/include/gains/omnibase_gains.xml");
+    {
+      hebi::GroupCommand gains_cmd(group->size());
+      std::string resource_path = ::ros::package::getPath("example_nodes") + "/src/Rosie_Demo/";
+      bool success = gains_cmd.readGains(resource_path + std::string("rosie_base_gains.xml"));
+      if (!success)
+        ROS_ERROR("Could not load base gains file!");
+      else
+      {
+        for (size_t i = 0; i < 5; ++i)
+        {
+          success = group->sendCommandWithAcknowledgement(gains_cmd);
+          if (success)
+            break;
+        }
+        if (!success)
+          ROS_ERROR("Could not set base gains!");
+      }
+    }
 
     constexpr double feedback_frequency = 100;
     group->setFeedbackFrequencyHz(feedback_frequency);
