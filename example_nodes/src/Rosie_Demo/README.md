@@ -8,7 +8,7 @@ See [Install Instructions](INSTALL.md)
 
 # Compiling
 
-After installing the necessary Intel Realsense drivers and ROS packages, compile via `catkin_make` in your ROS workspace (~/rosie_workspace if you have followed the installation instructions above).
+After installing the necessary Intel Realsense drivers and ROS packages, compile via `catkin_make example_nodes_generate_messages` and then `catkin_make` in your ROS workspace (~/rosie_workspace if you have followed the installation instructions above).
 
 # Color calibration for object detection
 
@@ -25,7 +25,7 @@ You will see an image such as the following:
 
 ![Initial color thresholding screen](vision_start.png)
 
-Tune min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note that you will have to adjust the min and the max for each channel.  When complete, you should have something like the following (there are two identified bean bags in this image):
+First, move the robot arm out of the image view area.  Then tune the min/max rgb values to get clear segmentation for desired objects, with as little extra noise as possible.  The object to be picked up should be displayed as white, and the background should be black.  Note that you will have to adjust the min and the max for each channel.  When complete, you should have something like the following (there are two identified bean bags in this image):
 
 ![Color thresholds providing good segmentation](vision_segmented.png)
 
