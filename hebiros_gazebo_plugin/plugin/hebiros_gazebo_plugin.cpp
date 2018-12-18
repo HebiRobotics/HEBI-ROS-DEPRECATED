@@ -1,14 +1,7 @@
-
 #include <hebiros_gazebo_plugin.h>
-
-
-HebirosGazeboPlugin::HebirosGazeboPlugin() {}
-
-HebirosGazeboPlugin::~HebirosGazeboPlugin() {}
 
 //Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-
   this->model = _model;
 
   int argc = 0;
@@ -38,7 +31,6 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
 //Update the joints at every simulation iteration
 void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
-
   ros::Time current_time = ros::Time::now();
 
   for (auto group_pair : hebiros_groups) {
@@ -55,12 +47,10 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 
 //Publish feedback and compute PID control to command a joint
 void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
-
   for (auto joint_pair : hebiros_group->joints) {
 
     std::string joint_name = joint_pair.first;
     std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_group->joints[joint_name];
-
 
     physics::JointPtr joint = this->model->GetJoint(joint_name+"/"+hebiros_joint->model_name);
 

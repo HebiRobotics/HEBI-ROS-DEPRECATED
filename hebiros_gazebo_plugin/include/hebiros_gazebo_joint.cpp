@@ -1,6 +1,4 @@
-
 #include <hebiros_gazebo_joint.h>
-
 
 HebirosGazeboJoint::HebirosGazeboJoint(const std::string& name_,
   const std::string& model_name_,
@@ -15,11 +13,8 @@ HebirosGazeboJoint::HebirosGazeboJoint(const std::string& name_,
     100, boost::bind(&HebirosGazeboJoint::SubIMU, this, _1));
 }
 
-HebirosGazeboJoint::~HebirosGazeboJoint() {}
-
 //Subscriber which receives IMU feedback from gazebo
 void HebirosGazeboJoint::SubIMU(const boost::shared_ptr<sensor_msgs::Imu const> data) {
-
   this->accelerometer = data->linear_acceleration;
   this->gyro = data->angular_velocity;
 }

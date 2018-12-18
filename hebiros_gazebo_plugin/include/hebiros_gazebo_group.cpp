@@ -1,4 +1,3 @@
-
 #include <hebiros_gazebo_group.h>
 #include "hebiros_gazebo_controller.h"
 
@@ -29,8 +28,6 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
     "hebiros_gazebo_plugin/set_feedback_frequency/"+name, boost::bind(
     &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
 }
-
-HebirosGazeboGroup::~HebirosGazeboGroup() {}
 
 void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
 
