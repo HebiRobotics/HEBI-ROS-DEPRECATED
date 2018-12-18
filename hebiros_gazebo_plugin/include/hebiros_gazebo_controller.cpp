@@ -1,6 +1,4 @@
-
 #include <hebiros_gazebo_controller.h>
-
 
 namespace controller {
 
@@ -12,33 +10,33 @@ enum class control_strategies {
   CONTROL_STRATEGY_4 = 4
 };
 
-control_strategies DEFAULT_CONTROL_STRATEGY = control_strategies::CONTROL_STRATEGY_3;
+static constexpr control_strategies DEFAULT_CONTROL_STRATEGY = control_strategies::CONTROL_STRATEGY_3;
 
-    double MAX_PWM = 1.0;
-    double MIN_PWM = -1.0;
+static constexpr double MAX_PWM = 1.0;
+static constexpr double MIN_PWM = -1.0;
 
-    double LOW_PASS_ALPHA = 0.1;
+static constexpr double LOW_PASS_ALPHA = 0.1;
 
-    double DEFAULT_POSITION_KP = 0.5;
-    double DEFAULT_POSITION_KI = 0.0;
-    double DEFAULT_POSITION_KD = 0.0;
-    double DEFAULT_VELOCITY_KP = 0.05;
-    double DEFAULT_VELOCITY_KI = 0.0;
-    double DEFAULT_VELOCITY_KD = 0.0;
-    double DEFAULT_EFFORT_KP = 0.25;
-    double DEFAULT_EFFORT_KI = 0.0;
-    double DEFAULT_EFFORT_KD = 0.001;
+static constexpr double DEFAULT_POSITION_KP = 0.5;
+static constexpr double DEFAULT_POSITION_KI = 0.0;
+static constexpr double DEFAULT_POSITION_KD = 0.0;
+static constexpr double DEFAULT_VELOCITY_KP = 0.05;
+static constexpr double DEFAULT_VELOCITY_KI = 0.0;
+static constexpr double DEFAULT_VELOCITY_KD = 0.0;
+static constexpr double DEFAULT_EFFORT_KP = 0.25;
+static constexpr double DEFAULT_EFFORT_KI = 0.0;
+static constexpr double DEFAULT_EFFORT_KD = 0.001;
 
-    double GEAR_RATIO_X5_1 = 272.22;
-    double GEAR_RATIO_X8_3 = 272.22;
-    double GEAR_RATIO_X5_4 = 762.22;
-    double GEAR_RATIO_X8_9 = 762.22;
-    double GEAR_RATIO_X5_9 = 1742.22;
-    double GEAR_RATIO_X8_16 = 1462.222;
+static constexpr double GEAR_RATIO_X5_1 = 272.22;
+static constexpr double GEAR_RATIO_X8_3 = 272.22;
+static constexpr double GEAR_RATIO_X5_4 = 762.22;
+static constexpr double GEAR_RATIO_X8_9 = 762.22;
+static constexpr double GEAR_RATIO_X5_9 = 1742.22;
+static constexpr double GEAR_RATIO_X8_16 = 1462.222;
 
-    double DEFAULT_GEAR_RATIO = 272.22;
+static constexpr double DEFAULT_GEAR_RATIO = 272.22;
 
-std::map<std::string, double> gear_ratios = {
+static std::map<std::string, double> gear_ratios = {
   {"X5_1", GEAR_RATIO_X5_1},
   {"X5_4", GEAR_RATIO_X5_4},
   {"X5_9", GEAR_RATIO_X5_9},
@@ -49,10 +47,6 @@ std::map<std::string, double> gear_ratios = {
 
 using namespace controller;
 
-
-HebirosGazeboController::HebirosGazeboController() {}
-
-HebirosGazeboController::~HebirosGazeboController() {}
 
 //Set defaults settings for a joint once
 void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
@@ -440,8 +434,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   float motor_velocity = velocity * gear_ratio;
   float speed_constant = 1530.0f;
   float term_resist = 9.99f;
-  if (hebiros_joint->isX8())
-  {
+  if (hebiros_joint->isX8()) {
     speed_constant = 1360.0f;
     term_resist = 3.19f;
   }
