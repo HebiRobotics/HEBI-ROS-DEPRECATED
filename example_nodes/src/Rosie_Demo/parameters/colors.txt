@@ -1,0 +1,30 @@
+rosie/enabled_colors: [ "rgb_yellow", "rgb_red" ]
+
+rosie/rgb_yellow: {
+    rmin: 186, rmax: 255, 
+    gmin: 137, gmax: 255,
+    bmin: 37, bmax: 156,
+    rdisp: 255, gdisp: 255, bdisp: 0,
+    priority: 0
+  }
+rosie/rgb_red: {
+    rmin: 217, rmax: 255,
+    gmin: 0, gmax: 71,
+    bmin: 0, bmax: 134,
+    rdisp: 255, gdisp: 0, bdisp: 0,
+    priority: 1
+  }
+rosie/hsv_yellow: {
+    hmin: 122, hmax: 213,
+    smin: 72, smax: 213,
+    vmin: 0, vmax: 75,
+    rdisp: 255, gdisp: 255, bdisp: 0,
+    priority: 0
+  }
+rosie/hsv_red: {
+    hmin: 103, hmax: 181,
+    smin: 136, smax: 255,
+    vmin: 145, vmax: 205,
+    rdisp: 255, gdisp: 0, bdisp: 0,
+    priority: 1
+  }

@@ -36,61 +36,100 @@ int findBiggestBlob(const std::vector<cv::KeyPoint>& keypoints) {
   return max_idx;
 }
 
+enum class ColorSpace {
+  RGB,
+  HSV
+};
+
 struct ColorParams {
-  // LED display
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+  // LED display - what is shown on the robot when moving to
+  // or picking up that color of beanbag
+  uint8_t r{};
+  uint8_t g{};
+  uint8_t b{};
   // Thresholds
-  int lowR;
-  int highR;
-  int lowG;
-  int highG;
-  int lowB;
-  int highB;
+  uint8_t lowRH{}; // Red or Hue
+  uint8_t highRH{};
+  uint8_t lowGS{}; // Green or Saturation
+  uint8_t highGS{};
+  uint8_t lowBV{}; // Blue or Value
+  uint8_t highBV{};
+  // RGB, HSV, etc.
+  ColorSpace colorSpace{};
+  // Lower priorities are chosen first
+  int priority{};
+
+  // Try setting the values from a value read from the ROS
+  // parameter server.
+  // The format is:
+  //
+  // rdisp: <uint8_t>
+  // gdisp: <uint8_t>
+  // bdisp: <uint8_t>
+  // priority: <int>
+  //
+  // and then for RGB, additionally:
+  // rmin: <uint8_t>
+  // rmax: <uint8_t>
+  // gmin: <uint8_t>
+  // gmax: <uint8_t>
+  // bmin: <uint8_t>
+  // bmax: <uint8_t>
+  //
+  // and for HSV, additionally:
+  // hmin: <uint8_t>
+  // hmax: <uint8_t>
+  // smin: <uint8_t>
+  // smax: <uint8_t>
+  // vmin: <uint8_t>
+  // vmax: <uint8_t>
+  bool trySetFromROSParam(std::map<std::string, int>& params) {
+    // Note: we don't check the range of these values, but
+    // we could/probably should
+    if (params.count("rdisp") == 0 ||
+        params.count("gdisp") == 0 ||
+        params.count("bdisp") == 0 ||
+        params.count("priority") == 0) {
+      return false;
+    }
+
+    if (params.count("rmin") == 1 &&
+        params.count("rmax") == 1 &&
+        params.count("gmin") == 1 &&
+        params.count("gmax") == 1 &&
+        params.count("bmin") == 1 &&
+        params.count("bmax") == 1) {
+      lowRH = (uint8_t)params["rmin"];
+      highRH = (uint8_t)params["rmax"];
+      lowGS = (uint8_t)params["gmin"];
+      highGS = (uint8_t)params["gmax"];
+      lowBV = (uint8_t)params["bmin"];
+      highBV = (uint8_t)params["bmax"];
+      colorSpace = ColorSpace::RGB;
+    } else if (params.count("hmin") == 1 &&
+        params.count("hmax") == 1 &&
+        params.count("smin") == 1 &&
+        params.count("smax") == 1 &&
+        params.count("vmin") == 1 &&
+        params.count("vmax") == 1) {
+      lowRH = (uint8_t)params["hmin"];
+      highRH = (uint8_t)params["hmax"];
+      lowGS = (uint8_t)params["smin"];
+      highGS = (uint8_t)params["smax"];
+      lowBV = (uint8_t)params["vmin"];
+      highBV = (uint8_t)params["vmax"];
+      colorSpace = ColorSpace::HSV;
+    }
+
+    r = (uint8_t)params["rdisp"];
+    g = (uint8_t)params["gdisp"];
+    b = (uint8_t)params["bdisp"];
+    priority = (uint8_t)params["priority"];
+    return true;
+  }
 };
 
-const ColorParams YellowParamsRGB {
-  255, 255, 0,
-  186, 255,
-  137, 255,
-  37, 116
-};
-
-const ColorParams YellowParamsHSV {
-  255, 255, 0,
-  122, 213,
-  72, 213,
-  0, 75
-};
-
-const ColorParams GreenParams {
-  0, 255, 0,
-  0, 66,
-  55, 101,
-  37, 101
-};
-
-const ColorParams RedParamsRGB {
-  255, 0, 0,
-  217, 255,
-  0, 71,
-  0, 134
-};
-// HSV
-const ColorParams RedParamsHSV {
-  255, 0, 0,
-  103, 181,
-  136, 255,
-  145, 205
-};
-
-const ColorParams PurpleParams {
-  255, 0, 255,
-  12, 79,
-  12, 40,
-  42, 86
-};
+std::vector<ColorParams> enabledColors;
 
 class Blob {
 public:
@@ -101,22 +140,15 @@ public:
   bool has_blob_{false};
 };
 
-// Count pixels of each color
 Blob getBlob(const cv::Mat& mat, cv::Mat& img_thresh, const ColorParams& color_params) {
-  /* 
-  - Scan all the pixels on the page
-  - Categorise them as yellow, blue, or yellow
-  */
 
   int height = mat.rows;
   int width = mat.cols;
 
-  ROS_INFO("(Width: %d) (Height: %d)", width, height);
-  
-  // Yellow:    
+  // Threshold the image  
   cv::inRange(mat,
-    cv::Scalar(color_params.lowB, color_params.lowG, color_params.lowR),
-    cv::Scalar(color_params.highB, color_params.highG, color_params.highR), img_thresh);
+    cv::Scalar((int)color_params.lowBV, (int)color_params.lowGS, (int)color_params.lowRH),
+    cv::Scalar((int)color_params.highBV, (int)color_params.highGS, (int)color_params.highRH), img_thresh);
 
   // Remove small crap
   cv::erode(img_thresh, img_thresh, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
@@ -126,6 +158,7 @@ Blob getBlob(const cv::Mat& mat, cv::Mat& img_thresh, const ColorParams& color_p
   cv::dilate(img_thresh, img_thresh, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
   cv::erode(img_thresh, img_thresh, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
 
+  // Detect blobs
   cv::SimpleBlobDetector::Params params;
   params.filterByArea = true;
   params.filterByCircularity = false;
@@ -161,7 +194,7 @@ bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::Cali
       break;
     } catch (cv_bridge::Exception &e) {
       // ROS_ERROR("cv_bridge exception: %s", e.what());
-      ROS_INFO("Failed to load stream. Trying again...");
+      ROS_WARN("Failed to load stream. Trying again...");
     }
   }
   // Avoid segmentation fault by not trying any later logic if empty frames
@@ -221,6 +254,7 @@ bool calibrateSrv(example_nodes::CalibrateSrv::Request& req, example_nodes::Cali
 }
 
 bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv::Response& res) {
+
   cv::namedWindow(OPENCV_WINDOW);
 
   cv_bridge::CvImagePtr cvImagePtr;
@@ -233,7 +267,7 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
       break;
     } catch (cv_bridge::Exception &e) {
       // ROS_ERROR("cv_bridge exception: %s", e.what());
-      ROS_INFO("Failed to load stream. Trying again...");
+      ROS_WARN("Failed to load stream. Trying again...");
     }
   }
   // Avoid segmentation fault by not trying any later logic if empty frames
@@ -244,22 +278,29 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
   }
 
   // TODO: look into depth?
-  cv::Mat &mat = cvImagePtr -> image;
+  cv::Mat &img_rgb = cvImagePtr -> image;
   cv::Mat img_hsv;
-  cv::cvtColor(mat, img_hsv, cv::COLOR_BGR2HSV); // convert from rgb to hsv
+  cv::cvtColor(img_rgb, img_hsv, cv::COLOR_BGR2HSV); // convert from rgb to hsv
+  cv::Mat img_thresh;
 
   // We check for each color we want to consider here, in a priority order.
-  // Note that you can switch in or add other colors here if you like.
-  // Currently, this looks for yellow, and then red if it can't find it.
-  // If you are using an HSV color space, use the "img_hsv" as the parameter to
-  // "getBlob" instead of "mat".
-  cv::Mat img_thresh;
-  auto params = YellowParamsRGB;
-  Blob blob = getBlob(mat, img_thresh, params);
-
-  if (!blob.has_blob_) {
-    params = RedParamsRGB;
-    blob = getBlob(mat, img_thresh, params);
+  Blob blob;
+  for (const auto& color : enabledColors)
+  {
+    if (color.colorSpace == ColorSpace::RGB)
+      blob = getBlob(img_rgb, img_thresh, color);
+    else if (color.colorSpace == ColorSpace::HSV)
+      blob = getBlob(img_hsv, img_thresh, color);
+   
+    if (blob.has_blob_)
+    {
+      // Save RGB values to display on the LEDs and don't
+      // check anymore
+      res.r = color.r;
+      res.g = color.g;
+      res.b = color.b;
+      break; 
+    }
   }
 
   if (blob.has_blob_) {
@@ -269,9 +310,6 @@ bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv:
 
     res.x = pt.x;
     res.y = pt.y;
-    res.r = params.r;
-    res.g = params.g;
-    res.b = params.b;
     // TODO: is this duplicate with return value?
     res.found = true;
   }
@@ -294,6 +332,28 @@ int main(int argc, char ** argv) {
   ros::init(argc, argv, "vision_process");
 
   ros::NodeHandle node;
+
+  // Get colors from parameter server:
+  std::vector<std::string> color_names;
+  node.getParam("rosie/enabled_colors", color_names);
+  for (const auto& color_name : color_names) {
+   
+    std::map<std::string, int> params;
+    node.getParam("rosie/" + color_name, params);
+    ColorParams new_color; 
+    if (new_color.trySetFromROSParam(params)) {
+      // Find insert location (sorted by priority)
+      auto insert_location = std::find_if(
+        enabledColors.begin(), enabledColors.end(),
+        [&new_color](const ColorParams& existing) {
+          return existing.priority > new_color.priority;
+        });
+      // Insert in list
+      enabledColors.insert(insert_location, new_color);
+    } 
+  }
+
+  ROS_INFO_STREAM("Loaded " << enabledColors.size() << " colors of bean bags to search for.");
 
   // Get camera images
   ros::Subscriber image_subscriber = node.subscribe("/camera/color/image_raw", 60, image_callback);
