@@ -17,7 +17,7 @@ After installing the necessary Intel Realsense drivers and ROS packages, compile
 You may need to tune the RGB or HSV values in order to pick up colored objects in the particular lighting conditions you run this demo in.  To do so, we have included a ROS node and launch file that allows you to drag sliders to adjust these values.  Note that you currently need to change the source to adjust to GUI to show the effect of different RGB value thresholds.
 
 To run the GUI, run:
-```roslaunch example_nodes VisionThreshold.launch```
+`roslaunch example_nodes VisionThreshold.launch`
 
 If the realsense cannot be found, then <ctrl-C>, unplug and replug the realsense, and relaunch the program.  This will be indicated by a red text error message in the terminal.
 
@@ -31,17 +31,11 @@ First, move the robot arm out of the image view area.  Then tune the min/max rgb
 
 The cleaner and more robust the segmentation is, the better results you will have with the demonstration.
 
-Once you have ranges for each of these parameters, note these values so you can add set these in the `vision_process.cpp` file as the various "color" objects that you are looking for, and then "ctrl-C" in the terminal to quit the thresholding GUI. Change or add the color structure for your identified object here:
+Once you have ranges for each of these parameters, note these values so you can add these to the color definitions, and then "ctrl-C" in the terminal to quit the thresholding GUI. Change or add the color structure for your identified object in the `src/example_nodes/src/Rosie_Demo/parameters/colors.txt` file (these parameters are loaded into the ROS parameter server when the ROSie.launch file is used).
 
-https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L53
+The "rosie/enabled_colors" variable in this file determines which color definitions will be used when running the demo; for RGB color definitions define the (r/g/b)min/max variables, and for HSV color definitions, define the (h/s/v)min/max variables.
 
-And then enable it in the logic that is actually searching for blobs here:
-
-https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/vision_process.cpp#L251
-
-After making these changes, run `catkin_make` in your workspace to have these values used next time the code is run.
-
-(Advanced note -- you can tweak the source of the vision threshold and vision process programs to allow HSV as well.)
+(Advanced note -- you can tweak the source of the vision process programs to allow HSV segmentation as well.)
 
 # Starting the demo
 
