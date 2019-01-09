@@ -37,22 +37,25 @@ sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool
 
 (Below instructions adapted from https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md)
 
-```cd ~
+```
+cd ~
 mkdir rosie_workspace
 cd rosie_workspace
 mkdir src
-cd src```
-
-```wget https://github.com/intel-ros/realsense/archive/2.1.1.tar.gz
-tar -xzvf 2.1.1.tar.gz
-rm 2.1.1.tar.gz
+cd src
 ```
 
-Patches needed for V2.1.1 of the ROS wrapper in combination with v2.17 of the librealsense2 drivers:
-* https://github.com/intel-ros/realsense/pull/523/files
-* white balance patch found at https://github.com/intel-ros/realsense/issues/496 (comment out case statement in noted file)
+```
+wget https://github.com/intel-ros/realsense/archive/2.1.3.tar.gz
+tar -xzvf 2.1.3.tar.gz
+rm 2.1.3.tar.gz
+```
 
-```catkin_init_workspace 
+Patches needed for V2.1.3 of the ROS wrapper in combination with v2.17 of the librealsense2 drivers:
+* Possibly, depending on camera and PC, you may need the white balance patch found at https://github.com/intel-ros/realsense/issues/496 (comment out case statement in noted file)
+
+```
+catkin_init_workspace 
 cd ..
 catkin_make clean
 catkin_make -DCATKIN_ENABLE_TESTING=False -DCMAKE_BUILD_TYPE=Release
@@ -63,7 +66,8 @@ source ~/.bashrc
 
 ### (5) Download code
 
-```cd src
+```
+cd src
 git clone https://github.com/HebiRobotics/HEBI-ROS.git
 cd HEBI-ROS
 git checkout iamtesch/ROSie
@@ -71,7 +75,8 @@ git checkout iamtesch/ROSie
 
 ### (6) Build
 
-```cd ../..
+```
+cd ../..
 catkin_make example_nodes_generate_messages
 catkin_make
 ```
