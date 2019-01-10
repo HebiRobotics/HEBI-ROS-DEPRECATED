@@ -31,11 +31,11 @@ First, move the robot arm out of the image view area.  Then tune the min/max rgb
 
 The cleaner and more robust the segmentation is, the better results you will have with the demonstration.
 
-Once you have ranges for each of these parameters, note these values so you can add these to the color definitions, and then "ctrl-C" in the terminal to quit the thresholding GUI. Change or add the color structure for your identified object in the `src/example_nodes/src/Rosie_Demo/parameters/colors.txt` file (these parameters are loaded into the ROS parameter server when the ROSie.launch file is used).
+Once you have ranges for each of these parameters, press "Ctrl-P" (or press the "brush" icon at the top) to open a small panel.  Press the "export" button so pring these values to the screen so you can add them to the color definitions, and then "ctrl-C" in the terminal to quit the thresholding GUI. Change or add the color structure for your identified object in the `src/example_nodes/src/Rosie_Demo/parameters/colors.txt` file (these parameters are loaded into the ROS parameter server when the ROSie.launch file is used).
 
 The "rosie/enabled_colors" variable in this file determines which color definitions will be used when running the demo; for RGB color definitions define the (r/g/b)min/max variables, and for HSV color definitions, define the (h/s/v)min/max variables.
 
-(Advanced note -- you can tweak the source of the vision process programs to allow HSV segmentation as well.)
+(Advanced note -- you can use the vision process programs to allow HSV segmentation as well -- press "Ctrl-P", and then click the "HSV" icon.  The "export" button will now print the correct values to use for HSV segmentation)
 
 # Starting the demo
 
