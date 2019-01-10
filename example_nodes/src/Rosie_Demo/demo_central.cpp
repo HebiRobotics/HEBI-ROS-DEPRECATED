@@ -324,33 +324,59 @@ public:
   // TODO: ADD SET COLOR SERVICE HERE!!!
 };
 
-// Note: to set startup value, take printout from calibration and
-// place in matrices below, ignoring the [0, 0, 1] row. Read
-// columnwise from the printout, and write to these matrices
-// row-wise.  Example -- the following output:
+class AffineTransform {
+public:
+  AffineTransform() {
+    trans_.setZero();
+  }
+    
+  bool trySetFromROSParam(const std::vector<double>& params) {
+    if (params.size() != 6) {
+      ROS_ERROR("Calibration matrix parameter is invalid size! Should be 6 elements!");
+      return false;
+    }
+    trans_(0, 0) = params[0];
+    trans_(0, 1) = params[1];
+    trans_(0, 2) = params[2];
+    trans_(1, 0) = params[3];
+    trans_(1, 1) = params[4];
+    trans_(1, 2) = params[5];
+    return true;
+  }
 
-// -0.000339 -0.001367 -0.000000 -0.001718 0.000496 -0.000000 1.117905 0.425470 1.000000
+  void writeForROSParam(std::vector<double>& params) {
+    params.resize(6);
+    params[0] = trans_(0, 0);
+    params[1] = trans_(0, 1);
+    params[2] = trans_(0, 2);
+    params[3] = trans_(1, 0);
+    params[4] = trans_(1, 1);
+    params[5] = trans_(1, 2);
+  }
 
-// would generate the following matrix:
+  void setTransform(const Eigen::Matrix<double, 2, 3>& new_trans) {
+    trans_ = new_trans;
+  }
 
-// { { -0.000339, -0.001718, 1.117905 },
-//   { -0.001367, 0.000496, 0.425470 } };
+  void transform(double& x, double& y) {
+    double tmp_x = x * trans_(0, 0) + y * trans_(0, 1) + trans_(0, 2);
+    y =            x * trans_(1, 0) + y * trans_(1, 1) + trans_(1, 2);
+    x = tmp_x;
+  }
 
+  std::string toString() {
+    std::stringstream res;
+    res << "rosie/calibration: [" <<
+      trans_(0, 0) << ", " << trans_(0, 1) << ", " << trans_(0, 2) << ", " <<
+      trans_(1, 0) << ", " << trans_(1, 1) << ", " << trans_(1, 2) << "]";
+    return res.str();
+  }
 
-// This is an "OK" solution...
-double affine_transform[2][3]
-//  { { -0.001356, -0.001167,  1.347606 },
-//    { -0.000797,  0.001273, -0.007661 } };
+private:
+  Eigen::Matrix<double, 2, 3> trans_;
+};
 
-//    { { -0.001372, -0.00111, 1.225248 },
-//      { -0.000770, 0.001244, -0.074991 } };
-
-// { { -0.001378, -0.001062, 1.120516 },
-//   { -0.000731, 0.001270, -0.079267 } };
-
-{ { -0.000410, -0.001728, 1.124043 },
-  { -0.001381, 0.000553, 0.326743 } };
-
+AffineTransform calibrate_trans;
 
 class Vision {
 public:
@@ -450,21 +476,21 @@ public:
      
       Eigen::MatrixXd calibrate_matrix = svd.solve(world_pts.transpose());
       ROS_WARN("CALIBRATION SUCCESS");
-      ROS_INFO("Size %d %d",
-        (int)calibrate_matrix.rows(), (int)calibrate_matrix.cols());
-      ROS_INFO("My Matrix! %f %f %f %f %f %f %f %f %f",
-        calibrate_matrix(0, 0), calibrate_matrix(0, 1), calibrate_matrix(0, 2),
-        calibrate_matrix(1, 0), calibrate_matrix(1, 1), calibrate_matrix(1, 2),
-        calibrate_matrix(2, 0), calibrate_matrix(2, 1), calibrate_matrix(2, 2));
-      ROS_INFO_STREAM("Camera\n" << camera_pts);
-      ROS_INFO_STREAM("World\n" << world_pts);
+      // Calibration debugging printouts, if needed:
+      //ROS_INFO("Size %d %d",
+      //  (int)calibrate_matrix.rows(), (int)calibrate_matrix.cols());
+      //ROS_INFO("My Matrix! %f %f %f %f %f %f %f %f %f",
+      //  calibrate_matrix(0, 0), calibrate_matrix(0, 1), calibrate_matrix(0, 2),
+      //  calibrate_matrix(1, 0), calibrate_matrix(1, 1), calibrate_matrix(1, 2),
+      //  calibrate_matrix(2, 0), calibrate_matrix(2, 1), calibrate_matrix(2, 2));
+      //ROS_INFO_STREAM("Camera\n" << camera_pts);
+      //ROS_INFO_STREAM("World\n" << world_pts);
 
-      affine_transform[0][0] = calibrate_matrix(0, 0);
-      affine_transform[0][1] = calibrate_matrix(1, 0);
-      affine_transform[0][2] = calibrate_matrix(2, 0);
-      affine_transform[1][0] = calibrate_matrix(0, 1);
-      affine_transform[1][1] = calibrate_matrix(1, 1);
-      affine_transform[1][2] = calibrate_matrix(2, 1);
+      Eigen::Matrix<double, 2, 3> tmp;
+      for (size_t i = 0; i < 2; ++i)
+        for (size_t j = 0; j < 3; ++j)
+          tmp(i, j) = calibrate_matrix(j, i);
+      calibrate_trans.setTransform(tmp);
 
       return true;
     }
@@ -484,15 +510,17 @@ private:
 // for now, we just hardcode transformations from Vision to Arm and base here...
 Arm::Location transformToArm(const Vision::Location& source)
 {
-  double x = source.x * affine_transform[0][0] + source.y * affine_transform[0][1] + affine_transform[0][2];
-  double y = source.x * affine_transform[1][0] + source.y * affine_transform[1][1] + affine_transform[1][2];
+  double x = source.x;
+  double y = source.y;
+  calibrate_trans.transform(x, y);
   return Arm::Location{x, y, -0.1};
 }
 
 Base::Location transformToBase(const Vision::Location& source)
 {
-  double x = source.x * affine_transform[0][0] + source.y * affine_transform[0][1] + affine_transform[0][2];
-  double y = source.x * affine_transform[1][0] + source.y * affine_transform[1][1] + affine_transform[1][2];
+  double x = source.x;
+  double y = source.y;
+  calibrate_trans.transform(x, y);
   return Base::Location{x, y};
 }
 
@@ -565,6 +593,19 @@ int main(int argc, char ** argv) {
 
   ros::NodeHandle node;
 
+  // Get calibration from parameter server:
+  if (!node.hasParam("rosie/calibration")) {
+    ROS_ERROR("Could not find rosie/calibration on parameter server! Exiting!");
+    return -1;
+  }
+
+  std::vector<double> calibration_param;
+  bool parsed_param = node.getParam("rosie/calibration", calibration_param) ? calibrate_trans.trySetFromROSParam(calibration_param) : false;
+  if (!parsed_param) {
+    ROS_ERROR("Could not parse rosie/calibration from parameter server! Exiting!");
+    return -1;
+  }
+
   constexpr double command_rate = 100; // Hz
   ros::Rate loop_rate(command_rate);
 
@@ -634,7 +675,15 @@ int main(int argc, char ** argv) {
     } else if (state.to_mode == IPad::Mode::Calibrate && !calibrate_latch) {
       arm_count = 0;
       spin_count = 0;
-      vision.calibrate();
+      if (vision.calibrate())
+      {
+        // Update the parameter on the parameter server:
+        calibrate_trans.writeForROSParam(calibration_param);
+        node.setParam("rosie/calibration", calibration_param);
+        ROS_WARN_STREAM("New calibration parameter: " << calibrate_trans.toString());
+        ROS_WARN_STREAM("These parameters are active for the remainder of program execution, but must be manually set in parameters/calibration.txt to affect future launches.");
+      }
+
       calibrate_latch = true; // don't re-calibrate once we've done it once!
     } else if (state.to_mode == IPad::Mode::Drive) {
       arm_count = 0;

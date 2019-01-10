@@ -83,7 +83,7 @@ struct ColorParams {
   // smax: <uint8_t>
   // vmin: <uint8_t>
   // vmax: <uint8_t>
-  bool trySetFromROSParam(std::map<std::string, int>& params) {
+  bool trySetFromROSParam(const std::map<std::string, int>& params) {
     // Note: we don't check the range of these values, but
     // we could/probably should
     if (params.count("rdisp") == 0 ||
@@ -99,12 +99,12 @@ struct ColorParams {
         params.count("gmax") == 1 &&
         params.count("bmin") == 1 &&
         params.count("bmax") == 1) {
-      lowRH = (uint8_t)params["rmin"];
-      highRH = (uint8_t)params["rmax"];
-      lowGS = (uint8_t)params["gmin"];
-      highGS = (uint8_t)params["gmax"];
-      lowBV = (uint8_t)params["bmin"];
-      highBV = (uint8_t)params["bmax"];
+      lowRH = (uint8_t)params.at("rmin");
+      highRH = (uint8_t)params.at("rmax");
+      lowGS = (uint8_t)params.at("gmin");
+      highGS = (uint8_t)params.at("gmax");
+      lowBV = (uint8_t)params.at("bmin");
+      highBV = (uint8_t)params.at("bmax");
       colorSpace = ColorSpace::RGB;
     } else if (params.count("hmin") == 1 &&
         params.count("hmax") == 1 &&
@@ -112,19 +112,19 @@ struct ColorParams {
         params.count("smax") == 1 &&
         params.count("vmin") == 1 &&
         params.count("vmax") == 1) {
-      lowRH = (uint8_t)params["hmin"];
-      highRH = (uint8_t)params["hmax"];
-      lowGS = (uint8_t)params["smin"];
-      highGS = (uint8_t)params["smax"];
-      lowBV = (uint8_t)params["vmin"];
-      highBV = (uint8_t)params["vmax"];
+      lowRH = (uint8_t)params.at("hmin");
+      highRH = (uint8_t)params.at("hmax");
+      lowGS = (uint8_t)params.at("smin");
+      highGS = (uint8_t)params.at("smax");
+      lowBV = (uint8_t)params.at("vmin");
+      highBV = (uint8_t)params.at("vmax");
       colorSpace = ColorSpace::HSV;
     }
 
-    r = (uint8_t)params["rdisp"];
-    g = (uint8_t)params["gdisp"];
-    b = (uint8_t)params["bdisp"];
-    priority = (uint8_t)params["priority"];
+    r = (uint8_t)params.at("rdisp");
+    g = (uint8_t)params.at("gdisp");
+    b = (uint8_t)params.at("bdisp");
+    priority = (uint8_t)params.at("priority");
     return true;
   }
 };
@@ -335,6 +335,10 @@ int main(int argc, char ** argv) {
 
   // Get colors from parameter server:
   std::vector<std::string> color_names;
+  if (!node.hasParam("rosie/enabled_colors")) {
+    ROS_ERROR("Could not find rosie/enabled_colors on parameter server! Exiting!");
+    return -1;
+  }
   node.getParam("rosie/enabled_colors", color_names);
   for (const auto& color_name : color_names) {
    
