@@ -104,13 +104,9 @@ _If the calibration fails_, press "B1" to "pause" the control again, then press 
 
 If the captured image does not show up, trying 3-4 more times will usually work to help visualize the image.
 
-**Important: Note that this calibration only applies for the current run of the robot; to set this as the default starting camera calibration, save these values in the source code at the location below, and be sure to recompile by running `catkin_make` in your workspace to have these values used next time the code is run. **  The source code linked below has comments describing how to transform this data.
+**Important: Note that this calibration only applies for the current run of the robot; to set this as the default starting camera calibration, write these values in the `example_nodes/src/Rosie_demo/parameters/calibration.txt` file.**
 
-https://github.com/HebiRobotics/HEBI-ROS/blob/04748b1b3a712a4fb881e365af1127304d29c19e/example_nodes/src/Rosie_Demo/demo_central.cpp#L327
-
-The values that you need to use for this will be output to the screen (see the highlighted red box indicating where these values can be found):
-
-![Calibration output](matrix_output.png)
+The values that you need to use for this will be output to the screen in yellow text
 
 # Code structure
 
@@ -126,4 +122,5 @@ The `gripper_node.cpp` file/node is the hardware interface for the robot's gripp
 
 The `vision_threshold.cpp` file is a separate node that provides a GUI for testing different threshold values in real time.
 
+The `parameters` directory contains the parameters that are loaded onto the parameter server with the launch files. These parameters determine, for example, the camera calibration and color thresholding for the vision process.
 
