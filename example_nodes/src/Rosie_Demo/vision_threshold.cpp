@@ -21,120 +21,7 @@
 #include <opencv2/calib3d.hpp>
 
 // Globals (TODO: refactor these...)
-static const std::string OPENCV_WINDOW = "Image window";
-/*
-// Count pixels of each color
-Blobs findBlobs(const cv::Mat& mat) {
-  int yellow_x = 0;
-  int yellow_y = 0;
-  int yellow_num = 0;
-
-  int blue_x = 0;
-  int blue_y = 0;
-  int blue_num = 0;
-
-  int green_x = 0;
-  int green_y = 0;
-  int green_num = 0;
- 
-  //- Scan all the pixels on the page
-  //- Categorise them as yellow, blue, or yellow
-
-  int height = mat.rows;
-  int width = mat.cols;
-
-  ROS_INFO("(Width: %d) (Height: %d)", width, height);
-
-  for (int i = 0; i < width; i++) {
-    for (int j = 0; j < height; j++) {
-      cv::Vec3b pixel = mat.at<cv::Vec3b>(j,i);
-      
-      // The input format is BGR
-      
-      // yellow
-      if ((pixel[2] >= 200) && (pixel[1] > 200) && (pixel[0] < 100)){
-        yellow_x += i;
-        yellow_y += j;
-        yellow_num += 1;
-      }
-
-      // blue 
-      else if ((pixel[2] < 60) && (pixel[1] < 100) && (pixel[0] >= 140)){
-        blue_x += i;
-        blue_y += j;
-        blue_num += 1;
-      }
-
-      // green
-      else if ((pixel[2] < 160) && (pixel[1] >= 150) && (pixel[0] < 130 )){
-        green_x += i;
-        green_y += j;
-        green_num += 1;
-      }
-    }
-  }
-
-  Blobs blobs;
-  blobs.setYellow(yellow_x, yellow_y, yellow_num);
-  blobs.setBlue(blue_x, blue_y, blue_num);
-  blobs.setGreen(green_x, green_y, green_num);
-  return blobs;
-}*/
-/*
-bool visionSrv(example_nodes::VisionSrv::Request& req, example_nodes::VisionSrv::Response& res) {
-
-  // TODO: look into depth?
-  // cv::Mat &mat2 = dpImagePtr ->image;
-
-  Blobs blobs = findBlobs(mat);
-
-  // TODO: with new color structure, iterate through following options...even get
-  // "best" (biggest, right number of pixels), and then just do that?
-  if (blobs.hasYellow()) {
-    auto yellow = blobs.getYellow();        
-    cv::circle(mat, yellow, 2, CV_RGB(0,255,255), 3);
-    cv::circle(mat, yellow, 20, CV_RGB(0,255,255), 2);
-    res.x = yellow.x;
-    res.y = yellow.y;
-    // TODO: part of new "color" structure?
-    res.r = 255;
-    res.g = 255;
-    res.b = 0;
-    // TODO: is this duplicate with return value?
-    res.found = true;
-  }
-
-  else if (blobs.hasBlue()) {
-    auto blue = blobs.getBlue();        
-    cv::circle(mat, blue, 2, CV_RGB(0,255,255), 3);
-    cv::circle(mat, blue, 20, CV_RGB(0,255,255), 2);
-    res.x = blue.x;
-    res.y = blue.y;
-    // TODO: part of new "color" structure?
-    res.r = 0;
-    res.g = 0;
-    res.b = 255;
-    // TODO: is this duplicate with return value?
-    res.found = true;
-  }
-
-  else if (blobs.hasGreen()) {
-    auto green = blobs.getGreen();        
-    cv::circle(mat, green, 2, CV_RGB(0,255,255), 3);
-    cv::circle(mat, green, 20, CV_RGB(0,255,255), 2);
-    res.x = green.x;
-    res.y = green.y;
-    // TODO: part of new "color" structure?
-    res.r = 0;
-    res.g = 255;
-    res.b = 0;
-    // TODO: is this duplicate with return value?
-    res.found = true;
-  }
-
-  return true; 
-}
-*/
+static const std::string OPENCV_WINDOW = "Image Thresholding GUI - Ctrl-P for Options";
 
 sensor_msgs::Image input_image;
 
@@ -143,32 +30,54 @@ void image_callback(sensor_msgs::Image data) {
   input_image = data;  
 }
 
+bool isHsv = false;
+int lowR = 0;
+int highR = 255;
+int lowG = 0;
+int highG = 255;
+int lowB = 0;
+int highB = 255;
+
+void callbackButton(int button_id, void* userData) {
+  isHsv = !isHsv;
+}
+
+void exportParameters(int button_id, void* userData) {
+  if (isHsv)
+    ROS_INFO_STREAM("{ " <<
+      "hmin: " << lowR << ", hmax: " << highR << ", " <<
+      "smin: " << lowG << ", smax: " << highG << ", " <<
+      "vmin: " << lowB << ", vmax: " << highB << "}");
+  else
+    ROS_INFO_STREAM("{ " <<
+      "rmin: " << lowR << ", rmax: " << highR << ", " <<
+      "gmin: " << lowG << ", gmax: " << highG << ", " <<
+      "bmin: " << lowB << ", bmax: " << highB << "}");
+  ROS_WARN("Copy this into the parameters/color.txt file.  Note that you will need to set the LED color displayed on the modules -- the (r/g/b)disp variables -- and the priority variable as desired.");
+}
+
 int main(int argc, char ** argv) {
 
   // Initialize ROS node
   ros::init(argc, argv, "vision_threshold");
-
   ros::NodeHandle node;
 
   // Get camera images
   ros::Subscriber image_subscriber = node.subscribe("/camera/color/image_raw", 60, image_callback);
       
   cv::namedWindow(OPENCV_WINDOW);
-//  cv::namedWindow("Thresh");
-  int lowR = 0;
-  int highR = 255;
-  int lowG = 0;
-  int highG = 255;
-  int lowB = 0;
-  int highB = 255;
-  cvCreateTrackbar("LowR", OPENCV_WINDOW.c_str(), &lowR, 255); // Red
-  cvCreateTrackbar("HighR", OPENCV_WINDOW.c_str(), &highR, 255); // Red
-  cvCreateTrackbar("LowG", OPENCV_WINDOW.c_str(), &lowG, 255); // Green
-  cvCreateTrackbar("HighG", OPENCV_WINDOW.c_str(), &highG, 255); // Green
-  cvCreateTrackbar("LowB", OPENCV_WINDOW.c_str(), &lowB, 255); // Blue
-  cvCreateTrackbar("HighB", OPENCV_WINDOW.c_str(), &highB, 255); // Blue
+  cvCreateButton("Use HSV", callbackButton, nullptr, CV_CHECKBOX, 0);
+  cvCreateButton("Export ROS Parameter", exportParameters, nullptr, CV_PUSH_BUTTON, 0);
+//  cvCreateLabel("Red");
+  cvCreateTrackbar("Low R/H", OPENCV_WINDOW.c_str(), &lowR, 255); // Red / Hue
+  cvCreateTrackbar("High R/H", OPENCV_WINDOW.c_str(), &highR, 255); // Red / Hue
+  cvCreateTrackbar("Low G/S", OPENCV_WINDOW.c_str(), &lowG, 255); // Green / Saturation
+  cvCreateTrackbar("High G/S", OPENCV_WINDOW.c_str(), &highG, 255); // Green / Saturation
+  cvCreateTrackbar("Low B/V", OPENCV_WINDOW.c_str(), &lowB, 255); // Blue / Value
+  cvCreateTrackbar("High B/V", OPENCV_WINDOW.c_str(), &highB, 255); // Blue / Value
 
   cv::Mat img_thresh;
+  cv::Mat img_hsv;
 
   while (ros::ok()) {
 
@@ -185,16 +94,18 @@ int main(int argc, char ** argv) {
         ROS_INFO("Failed to load stream. Trying again...");
       }
     }
-    // Avoid segmentation fault by not trying any later logic if empty frames
+    // Only continue and try to threshold image if valid frames
     // are being received.
     // (At end of for loop, iterator should equal max value...
     if (attempts_made != num_attempts) {
-      cv::Mat &mat = cvImagePtr -> image;
+      if (isHsv) {
+        cv::cvtColor(cvImagePtr->image, img_hsv, cv::COLOR_BGR2HSV); // convert from rgb to hsv
+      } 
+      cv::Mat* mat = isHsv ? &img_hsv : &cvImagePtr->image;
 
-      // DO STUFF
-      cv::inRange(mat, cv::Scalar(lowB, lowG, lowR), cv::Scalar(highB, highG, highR), img_thresh);
+      // Threshold image based on slider values.
+      cv::inRange(*mat, cv::Scalar(lowB, lowG, lowR), cv::Scalar(highB, highG, highR), img_thresh);
 
-//      cv::imshow(OPENCV_WINDOW, mat);
       cv::imshow(OPENCV_WINDOW, img_thresh);
       cv::waitKey(2);
 
