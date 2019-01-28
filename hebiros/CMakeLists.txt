@@ -166,19 +166,6 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/hebiros_node.cpp)
 
 add_executable(hebiros_node src/hebiros_node.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-
   src/hebiros.cpp
   src/hebiros_parameters.cpp
   src/hebiros_group.cpp
