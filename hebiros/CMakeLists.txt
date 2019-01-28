@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   actionlib_msgs
   actionlib
+  hebi_cpp_api
 )
 
 ## System dependencies are found with CMake's conventions
@@ -131,6 +132,7 @@ catkin_package(
   CATKIN_DEPENDS actionlib
   CATKIN_DEPENDS message_runtime
   CATKIN_DEPENDS tf
+  CATKIN_DEPENDS hebi_cpp_api
 #  DEPENDS system_lib
 )
 
@@ -210,11 +212,7 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-
-target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+target_link_libraries(hebiros_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##

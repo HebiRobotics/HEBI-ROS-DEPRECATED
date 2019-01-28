@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>hebiros</name>
   <version>1.5.0</version>
   <description>The hebiros package</description>
@@ -30,34 +30,21 @@
 
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
-  <!-- Examples: -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!-- build_depend>message_generation</build_depend -->
-  <!-- Use buildtool_depend for build tool packages: -->
-  <!--   <buildtool_depend>catkin</buildtool_depend> -->
-  <!-- Use run_depend for packages you need at runtime: -->
-  <!-- run_depend>message_runtime</run_depend -->
-  <!-- Use test_depend for packages you need only for testing: -->
-  <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>actionlib</build_depend>
-  <build_depend>actionlib_msgs</build_depend>
   <build_depend>message_generation</build_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>ros_control</run_depend>
-  <run_depend>ros_controllers</run_depend>
-  <run_depend>actionlib</run_depend>
-  <run_depend>actionlib_msgs</run_depend>
-  <run_depend>message_runtime</run_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>ros_control</exec_depend>
+  <exec_depend>ros_controllers</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <depend>tf</depend>
+  <depend>rospy</depend>
+  <depend>roscpp</depend>
+  <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
+  <depend>hebi_cpp_api</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
