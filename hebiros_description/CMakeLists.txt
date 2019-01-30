@@ -9,5 +9,11 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 )
 
-
+## Mark other files for installation (e.g. launch and bag files, etc.)
+install(DIRECTORY
+  meshes
+  urdf
+  # myfile2
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 

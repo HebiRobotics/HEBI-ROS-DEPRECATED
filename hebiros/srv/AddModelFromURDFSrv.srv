@@ -1,0 +1,4 @@
+string model_name
+# Note -- if this isn't given, it defaults to "robot_description"
+string description_param
+---

@@ -1,0 +1,7 @@
+int32 FrameTypeCenterOfMass = 0
+int32 FrameTypeOutput = 1
+float64[] positions
+int32 frame_type
+---
+float64[] frames
+

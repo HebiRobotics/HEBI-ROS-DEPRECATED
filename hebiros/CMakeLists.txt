@@ -71,7 +71,9 @@ add_service_files(
   FILES
   EntryListSrv.srv
   AddGroupFromNamesSrv.srv
-  AddGroupFromUrdfSrv.srv
+  AddGroupFromURDFSrv.srv
+  AddModelFromURDFSrv.srv
+  ModelFkSrv.srv
   SizeSrv.srv
   SetFeedbackFrequencySrv.srv
   SetCommandLifetimeSrv.srv
@@ -175,12 +177,24 @@ add_executable(hebiros_node src/hebiros_node.cpp
   include/hebi/mac_address.cpp
   include/hebi/trajectory.cpp
 
-  include/hebiros/hebiros.cpp
-  include/hebiros/hebiros_actions.cpp
-  include/hebiros/hebiros_group.cpp
-  include/hebiros/hebiros_services.cpp
-  include/hebiros/hebiros_subscribers.cpp
-  include/hebiros/hebiros_utility.cpp
+  src/hebiros.cpp
+  src/hebiros_parameters.cpp
+  src/hebiros_group.cpp
+  src/hebiros_group_gazebo.cpp
+  src/hebiros_group_physical.cpp
+  src/hebiros_group_registry.cpp
+  src/hebiros_services.cpp
+  src/hebiros_services_gazebo.cpp
+  src/hebiros_services_physical.cpp
+  src/hebiros_subscribers.cpp
+  src/hebiros_subscribers_gazebo.cpp
+  src/hebiros_subscribers_physical.cpp
+  src/hebiros_publishers.cpp
+  src/hebiros_publishers_gazebo.cpp
+  src/hebiros_publishers_physical.cpp
+  src/hebiros_clients.cpp
+  src/hebiros_actions.cpp
+  src/hebiros_model.cpp
 )
 
 add_dependencies(hebiros_node hebiros_generate_messages_cpp)
@@ -242,10 +256,9 @@ target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_hebiros.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+find_package(rostest REQUIRED)
+add_rostest_gtest(${PROJECT_NAME}-test launch/test_fk_1.test tests/test_fk_1.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
