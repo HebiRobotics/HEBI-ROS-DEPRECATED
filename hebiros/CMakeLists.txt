@@ -127,7 +127,6 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES hebiros
-#  CATKIN_DEPENDS other_catkin_pkg
   CATKIN_DEPENDS roscpp
   CATKIN_DEPENDS actionlib
   CATKIN_DEPENDS message_runtime
