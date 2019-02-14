@@ -1,0 +1,11 @@
+<launch>
+<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0.2 0 0 0 /base_link /base_scan 100" />
+
+<?ignore
+<node pkg="tf" type="static_transform_publisher" name="link3_broadcaster" args="0 0 0 0 0 0 /odom /base_footprint 100" />
+
+?>
+
+<node pkg="tf" type="static_transform_publisher" name="link4_broadcaster" args="0 0 0 0 0 0 /base_footprint /base_link 100" />
+
+</launch>
