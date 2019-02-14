@@ -173,6 +173,7 @@ int main(int argc, char ** argv) {
                        - dx * sin(odom.twist.twist.angular.z);
 
       odom_trans.transform.translation.z = 0.0;
+      odom_quat.normalize();
       odom_trans.transform.rotation = odom_quat;
       ROS_INFO_STREAM(odom_quat);
 
