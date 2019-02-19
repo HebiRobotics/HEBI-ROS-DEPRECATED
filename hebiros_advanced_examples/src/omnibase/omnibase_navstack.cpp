@@ -162,9 +162,11 @@ int main(int argc, char ** argv) {
         
       //first, we'll publish the transform over tf
       geometry_msgs::TransformStamped odom_trans;
-      odom_trans.header.stamp = current_time;
-      odom_trans.header.frame_id = "odom";
-      odom_trans.child_frame_id = "base_link";
+      odom_trans.header.stamp = ros::Time::now();
+    //  odom_trans.header.frame_id = "odom";
+    //  odom_trans.child_frame_id = "base_link";
+        odom_trans.header.frame_id = "odom";
+        odom_trans.child_frame_id = "base_link";
 
       odom_trans.transform.translation.x = dy * sin(odom.twist.twist.angular.z)
                        + dx * cos(odom.twist.twist.angular.z);
@@ -173,18 +175,20 @@ int main(int argc, char ** argv) {
                        - dx * sin(odom.twist.twist.angular.z);
 
       odom_trans.transform.translation.z = 0.0;
-      odom_quat.normalize();
+    //  ROS_INFO_STREAM(odom_quat);
+      //odom_quat.normalize();
       odom_trans.transform.rotation = odom_quat;
-      ROS_INFO_STREAM(odom_quat);
+      //ROS_INFO_STREAM(odom_quat);
 
       //send the transform
       odom_broadcaster.sendTransform(odom_trans);
-
+      ROS_INFO_STREAM(odom_trans);
 
     
       //next, we'll publish the odometry message over ROS
     //  nav_msgs::Odometry odom;
-      odom.header.stamp = current_time;
+      odom.header.stamp = ros::Time::now();
+    //  odom.header.frame_id = "base_link";
       odom.header.frame_id = "odom";
 
       //set the position
@@ -195,6 +199,7 @@ int main(int argc, char ** argv) {
 
       //set the velocity
       odom.child_frame_id = "base_link";
+    //  odom.child_frame_id = "odom";
       odom.twist.twist.linear.x = dx;
       odom.twist.twist.linear.y = dy;
       odom.twist.twist.linear.z = 0.0;

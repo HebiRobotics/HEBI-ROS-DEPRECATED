@@ -8,4 +8,6 @@
 
 <node pkg="tf" type="static_transform_publisher" name="link4_broadcaster" args="0 0 0 0 0 0 /base_footprint /base_link 100" />
 
+<node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="0 0 0 0 0 0 /laser /base_footprint 100" />
+
 </launch>

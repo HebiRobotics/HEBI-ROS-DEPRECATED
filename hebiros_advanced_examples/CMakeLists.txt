@@ -22,7 +22,7 @@ add_executable(example_gazebo_node src/gazebo/example_gazebo_node.cpp)
 add_executable(example_mobile_robot_node src/mobile_robot/example_mobile_robot_node.cpp)
 add_executable(example_omnibase_free_roam src/omnibase/example_omnibase_free_roam.cpp)
 add_executable(example_omnibase_odometry src/omnibase/example_omnibase_odometry.cpp)
-
+add_executable(omnibase_navstack src/omnibase/omnibase_navstack.cpp)
 
 add_dependencies(example_set_gains_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(example_rviz_node ${catkin_EXPORTED_TARGETS})
@@ -31,7 +31,7 @@ add_dependencies(example_gazebo_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(example_mobile_robot_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(example_omnibase_free_roam ${catkin_EXPORTED_TARGETS})
 add_dependencies(example_omnibase_odometry ${catkin_EXPORTED_TARGETS})
-
+add_dependencies(omnibase_navstack ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(example_set_gains_node ${catkin_LIBRARIES})
 target_link_libraries(example_rviz_node ${catkin_LIBRARIES})
@@ -40,7 +40,7 @@ target_link_libraries(example_gazebo_node ${catkin_LIBRARIES})
 target_link_libraries(example_mobile_robot_node ${catkin_LIBRARIES})
 target_link_libraries(example_omnibase_free_roam ${catkin_LIBRARIES})
 target_link_libraries(example_omnibase_odometry ${catkin_LIBRARIES})
-
+target_link_libraries(omnibase_navstack ${catkin_LIBRARIES})
 
 install(PROGRAMS
   src/omnibase/key_read.py
@@ -50,6 +50,7 @@ install(PROGRAMS
 install(FILES
   launch/omnibase/example_omnibase_odometry.launch
   launch/omnibase/example_omnibase_free_roam.launch
+  launch/omnibase/omnibase_navstack.launch	
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
