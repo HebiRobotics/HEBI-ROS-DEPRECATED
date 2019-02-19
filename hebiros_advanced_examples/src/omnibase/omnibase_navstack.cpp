@@ -115,8 +115,10 @@ int main(int argc, char ** argv) {
       /* get the latest pose for the base */
       currPose = feedback;
 
+      ros::spinOnce(); 
+      current_time = ros::Time::now();
 
-      
+
       /* Determine change in position for each individual wheel */
       /* Units: meters */
       d0 = (currPose.position[0] - prevPose.position[0]) * wheelRadius; //wheel1
@@ -129,7 +131,7 @@ int main(int argc, char ** argv) {
       dtheta0 = d0 / (baseRadius);
       dtheta1 = d1 / (baseRadius);
       dtheta2 = d2 / (baseRadius);
-      thetaChange = (dtheta0 + dtheta1 + dtheta2) / 3.0; 
+      thetaChange = (dtheta0 + dtheta1 + dtheta2) / -3.0; 
       thetaTotalChange += thetaChange;
       //ROS_INFO_STREAM("TTC " << thetaTotalChange);
       odom.twist.twist.angular.z = thetaChange;
@@ -138,8 +140,8 @@ int main(int argc, char ** argv) {
 
       /* Determine movement of the base in current frame of reference */
       /* Units: Meters*/
-      dx = (d0/2 + d1/2 - d2) * 2/3; 
-      dy = (d0 * (-sqrt(3)/2) + d1 * (sqrt(3)/2)) * 2/3;
+      dy = (d0/2 + d1/2 - d2) * -2/3; 
+      dx = (d0 * (-sqrt(3)/2) + d1 * (sqrt(3)/2)) * 2/3;
 
       /* Map movement into the original frame of reference */
       /* Units: Meters*/
@@ -182,7 +184,7 @@ int main(int argc, char ** argv) {
 
       //send the transform
       odom_broadcaster.sendTransform(odom_trans);
-      ROS_INFO_STREAM(odom_trans);
+      //ROS_INFO_STREAM(odom_trans);
 
     
       //next, we'll publish the odometry message over ROS

@@ -11,11 +11,5 @@
     <node pkg="tf" type="static_transform_publisher" name="link4_broadcaster" args="0 0 0.2 0 0 0 base_link base_scan 100" />
 
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
-    respawn="false" output="screen">
-    <remap from="/joint_states" to="/hebiros/x_demo/feedback/joint_state_urdf"/>
-    <param name="ignore_timestamp" value="true"/>
-  </node>
-
 
   </launch>
