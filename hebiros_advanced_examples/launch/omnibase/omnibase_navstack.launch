@@ -8,8 +8,8 @@
     <node pkg="hebiros_advanced_examples" type="key_read.py" name="key_read" />
 
 
-    <node pkg="tf" type="static_transform_publisher" name="link4_broadcaster" args="0 0 0.2 0 0 0 base_link base_scan 100" />
+    <!--node pkg="tf" type="static_transform_publisher" name="link4_broadcaster" args="0 0 0.2 0 0 0 base_link base_scan 100" /-->
 
-
+    <!--node pkg="tf" type="static_transform_publisher" name="link4_broadcaster" args="0 0 -0.2 0 0 0 base_scan base_link 100" /-->
 
   </launch>

@@ -165,10 +165,11 @@ int main(int argc, char ** argv) {
       //first, we'll publish the transform over tf
       geometry_msgs::TransformStamped odom_trans;
       odom_trans.header.stamp = ros::Time::now();
-    //  odom_trans.header.frame_id = "odom";
+      odom_trans.header.frame_id = "odom";
     //  odom_trans.child_frame_id = "base_link";
-        odom_trans.header.frame_id = "odom";
-        odom_trans.child_frame_id = "base_link";
+      odom_trans.child_frame_id = "base_footprint";
+    //    odom_trans.header.frame_id = "base_link";
+    //    odom_trans.child_frame_id = "odom";
 
       odom_trans.transform.translation.x = dy * sin(odom.twist.twist.angular.z)
                        + dx * cos(odom.twist.twist.angular.z);
@@ -192,6 +193,10 @@ int main(int argc, char ** argv) {
       odom.header.stamp = ros::Time::now();
     //  odom.header.frame_id = "base_link";
       odom.header.frame_id = "odom";
+    //  odom.child_frame_id = "base_link";
+      odom.child_frame_id = "base_footprint";
+    //  odom.child_frame_id = "odom";
+
 
       //set the position
    //  odom.pose.pose.position.x = dx;
@@ -200,8 +205,6 @@ int main(int argc, char ** argv) {
       odom.pose.pose.orientation = odom_quat;
 
       //set the velocity
-      odom.child_frame_id = "base_link";
-    //  odom.child_frame_id = "odom";
       odom.twist.twist.linear.x = dx;
       odom.twist.twist.linear.y = dy;
       odom.twist.twist.linear.z = 0.0;
