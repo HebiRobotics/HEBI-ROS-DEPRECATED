@@ -346,6 +346,8 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
   double position, double velocity, double effort, const ros::Duration& iteration_time) {
 
+  auto dt = iteration_time.toSec();
+
   CommandMsg target = hebiros_group->command_target;
   int i = hebiros_joint->command_index;
 
@@ -377,6 +379,10 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
 
   //Combine forces using selected strategy
   int control_strategy = hebiros_group->settings.control_strategy[i];
+  const auto& pos_gains = hebiros_group->settings.position_gains;
+  const auto& vel_gains = hebiros_group->settings.velocity_gains;
+  const auto& eff_gains = hebiros_group->settings.effort_gains;
+  size_t cmd_index = hebiros_joint->command_index;
   switch (control_strategy) {
     case 0:
       pwm = 0;
@@ -388,38 +394,37 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
 
     case 2:
       position_pid =
-        ComputePositionPID(hebiros_group, hebiros_joint, target_position, position, iteration_time);
+        hebiros_joint->position_pid->update(target_position, position, dt, pos_gains, cmd_index),
       velocity_pid =
-        ComputeVelocityPID(hebiros_group, hebiros_joint, target_velocity, velocity, iteration_time);
+        hebiros_joint->velocity_pid->update(target_velocity, velocity, dt, vel_gains, cmd_index);
       intermediate_effort = target_effort + position_pid + velocity_pid;
       effort_pwm = Clip(
-        ComputeEffortPID(hebiros_group, hebiros_joint, intermediate_effort, effort, iteration_time),
+        hebiros_joint->effort_pid->update(intermediate_effort, effort, dt, eff_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       pwm = effort_pwm;
       break;
 
     case 3:
       position_pwm = Clip(
-        ComputePositionPID(hebiros_group, hebiros_joint, target_position, position, iteration_time),
+        hebiros_joint->position_pid->update(target_position, position, dt, hebiros_group->settings.position_gains, hebiros_joint->command_index),
         MIN_PWM, MAX_PWM);
       velocity_pwm = Clip(
-        ComputeVelocityPID(hebiros_group, hebiros_joint, target_velocity, velocity, iteration_time),
+        hebiros_joint->velocity_pid->update(target_velocity, velocity, dt, vel_gains, cmd_index);
         MIN_PWM, MAX_PWM);
       effort_pwm = Clip(
-        ComputeEffortPID(hebiros_group, hebiros_joint, target_effort, effort, iteration_time),
+        hebiros_joint->effort_pid->update(target_effort, effort, dt, eff_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       pwm = Clip(position_pwm + velocity_pwm + effort_pwm, MIN_PWM, MAX_PWM);
       break;
 
     case 4:
-      position_pid =
-        ComputePositionPID(hebiros_group, hebiros_joint, target_position, position, iteration_time);
+      position_pid = hebiros_joint->position_pid->update(target_position, position, dt, hebiros_group->settings.position_gains, hebiros_joint->command_index);
       intermediate_effort = target_effort + position_pid;
       effort_pwm = Clip(
-        ComputeEffortPID(hebiros_group, hebiros_joint, intermediate_effort, effort, iteration_time),
+        hebiros_joint->effort_pid->update(intermediate_effort, effort, dt, eff_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       velocity_pwm = Clip(
-        ComputeVelocityPID(hebiros_group, hebiros_joint, target_velocity, velocity, iteration_time),
+        hebiros_joint->velocity_pid->update(target_velocity, velocity, dt, vel_gains, cmd_index);
         MIN_PWM, MAX_PWM);
       pwm = Clip(velocity_pwm + effort_pwm, MIN_PWM, MAX_PWM);
       break;
@@ -466,7 +471,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   // Update temperature:
   // Power = I^2R, but I = V/R so I^2R = V^2/R:
   double power_in = winding_voltage * winding_voltage / winding_resistance;
-  hebiros_joint->temperature.update(power_in, iteration_time.toSec());
+  hebiros_joint->temperature.update(power_in, dt);
   hebiros_joint->temperature_safety.update(hebiros_joint->temperature.getMotorWindingTemperature());
 
   //alpha = hebiros_joint->low_pass_alpha;
@@ -474,81 +479,6 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   //hebiros_joint->prev_force = force;
 
   return force;
-}
-
-//Compute the PID error for positions
-double HebirosGazeboController::ComputePositionPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double target_position, double position, const ros::Duration& iteration_time) {
-
-  double position_error_p, position_error_i, position_error_d;
-
-  position_error_p = target_position - position;
-  position_error_i = hebiros_joint->position_elapsed_error + position_error_p;
-  position_error_d = (position_error_p - hebiros_joint->position_prev_error) /
-    iteration_time.toSec();
-  hebiros_joint->position_prev_error = position_error_p;
-  hebiros_joint->position_elapsed_error = position_error_i;
-
-  if (iteration_time.toSec() <= 0) {
-    position_error_d = 0;
-  }
-
-  int i = hebiros_joint->command_index;
-
-  return (hebiros_group->settings.position_gains.kp[i] * position_error_p) +
-    (hebiros_group->settings.position_gains.ki[i] * position_error_i) +
-    (hebiros_group->settings.position_gains.kd[i] * position_error_d);
-}
-
-//Compute the PID error for velocities
-double HebirosGazeboController::ComputeVelocityPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double target_velocity, double velocity, const ros::Duration& iteration_time) {
-
-  double velocity_error_p, velocity_error_i, velocity_error_d;
-
-  velocity_error_p = target_velocity - velocity;
-  velocity_error_i = hebiros_joint->velocity_elapsed_error + velocity_error_p;
-  velocity_error_d = (velocity_error_p - hebiros_joint->velocity_prev_error) /
-    iteration_time.toSec();
-  hebiros_joint->velocity_prev_error = velocity_error_p;
-  hebiros_joint->velocity_elapsed_error = velocity_error_i;
-
-  if (iteration_time.toSec() <= 0) {
-    velocity_error_d = 0;
-  }
-
-  int i = hebiros_joint->command_index;
-
-  return (hebiros_group->settings.velocity_gains.kp[i] * velocity_error_p) +
-    (hebiros_group->settings.velocity_gains.ki[i] * velocity_error_i) +
-    (hebiros_group->settings.velocity_gains.kd[i] * velocity_error_d);
-}
-
-//Compute the PID error for efforts
-double HebirosGazeboController::ComputeEffortPID(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<HebirosGazeboJoint> hebiros_joint,
-  double target_effort, double effort, const ros::Duration& iteration_time) {
-
-  double effort_error_p, effort_error_i, effort_error_d;
-
-  effort_error_p = target_effort - effort;
-  effort_error_i = hebiros_joint->effort_elapsed_error + effort_error_p;
-  effort_error_d = (effort_error_p - hebiros_joint->effort_prev_error) /
-    iteration_time.toSec();
-  hebiros_joint->effort_prev_error = effort_error_p;
-  hebiros_joint->effort_elapsed_error = effort_error_i;
-
-  if (iteration_time.toSec() <= 0) {
-    effort_error_d = 0;
-  }
-
-  int i = hebiros_joint->command_index;
-
-  return (hebiros_group->settings.effort_gains.kp[i] * effort_error_p) +
-    (hebiros_group->settings.effort_gains.ki[i] * effort_error_i) +
-    (hebiros_group->settings.effort_gains.kd[i] * effort_error_d);
 }
 
 //Limit x to a value from low to high

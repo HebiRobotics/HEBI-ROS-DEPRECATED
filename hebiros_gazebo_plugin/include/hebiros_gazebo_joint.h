@@ -22,15 +22,13 @@ public:
   hebiros::sim::TemperatureModel temperature;
   hebiros::sim::TemperatureSafetyController temperature_safety{155};
 
+  PidController position_pid;
+  PidController velocity_pid;
+  PidController effort_pid;
+
   double prev_force {};
   double low_pass_alpha {};
   double gear_ratio {};
-  double position_prev_error {};
-  double position_elapsed_error {};
-  double velocity_prev_error {};
-  double velocity_elapsed_error {};
-  double effort_prev_error {};
-  double effort_elapsed_error {};
 
   ros::Subscriber imu_subscriber;
 
