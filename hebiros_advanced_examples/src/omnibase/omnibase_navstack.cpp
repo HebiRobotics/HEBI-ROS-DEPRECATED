@@ -1,10 +1,10 @@
 /**
 * Provides a base level implementation of odometry calculations for a 3-wheeled
-* omnidirectional base (omnibase). This file works in the hebiros setup, and 
+* omnidirectional base (omnibase) for a 3D enviroment. This file works in the hebiros setup, and 
 * publishes odometry results to an odometry node.
 *
-* @author Hardik Singh < hardik @ hebirobotics.com >
-* @since 6 Jul 2018
+* @author Sami Mian < sami @ hebirobotics.com >
+* @since 2 Feb 2019
 **/
 
 #include <ros/ros.h>
@@ -13,8 +13,6 @@
 #include "hebiros/FeedbackMsg.h"
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
-
-
 #include <ros/console.h>
 
 using namespace hebiros;
@@ -55,29 +53,9 @@ int main(int argc, char ** argv) {
   ros::Subscriber feedback_subscriber = node.subscribe(
     "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
-  // Create a publisher to post the calculated odometry to a topic
-//  ros::Publisher odometry_publisher = node.advertise<geometry_msgs::Twist>(
-//    "/hebiros/"+group_name+"/odometry", 100);
-//
-//  ros::Publisher odometryMSG_publisher = node.advertise<nav_msgs::Odometry>(
-//    "/hebiros/"+group_name+"/odom", 100);
-
-//  ros::Publisher odom_publisher = node.advertise<nav_msgs::Odometry>(
-//    "/odom", 100);
-
   ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 50);
   tf::TransformBroadcaster odom_broadcaster;
 
-
-  double x = 0.0;
-  double y = 0.0;
-  double th = 0.0;
-
-  ros::Time current_time, last_time;
-  current_time = ros::Time::now();
-  last_time = ros::Time::now();
-
-  
   feedback.position.resize(3);
   commands.velocity.resize(3);
 
@@ -89,18 +67,21 @@ int main(int argc, char ** argv) {
   double d0; double d1; double d2;
   double dx; double dy; 
   double dtheta0; double dtheta1; double dtheta2; double thetaChange; double thetaTotalChange;
+  double xPoseChange; double yPoseChange;
   sensor_msgs::JointState prevPose;
   sensor_msgs::JointState currPose;
   nav_msgs::Odometry odom;
+
   odom.twist.twist.angular.z = 0;
   geometry_msgs::Twist output;
+  geometry_msgs::TransformStamped odom_trans;
+  geometry_msgs::Quaternion odom_quat;
+  ros::Time current_time, last_time;
   bool startup_complete = false;
 
   /* Base dimensions */
   double wheelRadius = 0.0762; // m
-  double baseRadius = 0.235; // m (radius from base center to wheel center)
-
-  double xPoseChange; double yPoseChange;
+  double baseRadius = 0.220; // m (radius from base center to wheel center)
 
   /******** MAIN LOOP **********/
 
@@ -118,7 +99,9 @@ int main(int argc, char ** argv) {
       currPose = feedback;
 
       ros::spinOnce(); 
+      last_time = current_time;
       current_time = ros::Time::now();
+      double dt = current_time.toSec() - last_time.toSec();
 
 
       /* Determine change in position for each individual wheel */
@@ -133,10 +116,12 @@ int main(int argc, char ** argv) {
       dtheta0 = d0 / (baseRadius);
       dtheta1 = d1 / (baseRadius);
       dtheta2 = d2 / (baseRadius);
+
+      //Determine theta (change in angle)
       thetaChange = (dtheta0 + dtheta1 + dtheta2) / -3.0; 
       thetaTotalChange += thetaChange;
-      //ROS_INFO_STREAM("TTC " << thetaTotalChange);
-      odom.twist.twist.angular.z = thetaChange;
+      //ROS_INFO_STREAM("TTC " << thetaChange);
+      odom.twist.twist.angular.z = thetaChange / dt;
       odom.twist.twist.angular.y = 0;
       odom.twist.twist.angular.x = 0;
 
@@ -147,85 +132,46 @@ int main(int argc, char ** argv) {
 
       /* Map movement into the original frame of reference */
       /* Units: Meters*/
+      xPoseChange = -1 * dy * sin(thetaTotalChange) + dx * cos(thetaTotalChange);
+      yPoseChange = dy * cos(thetaTotalChange) + dx * sin(thetaTotalChange);
 
-
-      xPoseChange = dy * sin(thetaChange) + dx * cos(thetaChange);
-      yPoseChange = dy * cos(thetaChange) - dx * sin(thetaChange);
-
-      odom.pose.pose.position.x += xPoseChange;
-
-      odom.pose.pose.position.y += yPoseChange;
-
-    //  output.seq++;
-    //  output.stamp = ros::Time::now();
-    //  output.frame_id = 0;
-
-
-
-
-    
       //since all odometry is 6DOF we'll need a quaternion created from yaw
-      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(thetaTotalChange);
-        
-      //first, we'll publish the transform over tf
-      geometry_msgs::TransformStamped odom_trans;
-      odom_trans.header.stamp = ros::Time::now();
-      odom_trans.header.frame_id = "odom";
-    //  odom_trans.child_frame_id = "base_link";
-      odom_trans.child_frame_id = "base_footprint";
-    //    odom_trans.header.frame_id = "base_link";
-    //    odom_trans.child_frame_id = "odom";
-      
+      odom_quat = tf::createQuaternionMsgFromYaw(thetaTotalChange);
 
-      odom_trans.transform.translation.x = odom.pose.pose.position.x;//dy * sin(thetaChange) + dx * cos(thetaChange);
-
-      odom_trans.transform.translation.y = odom.pose.pose.position.y; //dy * cos(thetaChange) - dx * sin(thetaChange);
-
-      odom_trans.transform.translation.z = 0.0;
-
-      odom_trans.transform.rotation = odom_quat;
-    //  ROS_INFO_STREAM(odom_quat);
-      //odom_quat.normalize();
-      
-    //  ROS_INFO_STREAM(odom_trans.transform.translation.x);
-
-      //send the transform
-      odom_broadcaster.sendTransform(odom_trans);
-      //ROS_INFO_STREAM(odom_trans);
-
-    
-      //next, we'll publish the odometry message over ROS
-    //  nav_msgs::Odometry odom;
+      //Odom data message + output
       odom.header.stamp = ros::Time::now();
-    //  odom.header.frame_id = "base_link";
       odom.header.frame_id = "odom";
-    //  odom.child_frame_id = "base_link";
       odom.child_frame_id = "base_footprint";
-    //  odom.child_frame_id = "odom";
 
-
-      //set the position
-   //  odom.pose.pose.position.x = dx;
-   //   odom.pose.pose.position.y = dy;
+      //Odom pose values are set here
+      odom.pose.pose.position.x += xPoseChange;
+      odom.pose.pose.position.y += yPoseChange;
       odom.pose.pose.position.z = 0.0;
       odom.pose.pose.orientation = odom_quat;
 
       //set the velocity
-      odom.twist.twist.linear.x = dx;
-      odom.twist.twist.linear.y = dy;
+      odom.twist.twist.linear.x = dx / dt;
+      odom.twist.twist.linear.y = dy / dt;
       odom.twist.twist.linear.z = 0.0;
+
+        
+      //first, we'll publish the transform over tf
+      
+      odom_trans.header.stamp = ros::Time::now();
+      odom_trans.header.frame_id = "odom";
+      odom_trans.child_frame_id = "base_footprint";
+
+      //odom TF values set here
+      odom_trans.transform.translation.x = odom.pose.pose.position.x;//dy * sin(thetaChange) + dx * cos(thetaChange);
+      odom_trans.transform.translation.y = odom.pose.pose.position.y; //dy * cos(thetaChange) - dx * sin(thetaChange);
+      odom_trans.transform.translation.z = 0.0;
+      odom_trans.transform.rotation = odom_quat;
+      odom_broadcaster.sendTransform(odom_trans);
+
 
       //publish the message
       odom_pub.publish(odom);
 
-
-
-      /* Broadcast the latest odometry estimate in Twist format to node */
-  //    odometry_publisher.publish(output);
-
-  //    odometryMSG_publisher.publish(output);
-
-  //    odom_publisher.publish(output);
 
       /* Store the current pose for comparison to next recorded pose */
       prevPose = currPose;
@@ -237,4 +183,3 @@ int main(int argc, char ** argv) {
 
   return 0;
 }
-
