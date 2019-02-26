@@ -1,5 +1,4 @@
 #include "hebiros_gazebo_pid.h"
-#include "hebiros/PidGainsMsg.h"
 
 namespace hebiros {
 namespace sim {
@@ -20,9 +19,9 @@ double PidController::update(double target, double feedback, double dt, const Pi
   // TODO: store gains instead of looking them up
   // here...
   return
-    pid_gains.kp[i] * error_p + 
-    pid_gains.ki[i] * error_i +
-    pid_gains.ki[i] * error_d;
+    pid_gains.kp[gain_idx] * error_p + 
+    pid_gains.ki[gain_idx] * error_i +
+    pid_gains.ki[gain_idx] * error_d;
 }
 
 } // namespace simulation

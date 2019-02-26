@@ -394,37 +394,37 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
 
     case 2:
       position_pid =
-        hebiros_joint->position_pid->update(target_position, position, dt, pos_gains, cmd_index),
+        hebiros_joint->position_pid.update(target_position, position, dt, pos_gains, cmd_index),
       velocity_pid =
-        hebiros_joint->velocity_pid->update(target_velocity, velocity, dt, vel_gains, cmd_index);
+        hebiros_joint->velocity_pid.update(target_velocity, velocity, dt, vel_gains, cmd_index);
       intermediate_effort = target_effort + position_pid + velocity_pid;
       effort_pwm = Clip(
-        hebiros_joint->effort_pid->update(intermediate_effort, effort, dt, eff_gains, cmd_index),
+        hebiros_joint->effort_pid.update(intermediate_effort, effort, dt, eff_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       pwm = effort_pwm;
       break;
 
     case 3:
       position_pwm = Clip(
-        hebiros_joint->position_pid->update(target_position, position, dt, hebiros_group->settings.position_gains, hebiros_joint->command_index),
+        hebiros_joint->position_pid.update(target_position, position, dt, hebiros_group->settings.position_gains, hebiros_joint->command_index),
         MIN_PWM, MAX_PWM);
       velocity_pwm = Clip(
-        hebiros_joint->velocity_pid->update(target_velocity, velocity, dt, vel_gains, cmd_index);
+        hebiros_joint->velocity_pid.update(target_velocity, velocity, dt, vel_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       effort_pwm = Clip(
-        hebiros_joint->effort_pid->update(target_effort, effort, dt, eff_gains, cmd_index),
+        hebiros_joint->effort_pid.update(target_effort, effort, dt, eff_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       pwm = Clip(position_pwm + velocity_pwm + effort_pwm, MIN_PWM, MAX_PWM);
       break;
 
     case 4:
-      position_pid = hebiros_joint->position_pid->update(target_position, position, dt, hebiros_group->settings.position_gains, hebiros_joint->command_index);
+      position_pid = hebiros_joint->position_pid.update(target_position, position, dt, hebiros_group->settings.position_gains, hebiros_joint->command_index);
       intermediate_effort = target_effort + position_pid;
       effort_pwm = Clip(
-        hebiros_joint->effort_pid->update(intermediate_effort, effort, dt, eff_gains, cmd_index),
+        hebiros_joint->effort_pid.update(intermediate_effort, effort, dt, eff_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       velocity_pwm = Clip(
-        hebiros_joint->velocity_pid->update(target_velocity, velocity, dt, vel_gains, cmd_index);
+        hebiros_joint->velocity_pid.update(target_velocity, velocity, dt, vel_gains, cmd_index),
         MIN_PWM, MAX_PWM);
       pwm = Clip(velocity_pwm + effort_pwm, MIN_PWM, MAX_PWM);
       break;

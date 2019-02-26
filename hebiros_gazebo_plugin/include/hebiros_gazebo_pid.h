@@ -1,8 +1,7 @@
+#include "hebiros/PidGainsMsg.h"
+#include <cstdint>
 
 namespace hebiros {
-
-class PidGainsMsg;
-
 namespace sim {
 
 // A simple PID controller class
