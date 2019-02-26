@@ -8,13 +8,17 @@ namespace sim {
 class PidController {
 
 public:
-  PidController() = default;
+  PidController(double ff_scale)
+    : _ff_scale(ff_scale)
+  {}
 
   double update(double target, double feedback, double dt, const PidGainsMsg& pid_gains, size_t gain_idx);
 
 private:
-  double elapsed_error{};
-  double prev_error{};
+  double _elapsed_error{};
+  double _prev_error{};
+  // TODO: scale here or when setting value?
+  double _ff_scale{};
 };
 
 } // namespace simulation

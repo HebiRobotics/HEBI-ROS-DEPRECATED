@@ -8,10 +8,10 @@ double PidController::update(double target, double feedback, double dt, const Pi
 {
   double error_p, error_i, error_d;
   error_p = target - feedback;
-  error_i = elapsed_error + error_p;
-  error_d = (error_p - prev_error) / dt;
-  prev_error = error_p;
-  elapsed_error = error_i;
+  error_i = _elapsed_error + error_p;
+  error_d = (error_p - _prev_error) / dt;
+  _prev_error = error_p;
+  _elapsed_error = error_i;
 
   if (dt <= 0)
     error_d = 0;
@@ -21,7 +21,8 @@ double PidController::update(double target, double feedback, double dt, const Pi
   return
     pid_gains.kp[gain_idx] * error_p + 
     pid_gains.ki[gain_idx] * error_i +
-    pid_gains.ki[gain_idx] * error_d;
+    pid_gains.ki[gain_idx] * error_d + 
+    pid_gains.feed_forward[gain_idx] * _ff_scale * target;
 }
 
 } // namespace simulation

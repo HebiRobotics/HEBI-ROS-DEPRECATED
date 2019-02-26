@@ -27,22 +27,6 @@ static constexpr double DEFAULT_EFFORT_KP = 0.25;
 static constexpr double DEFAULT_EFFORT_KI = 0.0;
 static constexpr double DEFAULT_EFFORT_KD = 0.001;
 
-static constexpr double GEAR_RATIO_X5_1 = 272.22;
-static constexpr double GEAR_RATIO_X8_3 = 272.22;
-static constexpr double GEAR_RATIO_X5_4 = 762.22;
-static constexpr double GEAR_RATIO_X8_9 = 762.22;
-static constexpr double GEAR_RATIO_X5_9 = 1742.22;
-static constexpr double GEAR_RATIO_X8_16 = 1462.222;
-
-static constexpr double DEFAULT_GEAR_RATIO = 272.22;
-
-static std::map<std::string, double> gear_ratios = {
-  {"X5_1", GEAR_RATIO_X5_1},
-  {"X5_4", GEAR_RATIO_X5_4},
-  {"X5_9", GEAR_RATIO_X5_9},
-  {"X8_3", GEAR_RATIO_X8_3},
-  {"X8_9", GEAR_RATIO_X8_9},
-  {"X8_16", GEAR_RATIO_X8_16}};
 }
 
 using namespace controller;
@@ -57,12 +41,7 @@ void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> he
   int i = hebiros_joint->command_index;
 
   //Set gear ratio
-  if (gear_ratios.find(hebiros_joint->model_name) != gear_ratios.end()) {
-    hebiros_joint->gear_ratio = gear_ratios[hebiros_joint->model_name];
-  }
-  else {
-    hebiros_joint->gear_ratio = DEFAULT_GEAR_RATIO;
-  }
+  // TODO: check previous call to SetSettings -- potentially eliminate?
 
   //Set control strategy
   hebiros_group->settings.control_strategy.push_back(

@@ -23,13 +23,14 @@ public:
   hebiros::sim::TemperatureModel temperature;
   hebiros::sim::TemperatureSafetyController temperature_safety{155};
 
+  double gear_ratio {};
+
   hebiros::sim::PidController position_pid;
   hebiros::sim::PidController velocity_pid;
   hebiros::sim::PidController effort_pid;
 
   double prev_force {};
   double low_pass_alpha {};
-  double gear_ratio {};
 
   ros::Subscriber imu_subscriber;
 
