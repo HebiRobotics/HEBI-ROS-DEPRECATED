@@ -100,6 +100,8 @@ int main(int argc, char ** argv) {
   double wheelRadius = 0.0762; // m
   double baseRadius = 0.235; // m (radius from base center to wheel center)
 
+  double xPoseChange; double yPoseChange;
+
   /******** MAIN LOOP **********/
 
    while (ros::ok()) {
@@ -145,11 +147,14 @@ int main(int argc, char ** argv) {
 
       /* Map movement into the original frame of reference */
       /* Units: Meters*/
-      odom.pose.pose.position.x += dy * sin(thetaChange)
-                       + dx * cos(thetaChange); 
 
-      odom.pose.pose.position.y += dy * cos(thetaChange)
-                       - dx * sin(thetaChange); 
+
+      xPoseChange = dy * sin(thetaChange) + dx * cos(thetaChange);
+      yPoseChange = dy * cos(thetaChange) - dx * sin(thetaChange);
+
+      odom.pose.pose.position.x += xPoseChange;
+
+      odom.pose.pose.position.y += yPoseChange;
 
     //  output.seq++;
     //  output.stamp = ros::Time::now();
@@ -170,18 +175,19 @@ int main(int argc, char ** argv) {
       odom_trans.child_frame_id = "base_footprint";
     //    odom_trans.header.frame_id = "base_link";
     //    odom_trans.child_frame_id = "odom";
+      
 
-      odom_trans.transform.translation.x = dy * sin(odom.twist.twist.angular.z)
-                       + dx * cos(odom.twist.twist.angular.z);
+      odom_trans.transform.translation.x = odom.pose.pose.position.x;//dy * sin(thetaChange) + dx * cos(thetaChange);
 
-      odom_trans.transform.translation.y = dy * cos(odom.twist.twist.angular.z)
-                       - dx * sin(odom.twist.twist.angular.z);
+      odom_trans.transform.translation.y = odom.pose.pose.position.y; //dy * cos(thetaChange) - dx * sin(thetaChange);
 
       odom_trans.transform.translation.z = 0.0;
+
+      odom_trans.transform.rotation = odom_quat;
     //  ROS_INFO_STREAM(odom_quat);
       //odom_quat.normalize();
-      odom_trans.transform.rotation = odom_quat;
-      //ROS_INFO_STREAM(odom_quat);
+      
+    //  ROS_INFO_STREAM(odom_trans.transform.translation.x);
 
       //send the transform
       odom_broadcaster.sendTransform(odom_trans);
