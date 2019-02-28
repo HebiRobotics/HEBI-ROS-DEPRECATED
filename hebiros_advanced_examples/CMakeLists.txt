@@ -44,6 +44,7 @@ target_link_libraries(omnibase_navstack ${catkin_LIBRARIES})
 
 install(PROGRAMS
   src/omnibase/key_read.py
+  src/omnibase/ipad_controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -51,6 +52,7 @@ install(FILES
   launch/omnibase/example_omnibase_odometry.launch
   launch/omnibase/example_omnibase_free_roam.launch
   launch/omnibase/omnibase_navstack.launch	
+  launch/omnibase/navstack_ipad.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
