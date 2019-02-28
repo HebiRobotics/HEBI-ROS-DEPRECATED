@@ -51,9 +51,9 @@ int main(int argc, char ** argv) {
   // Create a subscriber to receive feedback from group
   // Register a callback that keeps the feedback updated
   ros::Subscriber feedback_subscriber = node.subscribe(
-    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
+    "/hebiros/"+group_name+"/feedback/joint_state", 1000, feedback_callback);
 
-  ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 50);
+  ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 1000);
   tf::TransformBroadcaster odom_broadcaster;
 
   feedback.position.resize(3);
