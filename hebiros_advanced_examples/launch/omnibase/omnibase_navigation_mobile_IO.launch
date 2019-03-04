@@ -1,0 +1,10 @@
+<launch>
+    <node name="hebiros_node" pkg="hebiros" type="hebiros_node" respawn="false" output="screen"/>
+
+    <node pkg="hebiros_advanced_examples" type="example_omnibase_odometry" name="example_omnibase_odometry" />
+
+    <node pkg="hebiros_advanced_examples" type="example_omnibase_free_roam" name="example_omnibase_free_roam" />
+
+    <node pkg="hebiros_advanced_examples" type="mobile_IO_controller.py" name="mobile_IO" />
+
+  </launch>
