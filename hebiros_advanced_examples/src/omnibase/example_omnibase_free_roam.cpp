@@ -85,7 +85,7 @@ int main(int argc, char ** argv) {
 
   ros::Rate loop_rate(rate_of_command);
 
-  ros::Subscriber key_subscriber = node.subscribe("keys/cmd_vel", 20,
+  ros::Subscriber key_subscriber = node.subscribe("cmd_vel", 20,
                            directions_callback);
 
   ////////////////////////////////////////////////////////////////////////////

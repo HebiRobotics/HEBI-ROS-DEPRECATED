@@ -11,7 +11,8 @@
 #include <geometry_msgs/Twist.h>
 #include "sensor_msgs/JointState.h"
 #include "hebiros/FeedbackMsg.h"
-
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
 #include <ros/console.h>
 
 using namespace hebiros;
@@ -19,7 +20,7 @@ using namespace hebiros;
 // Global Variables
 sensor_msgs::JointState feedback;
 sensor_msgs::JointState commands;
-double rate_of_command = 60;
+double rate_of_command = 100;
 double buffer = 0;
 bool feedback_init = false;
 
@@ -53,8 +54,8 @@ int main(int argc, char ** argv) {
     "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
   // Create a publisher to post the calculated odometry to a topic
-  ros::Publisher odometry_publisher = node.advertise<geometry_msgs::Twist>(
-    "/hebiros/"+group_name+"/odometry", 100);
+  ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 100);
+  tf::TransformBroadcaster odom_broadcaster;
   
   feedback.position.resize(3);
   commands.velocity.resize(3);
@@ -65,11 +66,15 @@ int main(int argc, char ** argv) {
 
   /* Declare  variables to be used for calculations */
   double d0; double d1; double d2;
-  double dx; double dy; 
-  double dtheta0; double dtheta1; double dtheta2;
+  double dx; double dy; double dt;
+  double dtheta0; double dtheta1; double dtheta2; double thetaChange; double thetaTotalChange;
+  double xPoseChange; double yPoseChange;
   sensor_msgs::JointState prevPose;
   sensor_msgs::JointState currPose;
-  geometry_msgs::Twist output;
+  nav_msgs::Odometry odom;
+  geometry_msgs::TransformStamped odom_trans;
+  geometry_msgs::Quaternion odom_quat;
+  ros::Time current_time, last_time;
   bool startup_complete = false;
 
   /* Base dimensions */
@@ -91,6 +96,21 @@ int main(int argc, char ** argv) {
       /* get the latest pose for the base */
       currPose = feedback;
 
+      ros::spinOnce(); 
+      last_time = current_time;
+      current_time = ros::Time::now();
+      dt = current_time.toSec() - last_time.toSec();
+
+      //Odom message setup; stamp and frame id assignment
+      odom.header.stamp = current_time;
+      odom.header.frame_id = "odom";
+      odom.child_frame_id = "base_footprint";
+
+      //Odom transform message setup; stamp and frame id assignment   
+      odom_trans.header.stamp = current_time;
+      odom_trans.header.frame_id = "odom";
+      odom_trans.child_frame_id = "base_footprint";
+
       /* Determine change in position for each individual wheel */
       /* Units: meters */
       d0 = (currPose.position[0] - prevPose.position[0]) * wheelRadius; //wheel1
@@ -103,23 +123,51 @@ int main(int argc, char ** argv) {
       dtheta0 = d0 / (baseRadius);
       dtheta1 = d1 / (baseRadius);
       dtheta2 = d2 / (baseRadius); 
-      output.angular.z += (dtheta0 + dtheta1 + dtheta2) / 3;
+
+      //Determine theta (change in angle)
+      thetaChange = (dtheta0 + dtheta1 + dtheta2) / -3.0; 
+      thetaTotalChange += thetaChange;
 
       /* Determine movement of the base in current frame of reference */
       /* Units: Meters*/
-      dx = (d0/2 + d1/2 - d2) * 2/3; 
-      dy = (d0 * (-sqrt(3)/2) + d1 * (sqrt(3)/2)) * 2/3;
+      dy = (d0/2 + d1/2 - d2) * -2/3; 
+      dx = (d0 * (-sqrt(3)/2) + d1 * (sqrt(3)/2)) * 2/3;
 
       /* Map movement into the original frame of reference */
       /* Units: Meters*/
-      output.linear.x += dy * sin(output.angular.z)
-                       + dx * cos(output.angular.z); 
+      xPoseChange = -1 * dy * sin(thetaTotalChange) + dx * cos(thetaTotalChange);
+      yPoseChange = dy * cos(thetaTotalChange) + dx * sin(thetaTotalChange);
 
-      output.linear.y += dy * cos(output.angular.z)
-                       - dx * sin(output.angular.z); 
 
-      /* Broadcast the latest odometry estimate in Twist format to node */
-      odometry_publisher.publish(output);
+      //Odom pose values are set here
+      odom.pose.pose.position.x += xPoseChange;
+      odom.pose.pose.position.y += yPoseChange;
+      odom.pose.pose.position.z = 0.0;
+      odom.pose.pose.orientation = odom_quat;
+
+      //odom linear velocity values are set here
+      odom.twist.twist.linear.x = dx / dt;
+      odom.twist.twist.linear.y = dy / dt;
+      odom.twist.twist.linear.z = 0.0;
+
+      //odom angular velocity values are set here
+      odom.twist.twist.angular.z = thetaChange / dt;
+      odom.twist.twist.angular.y = 0;
+      odom.twist.twist.angular.x = 0;        
+
+      //odom transform values set here
+      odom_trans.transform.translation.x = odom.pose.pose.position.x;//dy * sin(thetaChange) + dx * cos(thetaChange);
+      odom_trans.transform.translation.y = odom.pose.pose.position.y; //dy * cos(thetaChange) - dx * sin(thetaChange);
+      odom_trans.transform.translation.z = 0.0;
+      odom_trans.transform.rotation = odom_quat;
+      
+
+      //publish odometry transform messaage
+      odom_broadcaster.sendTransform(odom_trans);
+
+
+      //publish the odometry message
+      odom_pub.publish(odom);
 
       /* Store the current pose for comparison to next recorded pose */
       prevPose = currPose;
