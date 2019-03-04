@@ -1,7 +1,7 @@
 /**
 * Provides a base level implementation of odometry calculations for a 3-wheeled
 * omnidirectional base (omnibase) for a 3D enviroment. This file works in the hebiros setup, and 
-* publishes odometry results to an odometry node.
+* publishes odometry results to an odometry node /odom.
 *
 * @author Sami Mian < sami @ hebirobotics.com >
 * @since 2 Feb 2019
@@ -20,7 +20,7 @@ using namespace hebiros;
 // Global Variables
 sensor_msgs::JointState feedback;
 sensor_msgs::JointState commands;
-double rate_of_command = 60;
+double rate_of_command = 100;
 double buffer = 0;
 bool feedback_init = false;
 
@@ -42,7 +42,7 @@ int main(int argc, char ** argv) {
   ros::Rate loop_rate(rate_of_command);
 
   ////////////////////////////////////////////////////////////////////////////
-  ////////                   HEBI API SETUP                            ////////
+  ////////                   HEBI API SETUP                            ///////
   ////////////////////////////////////////////////////////////////////////////
 
   /* Update this with the group name for your modules */
@@ -51,9 +51,10 @@ int main(int argc, char ** argv) {
   // Create a subscriber to receive feedback from group
   // Register a callback that keeps the feedback updated
   ros::Subscriber feedback_subscriber = node.subscribe(
-    "/hebiros/"+group_name+"/feedback/joint_state", 1000, feedback_callback);
+    "/hebiros/"+group_name+"/feedback/joint_state", 100, feedback_callback);
 
-  ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 1000);
+  //Create a publisher to post the calculated odometry to a topic
+  ros::Publisher odom_pub = node.advertise<nav_msgs::Odometry>("odom", 100);
   tf::TransformBroadcaster odom_broadcaster;
 
   feedback.position.resize(3);
@@ -65,15 +66,12 @@ int main(int argc, char ** argv) {
 
   /* Declare  variables to be used for calculations */
   double d0; double d1; double d2;
-  double dx; double dy; 
+  double dx; double dy; double dt;
   double dtheta0; double dtheta1; double dtheta2; double thetaChange; double thetaTotalChange;
   double xPoseChange; double yPoseChange;
   sensor_msgs::JointState prevPose;
   sensor_msgs::JointState currPose;
   nav_msgs::Odometry odom;
-
-  odom.twist.twist.angular.z = 0;
-  geometry_msgs::Twist output;
   geometry_msgs::TransformStamped odom_trans;
   geometry_msgs::Quaternion odom_quat;
   ros::Time current_time, last_time;
@@ -101,7 +99,17 @@ int main(int argc, char ** argv) {
       ros::spinOnce(); 
       last_time = current_time;
       current_time = ros::Time::now();
-      double dt = current_time.toSec() - last_time.toSec();
+      dt = current_time.toSec() - last_time.toSec();
+
+      //Odom message setup; stamp and frame id assignment
+      odom.header.stamp = current_time;
+      odom.header.frame_id = "odom";
+      odom.child_frame_id = "base_footprint";
+
+      //Odom transform message setup; stamp and frame id assignment   
+      odom_trans.header.stamp = current_time;
+      odom_trans.header.frame_id = "odom";
+      odom_trans.child_frame_id = "base_footprint";
 
 
       /* Determine change in position for each individual wheel */
@@ -120,10 +128,9 @@ int main(int argc, char ** argv) {
       //Determine theta (change in angle)
       thetaChange = (dtheta0 + dtheta1 + dtheta2) / -3.0; 
       thetaTotalChange += thetaChange;
-      //ROS_INFO_STREAM("TTC " << thetaChange);
-      odom.twist.twist.angular.z = thetaChange / dt;
-      odom.twist.twist.angular.y = 0;
-      odom.twist.twist.angular.x = 0;
+
+      //since all odometry is 6DOF we'll need a quaternion created from yaw
+      odom_quat = tf::createQuaternionMsgFromYaw(thetaTotalChange);
 
       /* Determine movement of the base in current frame of reference */
       /* Units: Meters*/
@@ -135,13 +142,6 @@ int main(int argc, char ** argv) {
       xPoseChange = -1 * dy * sin(thetaTotalChange) + dx * cos(thetaTotalChange);
       yPoseChange = dy * cos(thetaTotalChange) + dx * sin(thetaTotalChange);
 
-      //since all odometry is 6DOF we'll need a quaternion created from yaw
-      odom_quat = tf::createQuaternionMsgFromYaw(thetaTotalChange);
-
-      //Odom data message + output
-      odom.header.stamp = ros::Time::now();
-      odom.header.frame_id = "odom";
-      odom.child_frame_id = "base_footprint";
 
       //Odom pose values are set here
       odom.pose.pose.position.x += xPoseChange;
@@ -149,29 +149,29 @@ int main(int argc, char ** argv) {
       odom.pose.pose.position.z = 0.0;
       odom.pose.pose.orientation = odom_quat;
 
-      //set the velocity
+      //odom linear velocity values are set here
       odom.twist.twist.linear.x = dx / dt;
       odom.twist.twist.linear.y = dy / dt;
       odom.twist.twist.linear.z = 0.0;
 
-        
-      //first, we'll publish the transform over tf
-      
-      odom_trans.header.stamp = ros::Time::now();
-      odom_trans.header.frame_id = "odom";
-      odom_trans.child_frame_id = "base_footprint";
+      //odom angular velocity values are set here
+      odom.twist.twist.angular.z = thetaChange / dt;
+      odom.twist.twist.angular.y = 0;
+      odom.twist.twist.angular.x = 0;        
 
-      //odom TF values set here
+      //odom transform values set here
       odom_trans.transform.translation.x = odom.pose.pose.position.x;//dy * sin(thetaChange) + dx * cos(thetaChange);
       odom_trans.transform.translation.y = odom.pose.pose.position.y; //dy * cos(thetaChange) - dx * sin(thetaChange);
       odom_trans.transform.translation.z = 0.0;
       odom_trans.transform.rotation = odom_quat;
+      
+
+      //publish odometry transform messaage
       odom_broadcaster.sendTransform(odom_trans);
 
 
-      //publish the message
+      //publish the odometry message
       odom_pub.publish(odom);
-
 
       /* Store the current pose for comparison to next recorded pose */
       prevPose = currPose;

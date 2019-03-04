@@ -79,7 +79,7 @@ Visualization Manager:
       Min Intensity: 106
       Name: LaserScan
       Position Transformer: XYZ
-      Queue Size: 10
+      Queue Size: 100
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.009999999776482582
@@ -109,25 +109,6 @@ Visualization Manager:
           Show Trail: false
           Value: true
         base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        caster_back_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_right_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
