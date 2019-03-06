@@ -7,13 +7,13 @@ using namespace hebi;
 
 void HebirosSubscribersPhysical::registerGroupSubscribers(std::string group_name) {
 
-  subscribers["/hebiros/"+group_name+"/command"] = 
-    HebirosNode::n_ptr->subscribe<CommandMsg>("/hebiros/"+group_name+"/command", 100,
+  subscribers["hebiros/"+group_name+"/command"] =
+    HebirosNode::n_ptr->subscribe<CommandMsg>("hebiros/"+group_name+"/command", 100,
     boost::bind(&HebirosSubscribersPhysical::command, this, _1, group_name));
 
-  subscribers["/hebiros/"+group_name+"/command/joint_state"] = 
+  subscribers["hebiros/"+group_name+"/command/joint_state"] =
     HebirosNode::n_ptr->subscribe<sensor_msgs::JointState>(
-    "/hebiros/"+group_name+"/command/joint_state", 100,
+    "hebiros/"+group_name+"/command/joint_state", 100,
     boost::bind(&HebirosSubscribersPhysical::jointCommand, this, _1, group_name));
 
   // TODO: replace with better abstraction later
@@ -31,9 +31,9 @@ void HebirosSubscribersPhysical::registerGroupSubscribers(std::string group_name
   });
 
   group->setFeedbackFrequency(
-    HebirosParameters::getInt("/hebiros/feedback_frequency"));
+    HebirosParameters::getInt("hebiros/feedback_frequency"));
   group->setCommandLifetime(
-    HebirosParameters::getInt("/hebiros/command_lifetime"));
+    HebirosParameters::getInt("hebiros/command_lifetime"));
 }
 
 void HebirosSubscribersPhysical::command(const boost::shared_ptr<CommandMsg const> data,
@@ -439,11 +439,11 @@ void HebirosSubscribersPhysical::feedback(std::string group_name, const GroupFee
     }
     feedback_msg.led_color.push_back(led_msg);
     feedback_msg.sequence_number.push_back(group_fbk[i].actuator().sequenceNumber().get());
-    feedback_msg.receive_time.push_back(group_fbk[i].actuator().receiveTime().get());
-    feedback_msg.transmit_time.push_back(group_fbk[i].actuator().transmitTime().get());
-    feedback_msg.hardware_receive_time.push_back(group_fbk[i].actuator().hardwareReceiveTime().get());
+    feedback_msg.receive_time.push_back(group_fbk[i].receiveTimeUs().get());
+    feedback_msg.transmit_time.push_back(group_fbk[i].transmitTimeUs().get());
+    feedback_msg.hardware_receive_time.push_back(group_fbk[i].hardwareReceiveTimeUs().get());
     feedback_msg.hardware_transmit_time.push_back(
-      group_fbk[i].actuator().hardwareTransmitTime().get());
+      group_fbk[i].hardwareTransmitTimeUs().get());
   }
 
   group->feedback_msg = feedback_msg;

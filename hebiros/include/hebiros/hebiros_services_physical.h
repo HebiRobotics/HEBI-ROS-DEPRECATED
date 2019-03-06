@@ -12,7 +12,7 @@
 #include "hebiros/SendCommandWithAcknowledgementSrv.h"
 
 #include "hebiros_services.h"
-#include "lookup.hpp"
+#include "hebi_cpp_api/lookup.hpp"
 
 using namespace hebi;
 using namespace hebiros;

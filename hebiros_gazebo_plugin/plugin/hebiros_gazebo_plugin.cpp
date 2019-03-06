@@ -1,20 +1,22 @@
-
 #include <hebiros_gazebo_plugin.h>
-
-
-HebirosGazeboPlugin::HebirosGazeboPlugin() {}
-
-HebirosGazeboPlugin::~HebirosGazeboPlugin() {}
 
 //Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-
   this->model = _model;
 
   int argc = 0;
   char **argv = NULL;
   ros::init(argc, argv, "hebiros_gazebo_plugin_node");
-  this->n.reset(new ros::NodeHandle);
+
+  this->robot_namespace = "";
+  if (_sdf->HasElement("robotNamespace")) {
+    this->robot_namespace = _sdf->GetElement("robotNamespace")->Get<std::string>();
+  }
+  if (this->robot_namespace == "") {
+    this->n.reset(new ros::NodeHandle);
+  } else {
+    this->n.reset(new ros::NodeHandle(this->robot_namespace));
+  }
 
   this->update_connection = event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
@@ -49,12 +51,10 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 
 //Publish feedback and compute PID control to command a joint
 void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
-
   for (auto joint_pair : hebiros_group->joints) {
 
     std::string joint_name = joint_pair.first;
     std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_group->joints[joint_name];
-
 
     physics::JointPtr joint = this->model->GetJoint(joint_name+"/"+hebiros_joint->model_name);
 
@@ -165,7 +165,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   hebiros_group->feedback.gyro.resize(size);
 
   hebiros_group->feedback_pub = this->n->advertise<FeedbackMsg>(
-    "/hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
+    "hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
 
   hebiros_group->group_added = true;
 
@@ -176,21 +176,35 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
 void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::string joint_name) {
 
+  std::string model_name = "";
+  bool is_x8 = false;
+  if (this->model->GetJoint(joint_name+"/X5_1")) {
+    model_name = "X5_1";
+  }
+  else if (this->model->GetJoint(joint_name+"/X5_4")) {
+    model_name = "X5_4";
+  }
+  else if (this->model->GetJoint(joint_name+"/X5_9")) {
+    model_name = "X5_9";
+  }
+  else if (this->model->GetJoint(joint_name+"/X8_3")) {
+    model_name = "X8_3";
+    is_x8 = true;
+  }
+  else if (this->model->GetJoint(joint_name+"/X8_9")) {
+    model_name = "X8_9";
+    is_x8 = true;
+  }
+  else if (this->model->GetJoint(joint_name+"/X8_16")) {
+    model_name = "X8_16";
+    is_x8 = true;
+  }
+
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
-    std::make_shared<HebirosGazeboJoint>(joint_name, this->n);
+    std::make_shared<HebirosGazeboJoint>(joint_name, model_name, is_x8, this->n);
 
   hebiros_joint->feedback_index = hebiros_group->joints.size();
   hebiros_joint->command_index = hebiros_joint->feedback_index;
-
-  if (this->model->GetJoint(joint_name+"/X5_1")) {
-    hebiros_joint->model_name = "X5_1";
-  }
-  else if (this->model->GetJoint(joint_name+"/X5_4")) {
-    hebiros_joint->model_name = "X5_4";
-  }
-  else if (this->model->GetJoint(joint_name+"/X5_9")) {
-    hebiros_joint->model_name = "X5_9";
-  }
 
   HebirosGazeboController::SetSettings(hebiros_group, hebiros_joint);
   hebiros_group->joints[joint_name] = hebiros_joint;

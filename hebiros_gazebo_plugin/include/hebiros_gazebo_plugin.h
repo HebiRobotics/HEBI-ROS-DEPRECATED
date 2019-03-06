@@ -1,6 +1,4 @@
-
-#ifndef _HEBIROS_GAZEBO_PLUGIN_HH_
-#define _HEBIROS_GAZEBO_PLUGIN_HH_
+#pragma once
 
 #include <gazebo/common/common.hh>
 #include <gazebo/gazebo.hh>
@@ -27,32 +25,29 @@ using namespace gazebo;
 
 class HebirosGazeboPlugin: public ModelPlugin {
 
-  public:
-    HebirosGazeboPlugin();
-    ~HebirosGazeboPlugin();
-    void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-    void OnUpdate(const common::UpdateInfo & _info);
+public:
+  HebirosGazeboPlugin() = default;
 
-  private:
+  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
+  void OnUpdate(const common::UpdateInfo & _info);
 
-    physics::ModelPtr model;
-    bool first_sim_iteration{true};
-    event::ConnectionPtr update_connection;
-    std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
-    std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
+private:
 
-    std::shared_ptr<ros::NodeHandle> n;
-    ros::Subscriber command_sub;
-    ros::ServiceServer add_group_srv;
-    ros::ServiceServer acknowledge_srv;
+  physics::ModelPtr model;
+  bool first_sim_iteration{true};  
+  event::ConnectionPtr update_connection;
+  std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
+  std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
 
-    void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, std::string joint_name);
-    void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time);
+  std::string robot_namespace;
+  std::shared_ptr<ros::NodeHandle> n;
+  ros::Subscriber command_sub;
+  ros::ServiceServer add_group_srv;
+  ros::ServiceServer acknowledge_srv;
 
-    bool SrvAddGroup(AddGroupFromNamesSrv::Request &req,
-      AddGroupFromNamesSrv::Response &res);
+  void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, std::string joint_name);
+  void UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time);
+
+  bool SrvAddGroup(AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);
 
 };
-
-
-#endif
