@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1.3)
 project(hebiros)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O2")
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   genmsg
   actionlib_msgs
   actionlib
+  hebi_cpp_api
 )
 
 ## System dependencies are found with CMake's conventions
@@ -126,11 +127,11 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES hebiros
-#  CATKIN_DEPENDS other_catkin_pkg
   CATKIN_DEPENDS roscpp
   CATKIN_DEPENDS actionlib
   CATKIN_DEPENDS message_runtime
   CATKIN_DEPENDS tf
+  CATKIN_DEPENDS hebi_cpp_api
 #  DEPENDS system_lib
 )
 
@@ -141,10 +142,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
+  .
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include/hebi
-  include/hebi/Eigen
   include/hebiros
 )
 
@@ -164,19 +164,6 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/hebiros_node.cpp)
 
 add_executable(hebiros_node src/hebiros_node.cpp
-  include/hebi/command.cpp
-  include/hebi/feedback.cpp
-  include/hebi/group_command.cpp
-  include/hebi/group_feedback.cpp
-  include/hebi/group_info.cpp
-  include/hebi/group.cpp
-  include/hebi/info.cpp
-  include/hebi/robot_model.cpp
-  include/hebi/log_file.cpp
-  include/hebi/lookup.cpp
-  include/hebi/mac_address.cpp
-  include/hebi/trajectory.cpp
-
   src/hebiros.cpp
   src/hebiros_parameters.cpp
   src/hebiros_group.cpp
@@ -197,7 +184,7 @@ add_executable(hebiros_node src/hebiros_node.cpp
   src/hebiros_model.cpp
 )
 
-add_dependencies(hebiros_node hebiros_generate_messages_cpp)
+add_dependencies(hebiros_node hebiros_generate_messages_cpp ${hebiros_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -210,11 +197,7 @@ add_dependencies(hebiros_node hebiros_generate_messages_cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-
-target_link_libraries(hebiros_node ${catkin_LIBRARIES} ${PROJECT_SOURCE_DIR}/lib/linux_x86_64/libhebi.so)
+target_link_libraries(hebiros_node ${catkin_LIBRARIES})
 
 #############
 ## Install ##
