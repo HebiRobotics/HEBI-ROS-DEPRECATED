@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1.3)
 project(hebiros)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -O2")
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -142,10 +142,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
+  .
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include/hebi
-  include/hebi/Eigen
   include/hebiros
 )
 
@@ -185,7 +184,7 @@ add_executable(hebiros_node src/hebiros_node.cpp
   src/hebiros_model.cpp
 )
 
-add_dependencies(hebiros_node hebiros_generate_messages_cpp)
+add_dependencies(hebiros_node hebiros_generate_messages_cpp ${hebiros_node_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -3,7 +3,7 @@
 
 #include "ros/ros.h"
 #include "urdf/model.h"
-#include "robot_model.hpp"
+#include "hebi_cpp_api/robot_model.hpp"
 
 class HebirosModel {
 

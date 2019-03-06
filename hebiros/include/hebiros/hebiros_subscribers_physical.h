@@ -6,8 +6,8 @@
 #include "hebiros/CommandMsg.h"
 
 #include "hebiros_subscribers.h"
-#include "group_feedback.hpp"
-#include "group_command.hpp"
+#include "hebi_cpp_api/group_feedback.hpp"
+#include "hebi_cpp_api/group_command.hpp"
 
 
 class HebirosSubscribersPhysical : public HebirosSubscribers {

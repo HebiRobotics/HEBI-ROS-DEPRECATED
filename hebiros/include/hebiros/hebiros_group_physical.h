@@ -1,7 +1,7 @@
 #pragma once
 
-#include "group.hpp"
-#include "group_info.hpp"
+#include "hebi_cpp_api/group.hpp"
+#include "hebi_cpp_api/group_info.hpp"
 #include "hebiros_group.h"
 
 class HebirosGroupPhysical : public HebirosGroup {
