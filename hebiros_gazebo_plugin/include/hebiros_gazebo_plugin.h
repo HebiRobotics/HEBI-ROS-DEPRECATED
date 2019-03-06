@@ -34,6 +34,7 @@ public:
 private:
 
   physics::ModelPtr model;
+  bool first_sim_iteration{true};  
   event::ConnectionPtr update_connection;
   std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
   std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
