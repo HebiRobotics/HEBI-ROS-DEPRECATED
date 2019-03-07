@@ -65,17 +65,25 @@ int main(int argc, char ** argv) {
   ////////////////////////////////////////////////////////////////////////////
 
   /* Declare  variables to be used for calculations */
-  double d0; double d1; double d2;
-  double dx; double dy; double dt;
-  double dtheta0; double dtheta1; double dtheta2; double thetaChange; double thetaTotalChange;
-  double xPoseChange; double yPoseChange;
+  double theta_global = 0;
   sensor_msgs::JointState prevPose;
   sensor_msgs::JointState currPose;
   nav_msgs::Odometry odom;
   geometry_msgs::TransformStamped odom_trans;
   geometry_msgs::Quaternion odom_quat;
   ros::Time current_time, last_time;
+  current_time = ros::Time::now();  //set initial time
   bool startup_complete = false;
+
+  /*Parameter setup for NAV and Geometry messages   */
+  //Odom message setup; stamp and frame id assignment
+  odom.header.frame_id = "odom";
+  odom.child_frame_id = "base_footprint";
+
+  //Odom transform message setup; stamp and frame id assignment   
+  odom_trans.header.frame_id = "odom";
+  odom_trans.child_frame_id = "base_footprint";
+
 
   /* Base dimensions */
   double wheelRadius = 0.0762; // m
@@ -99,65 +107,62 @@ int main(int argc, char ** argv) {
       ros::spinOnce(); 
       last_time = current_time;
       current_time = ros::Time::now();
-      dt = current_time.toSec() - last_time.toSec();
+      double dt = current_time.toSec() - last_time.toSec();
 
-      //Odom message setup; stamp and frame id assignment
+      //Odom message and transform time stamps
       odom.header.stamp = current_time;
-      odom.header.frame_id = "odom";
-      odom.child_frame_id = "base_footprint";
-
-      //Odom transform message setup; stamp and frame id assignment   
       odom_trans.header.stamp = current_time;
-      odom_trans.header.frame_id = "odom";
-      odom_trans.child_frame_id = "base_footprint";
 
       /* Determine change in position for each individual wheel */
       /* Units: meters */
-      d0 = (currPose.position[0] - prevPose.position[0]) * wheelRadius; //wheel1
-      d1 = (currPose.position[1] - prevPose.position[1]) * wheelRadius; //wheel2
-      d2 = (currPose.position[2] - prevPose.position[2]) * wheelRadius; //wheel3
+      double distance_wheel1 = (currPose.position[0] - prevPose.position[0]) * wheelRadius; //wheel1
+      double distance_wheel2 = (currPose.position[1] - prevPose.position[1]) * wheelRadius; //wheel2
+      double distance_wheel3 = (currPose.position[2] - prevPose.position[2]) * wheelRadius; //wheel3
 
 
       /* Use an average from all wheels to determine change in body angle */
       /* Units: Radians*/
-      dtheta0 = d0 / (baseRadius);
-      dtheta1 = d1 / (baseRadius);
-      dtheta2 = d2 / (baseRadius); 
+      double theta_wheel1 = distance_wheel1 / (baseRadius);
+      double theta_wheel2 = distance_wheel2 / (baseRadius);
+      double theta_wheel3 = distance_wheel3 / (baseRadius);
 
       //Determine theta (change in angle)
-      thetaChange = (dtheta0 + dtheta1 + dtheta2) / -3.0; 
-      thetaTotalChange += thetaChange;
+      double theta_local = (theta_wheel1 + theta_wheel2 + theta_wheel3) / -3.0; 
+      theta_global += theta_local;
+
+      //since all odometry is 6DOF we'll need a quaternion created from yaw
+      odom_quat = tf::createQuaternionMsgFromYaw(theta_global);
 
       /* Determine movement of the base in current frame of reference */
       /* Units: Meters*/
-      dy = (d0/2 + d1/2 - d2) * -2/3; 
-      dx = (d0 * (-sqrt(3)/2) + d1 * (sqrt(3)/2)) * 2/3;
+      double dy_local = (distance_wheel1/2 + distance_wheel2/2 - distance_wheel3) * -2/3; 
+      double dx_local = (distance_wheel1 * (-sqrt(3)/2) + distance_wheel2 * (sqrt(3)/2)) * 2/3;
 
       /* Map movement into the original frame of reference */
       /* Units: Meters*/
-      xPoseChange = -1 * dy * sin(thetaTotalChange) + dx * cos(thetaTotalChange);
-      yPoseChange = dy * cos(thetaTotalChange) + dx * sin(thetaTotalChange);
+      double dx_global = -1 * dy_local * sin(theta_global) + dx_local * cos(theta_global);
+      double dy_global = dy_local * cos(theta_global) + dx_local * sin(theta_global);
 
 
       //Odom pose values are set here
-      odom.pose.pose.position.x += xPoseChange;
-      odom.pose.pose.position.y += yPoseChange;
+      odom.pose.pose.position.x += dx_global;
+      odom.pose.pose.position.y += dy_global;
       odom.pose.pose.position.z = 0.0;
       odom.pose.pose.orientation = odom_quat;
 
       //odom linear velocity values are set here
-      odom.twist.twist.linear.x = dx / dt;
-      odom.twist.twist.linear.y = dy / dt;
+      odom.twist.twist.linear.x = dx_local / dt;
+      odom.twist.twist.linear.y = dy_local / dt;
       odom.twist.twist.linear.z = 0.0;
 
       //odom angular velocity values are set here
-      odom.twist.twist.angular.z = thetaChange / dt;
+      odom.twist.twist.angular.z = theta_local / dt;
       odom.twist.twist.angular.y = 0;
-      odom.twist.twist.angular.x = 0;        
+      odom.twist.twist.angular.x = 0;         
 
       //odom transform values set here
-      odom_trans.transform.translation.x = odom.pose.pose.position.x;//dy * sin(thetaChange) + dx * cos(thetaChange);
-      odom_trans.transform.translation.y = odom.pose.pose.position.y; //dy * cos(thetaChange) - dx * sin(thetaChange);
+      odom_trans.transform.translation.x = odom.pose.pose.position.x;
+      odom_trans.transform.translation.y = odom.pose.pose.position.y;
       odom_trans.transform.translation.z = 0.0;
       odom_trans.transform.rotation = odom_quat;
       
