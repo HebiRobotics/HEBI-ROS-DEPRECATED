@@ -20,12 +20,15 @@ static constexpr double LOW_PASS_ALPHA = 0.1;
 static constexpr double DEFAULT_POSITION_KP = 0.5;
 static constexpr double DEFAULT_POSITION_KI = 0.0;
 static constexpr double DEFAULT_POSITION_KD = 0.0;
+static constexpr double DEFAULT_POSITION_FF = 0.0;
 static constexpr double DEFAULT_VELOCITY_KP = 0.05;
 static constexpr double DEFAULT_VELOCITY_KI = 0.0;
 static constexpr double DEFAULT_VELOCITY_KD = 0.0;
+static constexpr double DEFAULT_VELOCITY_FF = 1.0;
 static constexpr double DEFAULT_EFFORT_KP = 0.25;
 static constexpr double DEFAULT_EFFORT_KI = 0.0;
 static constexpr double DEFAULT_EFFORT_KD = 0.001;
+static constexpr double DEFAULT_EFFORT_FF = 1.0;
 
 }
 
@@ -57,6 +60,17 @@ void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup
   std::string model_name = hebiros_joint->model_name;
   int i = hebiros_joint->command_index;
   int control_strategy = hebiros_group->settings.control_strategy[i];
+
+  if (control_strategy == 2) {
+    hebiros_group->settings.position_gains.feed_forward.push_back(0);
+    hebiros_group->settings.velocity_gains.feed_forward.push_back(0);
+    hebiros_group->settings.effort_gains.feed_forward.push_back(1);
+  }
+  if (control_strategy == 3 || control_strategy == 4) {
+    hebiros_group->settings.position_gains.feed_forward.push_back(0);
+    hebiros_group->settings.velocity_gains.feed_forward.push_back(1);
+    hebiros_group->settings.effort_gains.feed_forward.push_back(1);
+  }
 
   if (model_name == "X5_1" && control_strategy == 2) {
     hebiros_group->settings.position_gains.kp.push_back(5);
@@ -260,12 +274,15 @@ void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup
     hebiros_group->settings.position_gains.kp.push_back(DEFAULT_POSITION_KP);
     hebiros_group->settings.position_gains.ki.push_back(DEFAULT_POSITION_KI);
     hebiros_group->settings.position_gains.kd.push_back(DEFAULT_POSITION_KD);
+    hebiros_group->settings.position_gains.feed_forward.push_back(DEFAULT_POSITION_FF);
     hebiros_group->settings.velocity_gains.kp.push_back(DEFAULT_VELOCITY_KP);
     hebiros_group->settings.velocity_gains.ki.push_back(DEFAULT_VELOCITY_KI);
     hebiros_group->settings.velocity_gains.kd.push_back(DEFAULT_VELOCITY_KD);
+    hebiros_group->settings.velocity_gains.feed_forward.push_back(DEFAULT_VELOCITY_FF);
     hebiros_group->settings.effort_gains.kp.push_back(DEFAULT_EFFORT_KP);
     hebiros_group->settings.effort_gains.ki.push_back(DEFAULT_EFFORT_KI);
     hebiros_group->settings.effort_gains.kd.push_back(DEFAULT_EFFORT_KD);
+    hebiros_group->settings.effort_gains.feed_forward.push_back(DEFAULT_EFFORT_FF);
   }
 }
 
@@ -296,6 +313,9 @@ void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup>
   if (i < target.settings.position_gains.kd.size()) {
     hebiros_group->settings.position_gains.kd[i] = target.settings.position_gains.kd[i];
   }
+  if (i < target.settings.position_gains.feed_forward.size()) {
+    hebiros_group->settings.position_gains.feed_forward[i] = target.settings.position_gains.feed_forward[i];
+  }
 
   //Change velocity gains
   if (i < target.settings.velocity_gains.kp.size()) {
@@ -307,6 +327,9 @@ void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup>
   if (i < target.settings.velocity_gains.kd.size()) {
     hebiros_group->settings.velocity_gains.kd[i] = target.settings.velocity_gains.kd[i];
   }
+  if (i < target.settings.velocity_gains.feed_forward.size()) {
+    hebiros_group->settings.velocity_gains.feed_forward[i] = target.settings.velocity_gains.feed_forward[i];
+  }
 
   //Change effort gains
   if (i < target.settings.effort_gains.kp.size()) {
@@ -317,6 +340,9 @@ void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup>
   }
   if (i < target.settings.effort_gains.kd.size()) {
     hebiros_group->settings.effort_gains.kd[i] = target.settings.effort_gains.kd[i];
+  }
+  if (i < target.settings.effort_gains.feed_forward.size()) {
+    hebiros_group->settings.effort_gains.feed_forward[i] = target.settings.effort_gains.feed_forward[i];
   }
 }
 

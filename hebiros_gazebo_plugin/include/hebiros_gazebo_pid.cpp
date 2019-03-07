@@ -19,7 +19,7 @@ double PidController::update(double target, double feedback, double dt, const Pi
   // TODO: store gains instead of looking them up
   // here...
   return
-    pid_gains.kp[gain_idx] * error_p + 
+    pid_gains.kp[gain_idx] * error_p +
     pid_gains.ki[gain_idx] * error_i +
     pid_gains.kd[gain_idx] * error_d +
     pid_gains.feed_forward[gain_idx] * _ff_scale * target;
