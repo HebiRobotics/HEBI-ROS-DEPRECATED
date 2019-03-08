@@ -93,8 +93,8 @@ while (running):
 		running = False;
 		print("End of Program, disconnecting from Mobile IO")
 
-	x = io_a.get_float(7)
-	y = io_a.get_float(2)
+	y = -1 * (io_a.get_float(7))
+	x = io_a.get_float(2)
 	th = io_a.get_float(1)
 	scale = io_a.get_float(5)
 	
