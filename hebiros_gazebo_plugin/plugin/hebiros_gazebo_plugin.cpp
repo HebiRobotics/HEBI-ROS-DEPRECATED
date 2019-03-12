@@ -3,7 +3,7 @@
 // Checks the content of a string before the first "." at compile time.
 // Necessary because Gazebo only defines string version numbers.
 // Note: This requires -std=c++14 or higher to compile
-constexpr int GetGazeboVersion ( char const* string_ver )
+constexpr int GetGazeboVersion (char const* string_ver)
 {
   int res = 0;
   int i = 0;
@@ -18,7 +18,12 @@ constexpr int GetGazeboVersion ( char const* string_ver )
 // This is a templated struct that allows for wrapping some of the Gazebo
 // code for which compilation differse between versions; we use partial
 // template specialization to compile the appropriate version.
-template<int GazeboVersion, class JointType> struct GazeboHelper;
+template<int GazeboVersion, class JointType> struct GazeboHelper {
+  static_assert(GazeboVersion == 7 || GazeboVersion == 9, "Unknown version of gazebo");
+  // Default implementations so that the above assertion is the only compilation error
+  static double position(JointType joint) { return 0; }
+  static double effort(JointType joint) { return 0; }
+};
 
 template<class JointType> struct GazeboHelper<7, JointType> {
   static double position(JointType joint) {
