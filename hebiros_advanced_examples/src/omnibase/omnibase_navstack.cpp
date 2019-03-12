@@ -102,6 +102,7 @@ int main(int argc, char ** argv) {
 
   /* Declare  variables to be used for calculations */
   double theta_global = 0;
+  double dt = 1;
   sensor_msgs::JointState prevPose;
   sensor_msgs::JointState currPose;
   nav_msgs::Odometry odom;
@@ -124,7 +125,7 @@ int main(int argc, char ** argv) {
 
   /* Base dimensions */
   double wheelRadius = 0.0762; // m
-  double baseRadius = 0.235; // m (radius from base center to wheel center)
+  double baseRadius = 0.225; // m (radius from base center to wheel center)
 
   /******** MAIN LOOP **********/
 
@@ -144,7 +145,7 @@ int main(int argc, char ** argv) {
       ros::spinOnce(); 
       last_time = current_time;
       current_time = ros::Time::now();
-      double dt = current_time.toSec() - last_time.toSec();
+      dt = current_time.toSec() - last_time.toSec(); //dt is the change in time, originally set to 1 to avoid div by 0
 
       //Odom message and transform time stamps
       odom.header.stamp = current_time;

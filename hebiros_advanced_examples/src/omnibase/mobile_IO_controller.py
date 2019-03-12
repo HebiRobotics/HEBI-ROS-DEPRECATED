@@ -62,7 +62,6 @@ drive_state = False;
 
 ####### PARAMETERS ##########
 speed = 0
-turnspeed = 1
 threshold = 0.3
 scale = 0
 	
@@ -97,7 +96,7 @@ while (running):
 		running = False
 		print("End of Program, disconnecting from Mobile IO")
 
-	y = (io_a.get_float(7)) #removed the negative thanks to the new coordinate frame, may need to replace
+	y = -1*(io_a.get_float(7)) #removed the negative thanks to the new coordinate frame, may need to replace
 	x = io_a.get_float(2)
 	th = io_a.get_float(1)
 	scale = io_a.get_float(5)
@@ -121,7 +120,7 @@ while (running):
 
 	# important parameters
 	twist.linear.x = x * speed; twist.linear.y = y * speed; 
-	twist.angular.z = th*turnspeed;
+	twist.angular.z = th*speed;
 
 	# not important parameters, set to 0
 	twist.linear.z = 0;
