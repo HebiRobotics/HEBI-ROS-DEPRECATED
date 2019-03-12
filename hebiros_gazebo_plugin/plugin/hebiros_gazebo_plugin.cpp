@@ -1,7 +1,54 @@
 #include <hebiros_gazebo_plugin.h>
 
+// Checks the content of a string before the first "." at compile time.
+// Necessary because Gazebo only defines string version numbers.
+// Note: This requires -std=c++14 or higher to compile
+constexpr int GetGazeboVersion ( char const* string_ver )
+{
+  int res = 0;
+  int i = 0;
+  while (string_ver[i] != '\0' && string_ver[i] >= '0' && string_ver[i] <= '9') {
+    res *= 10;
+    res += static_cast<int>(string_ver[i] - '0');
+    ++i;
+  }
+  return res;
+}
+
+// This is a templated struct that allows for wrapping some of the Gazebo
+// code for which compilation differse between versions; we use partial
+// template specialization to compile the appropriate version.
+template<int GazeboVersion, class JointType> struct GazeboHelper;
+
+template<class JointType> struct GazeboHelper<7, JointType> {
+  static double position(JointType joint) {
+    return joint->GetAngle(0).Radian(); 
+  }
+
+  static double effort(JointType joint) {
+    auto trans = joint->GetChild()->GetInitialRelativePose().rot;
+    auto wrench = joint->GetForceTorque(0);
+    return (-1 * (trans * wrench.body1Torque)).z;
+  }
+};
+
+template<class JointType> struct GazeboHelper<9, JointType> {
+  static double position(JointType joint) {
+    return joint->Position(0);
+  }
+
+  static double effort(JointType joint) {
+    auto trans = joint->GetChild()->InitialRelativePose().Rot();
+    physics::JointWrench wrench = joint->GetForceTorque(0);
+    return (-1 * (trans * wrench.body1Torque)).Z();
+  }
+};
+
+using GazeboWrapper = GazeboHelper<GetGazeboVersion(GAZEBO_VERSION), physics::JointPtr>;
+
 //Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
+     
   this->model = _model;
 
   int argc = 0;
@@ -69,11 +116,10 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       int i = hebiros_joint->feedback_index;
 
       joint->SetProvideFeedback(true);
-      double position = joint->GetAngle(0).Radian();
       double velocity = joint->GetVelocity(0);
-      physics::JointWrench wrench = joint->GetForceTorque(0);
-      auto trans = joint->GetChild()->GetInitialRelativePose().rot;
-      double effort = (-1 * (trans * wrench.body1Torque)).z;
+
+      double position = GazeboWrapper::position(joint);
+      double effort = GazeboWrapper::effort(joint);
 
       hebiros_group->feedback.position[i] = position;
       hebiros_group->feedback.velocity[i] = velocity;

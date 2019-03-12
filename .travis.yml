@@ -14,9 +14,13 @@ env:
     - ROS_DISTRO="kinetic" NOT_TEST_BUILD=true ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu VERBOSE_OUTPUT=false
     - ROS_DISTRO="kinetic" NOT_TEST_BUILD=true ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu DEBUG_BASH=true
     - ROS_DISTRO="kinetic" PRERELEASE=true
+    - ROS_DISTRO="melodic" NOT_TEST_BUILD=true ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu VERBOSE_OUTPUT=false
+    - ROS_DISTRO="melodic" NOT_TEST_BUILD=true ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu DEBUG_BASH=true
+    - ROS_DISTRO="melodic" PRERELEASE=true
 matrix:
   allow_failures:
     - env: ROS_DISTRO="kinetic" PRERELEASE=true
+    - env: ROS_DISTRO="melodic" PRERELEASE=true
 install:
   - git clone https://github.com/ros-industrial/industrial_ci.git .ci_config
 script:
