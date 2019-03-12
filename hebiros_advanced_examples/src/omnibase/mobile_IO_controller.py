@@ -10,7 +10,7 @@ B5: Reset Speed Scale
 B8: Exit Program
 
 @author Sami Mian < sami @ hebirobotics.com >
-@since 2 Feb 2019
+@since Feb 2 2019
 
 Installation Requirements:
 This python code required the HEBI python API to be installed on the host machine in order to run.
@@ -48,7 +48,7 @@ group_command = hebi.GroupCommand(group.size)
 
 
 #ROS Publisher setup
-pub_rosie = rospy.Publisher('/cmd_vel', Twist, queue_size = 3)
+pub_rosie = rospy.Publisher('cmd_vel', Twist, queue_size = 3)
 rospy.init_node('key_read_node')
 r = rospy.Rate(200)
 
@@ -78,28 +78,32 @@ while (running):
 	io_b = group_feedback.io.b
 	controlA = group_command.io.a
 
-	if(io_b.get_int(1) !=0 and drive_state == False):	
-		drive_state = True;
+	if(io_b.get_int(1) !=0 and drive_state == False):
+		drive_state = True
 		print("Drive Enabled")
-	if(io_b.get_int(2) !=0 and drive_state == True):	
-		drive_state = False;
+		group_command.io.e.set_int(1,1)		#Turn on green indicator
+		group.send_command(group_command)
+	if(io_b.get_int(2) !=0 and drive_state == True):
+		drive_state = False
 		print("Drive Disabled")
-	if(io_b.get_int(5) !=0):	
+		group_command.io.e.set_int(1,0)		#Turn off green indicator
+		group.send_command(group_command)
+	if(io_b.get_int(5) !=0):
 		scale = 0
-		group_command.io.a.set_float(5,scale);
+		group_command.io.a.set_float(5,scale)
 		group.send_command(group_command)
 	 	#print("Scale reset to 0, speed set to default")
-	if(io_b.get_int(8) !=0):	
-		running = False;
+	if(io_b.get_int(8) !=0):
+		running = False
 		print("End of Program, disconnecting from Mobile IO")
 
-	x = io_a.get_float(7)
-	y = io_a.get_float(2)
+	y = (io_a.get_float(7)) #removed the negative thanks to the new coordinate frame, may need to replace
+	x = io_a.get_float(2)
 	th = io_a.get_float(1)
 	scale = io_a.get_float(5)
-	
+
 	#read A5 value and adjust gui appropriately
-	group_command.io.a.set_float(5,scale);
+	group_command.io.a.set_float(5,scale)
 	group.send_command(group_command)
 
 	#speed and value tuning for smoother drive
@@ -111,14 +115,18 @@ while (running):
 	if(abs(th)<threshold):
 		th = 0;
 
+	#Create a Twist object for sending commands (and sending a pause)
 	twist = Twist()
 	twist_off = Twist()
+
 	# important parameters
 	twist.linear.x = x * speed; twist.linear.y = y * speed; 
 	twist.angular.z = th*turnspeed;
-	# not important parameters, NO NEED TO CHANGE
+
+	# not important parameters, set to 0
 	twist.linear.z = 0;
 	twist.angular.x = 0; twist.angular.y = 0; 
+
 	#parameters for 0 velocity
 	twist_off.linear.x = 0; twist_off.linear.y = 0; twist_off.linear.z = 0;
 	twist_off.angular.x = 0; twist_off.angular.y = 0; twist_off.angular.z = 0;
