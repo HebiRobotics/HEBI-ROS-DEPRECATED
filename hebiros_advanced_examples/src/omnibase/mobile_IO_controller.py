@@ -33,7 +33,6 @@ sleep(2)
 
 group = lookup.get_group_from_names(['HEBI'], ['Mobile IO'])
 
-
 if group is None:
 	print('Group not found: Did you forget to set the module family and names above?')
 	exit(1)

@@ -125,7 +125,7 @@ int main(int argc, char ** argv) {
 
   /* Base dimensions */
   double wheelRadius = 0.0762; // m
-  double baseRadius = 0.225; // m (radius from base center to wheel center)
+  double baseRadius = 0.220; // m (radius from base center to wheel center)
 
   /******** MAIN LOOP **********/
 

@@ -43,7 +43,7 @@ void updateOmniVels() {
   /* Declare main kinematic variables */
   double wheelRadius = 0.0762; // m
   double baseRadius = 0.225; // m (center of omni to origin of base)
-  double speed = 0.5; // m/s
+  double speed = 0.3; // m/s
   double wheelRotSpeed = M_PI/3; // (rad/s)
   double ratio = sqrt(3)/2;
 
