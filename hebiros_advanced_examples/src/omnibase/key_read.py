@@ -42,20 +42,20 @@ keyBindings = {
 		'D':(0,0,1),#
 		'a':(0,0,-1),
 		'A':(0,0,-1),
-		's':(0,-1,0),
-		'S':(0,-1,0),
-		'w':(0,1,0),
-		'W':(0,1,0),
+		's':(-1,0,0),
+		'S':(-1,0,0),
+		'w':(1,0,0),
+		'W':(1,0,0),
 		## these are for the diagonal + rotational movement
 		# 'q':(0,1,-1),
 		# 'Q':(0,1,-1),
 		# 'e':(0,1,1),
 		# 'E':(0,1,1),
 		## these are for the horizontal translation
-		'q':(-1,0,0),
-		'Q':(-1,0,0),
-		'e':(1,0,0),
-		'E':(1,0,0),
+		'e':(0,-1,0),
+		'E':(0,-1,0),
+		'q':(0,1,0),
+		'Q':(0,1,0),
 		##
 	}
 
@@ -70,7 +70,7 @@ def shutdownHook():
 
 if __name__=="__main__":
 
-	pub = rospy.Publisher('keys/cmd_vel', Twist, queue_size = 3)
+	pub = rospy.Publisher('cmd_vel', Twist, queue_size = 3)
 	rospy.init_node('key_read_node')
 	pygame.init()
 	pygame.font.init()
