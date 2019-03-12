@@ -93,6 +93,10 @@ int main(int argc, char ** argv) {
   //Create a broadcaster for the TF for odom -> base_link
   tf::TransformBroadcaster odom_broadcaster;
 
+
+  //This node while handle two transforms, one from "map" to "odom"
+  tf::TransformBroadcaster map_broadcaster;
+
   feedback.position.resize(3);
   commands.velocity.resize(3);
 
@@ -152,6 +156,12 @@ int main(int argc, char ** argv) {
       odom.header.stamp = current_time;
       odom_trans.header.stamp = current_time;
 
+      //Send the transform for "map" to "odom" to tf
+      //The map and odometry frame do not differ, so just send a 0 transform
+      map_broadcaster.sendTransform(
+        tf::StampedTransform(
+          tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.0, 0.0, 0.0)),
+          current_time,"map", "odom"));
 
       /* Determine change in position for each individual wheel */
       /* Units: meters */
