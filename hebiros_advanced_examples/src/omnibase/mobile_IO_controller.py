@@ -93,6 +93,8 @@ while (running):
 	 	#print("Scale reset to 0, speed set to default")
 	if(io_b.get_int(8) !=0):
 		running = False
+		group_command.io.e.set_int(1,0)		#Turn off green indicator
+		group.send_command(group_command)
 		print("End of Program, disconnecting from Mobile IO")
 
 	y = -1*(io_a.get_float(7)) #removed the negative thanks to the new coordinate frame, may need to replace

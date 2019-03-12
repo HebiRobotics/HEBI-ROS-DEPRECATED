@@ -109,9 +109,7 @@ int main(int argc, char ** argv) {
   geometry_msgs::TransformStamped odom_trans;
   geometry_msgs::Quaternion odom_quat;
   ros::Time current_time, last_time;
-  current_time = ros::Time::now();  //set initial time
   bool startup_complete = false;
-
 
   /*Parameter setup for NAV and Geometry messages   */
   //Odom message setup; stamp and frame id assignment
@@ -122,6 +120,8 @@ int main(int argc, char ** argv) {
   odom_trans.header.frame_id = "odom";
   odom_trans.child_frame_id = "base_footprint";
 
+  //initial Quaternion values
+  odom_quat.x = 0.0; odom_quat.y = 0.0; odom_quat.z = 0.0; odom_quat.w = 1.0;
 
   /* Base dimensions */
   double wheelRadius = 0.0762; // m
@@ -135,6 +135,7 @@ int main(int argc, char ** argv) {
       /* Get the initial position of the wheels at startup */
       if (feedback_init == true) { 
         prevPose = feedback;
+        current_time = ros::Time::now();  //set initial time
         startup_complete = true;
       }
 
