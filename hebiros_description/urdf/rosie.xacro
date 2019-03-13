@@ -15,7 +15,7 @@
     <visual>
       <origin xyz="-0 0 0" rpy="0 0 0"/>
       <geometry>
-        <box size="0.30 0.30 0.10"/>
+        <box size="0.50 0.50 0.10"/>
         <mesh filename="package://hebiros_description/meshes/A-2127-02_Simple.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="light_black"/>
@@ -24,7 +24,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <box size="0.3 0.3 0.1"/>
+        <box size="0.50 0.50 0.1"/>
       </geometry>
     </collision>
     
