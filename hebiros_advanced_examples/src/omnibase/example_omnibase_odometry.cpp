@@ -32,7 +32,7 @@ void feedback_callback(sensor_msgs::JointState data) {
 }
 
 //function to update the odometry pose values
-void updatePose(nav_msgs::Odometry& odom, double dx_global, double dy_global, geometry_msgs::Quaternion& odom_quat){
+void updatePose(nav_msgs::Odometry& odom, double dx_global, double dy_global, const geometry_msgs::Quaternion& odom_quat){
 
   //Odom pose values are set here
   odom.pose.pose.position.x += dx_global;
@@ -56,7 +56,7 @@ void updateTwist(nav_msgs::Odometry& odom, double dx_local, double dy_local, dou
 }
 
 //function to update the odometry transform values
-void updateOdomTransform(geometry_msgs::TransformStamped& odom_trans, nav_msgs::Odometry& odom, geometry_msgs::Quaternion& odom_quat){
+void updateOdomTransform(geometry_msgs::TransformStamped& odom_trans, const nav_msgs::Odometry& odom, const geometry_msgs::Quaternion& odom_quat){
 
   //Set the odometry -> base_footprint transform values here
   odom_trans.transform.translation.x = odom.pose.pose.position.x;
@@ -101,7 +101,6 @@ int main(int argc, char ** argv) {
 
   /* Declare  variables to be used for calculations */
   double theta_global = 0;
-  double dt = 1;
   sensor_msgs::JointState prevPose;
   sensor_msgs::JointState currPose;
   nav_msgs::Odometry odom;
@@ -145,7 +144,7 @@ int main(int argc, char ** argv) {
       ros::spinOnce(); 
       last_time = current_time;
       current_time = ros::Time::now();
-      dt = current_time.toSec() - last_time.toSec();
+      double dt = current_time.toSec() - last_time.toSec();
 
       //Odom message and transform time stamps
       odom.header.stamp = current_time;
