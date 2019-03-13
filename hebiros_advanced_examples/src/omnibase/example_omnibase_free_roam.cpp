@@ -21,7 +21,7 @@ sensor_msgs::JointState feedback;
 geometry_msgs::Twist directions;
 std::array<double, 3> omniVels; 
 std::array<double, 3> omniPos;
-double rate_of_command = 60;
+double rate_of_command = 100;
 bool feedback_init = false;
 bool keys_init = false;
 
@@ -42,24 +42,24 @@ void directions_callback(geometry_msgs::Twist data) {
 void updateOmniVels() {
   /* Declare main kinematic variables */
   double wheelRadius = 0.0762; // m
-  double baseRadius = 0.235; // m (center of omni to origin of base)
+  double baseRadius = 0.230; // m (center of omni to origin of base)
   double speed = 0.3; // m/s
   double wheelRotSpeed = M_PI/3; // (rad/s)
   double ratio = sqrt(3)/2;
 
   // Wheel 1, front right
-  omniVels[0] = directions.linear.x * speed * 0.5/wheelRadius + 
-                directions.linear.y * speed * -ratio/wheelRadius +
+  omniVels[0] = directions.linear.x * -speed * ratio/wheelRadius +
+                directions.linear.y * -speed * 0.5/wheelRadius + 
                 directions.angular.z * wheelRotSpeed * baseRadius/wheelRadius;
 
   // Wheel 2, front left
-  omniVels[1] = directions.linear.x * speed * 0.5/wheelRadius + 
-                directions.linear.y * speed * ratio/wheelRadius +
-                directions.angular.z *wheelRotSpeed *  baseRadius/wheelRadius;
+  omniVels[1] = directions.linear.x * speed * ratio/wheelRadius +
+                directions.linear.y * -speed * 0.5/wheelRadius + 
+                directions.angular.z * wheelRotSpeed *  baseRadius/wheelRadius;
 
   // Wheel 3, back center
-  omniVels[2] = directions.linear.x * -speed * 1/wheelRadius + 
-                0 +
+  omniVels[2] = 0 +
+                directions.linear.y * speed * 1/wheelRadius + 
                 directions.angular.z * wheelRotSpeed * baseRadius/wheelRadius;
 }
 
