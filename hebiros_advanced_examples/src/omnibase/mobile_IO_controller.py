@@ -51,10 +51,11 @@ pub_rosie = rospy.Publisher('cmd_vel', Twist, queue_size = 3)
 rospy.init_node('key_read_node')
 r = rospy.Rate(200)
 
-#Logic Vairables
+#Direction Vairables
 x = 0
 y  = 0
 th = 0
+#Logic Vairables
 running = True
 drive_state = False;
 
