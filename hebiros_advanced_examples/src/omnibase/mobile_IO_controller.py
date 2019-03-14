@@ -48,7 +48,7 @@ group_command = hebi.GroupCommand(group.size)
 
 #ROS Publisher setup
 pub_rosie = rospy.Publisher('cmd_vel', Twist, queue_size = 3)
-rospy.init_node('key_read_node')
+rospy.init_node('mobile_io_node')
 r = rospy.Rate(200)
 
 #Logic Vairables
