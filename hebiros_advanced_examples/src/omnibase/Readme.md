@@ -1,6 +1,6 @@
 # Overview
 
-These files are used to interface with the omnibase robot base. This documentation will provie TBD
+These files are used to interface with the omnibase robot base. This documentation provides instruciton to run each of the nodes, as well as information on the ROS messages used by each file.
 
 **Important: to run any of these commands, you will need to run `source devel/setup.sh` from your catkin workspace first**
 
@@ -53,36 +53,4 @@ It receives commands from and sends feedback to the app.
 
 The mobile_io_controller python script publishes to the '/cmd_vel' rostopic;
 Velocity commands for the omnibase node are sent over this rostopic.
-
-
-# Omnibase Node
-
-## Requirements:
-
-Set the `families` and `names` parameters to lists of strings matching the modules on your robot. Have modules on the network matching these names.
-
-By default, if no parameters are given, this defaults to family "HEBI" and "Wheel1", "Wheel2", "Wheel3" for the omnibase, or "Left" and "Right" for the diff drive.
-
-## To run:
-
-```
-roslaunch hebi_cpp_api_ros_examples omni_base_node.launch
-```
-
-or
-
-```
-roslaunch hebi_cpp_api_ros_examples diff_drive_node.launch
-```
-
-## To command:
-
-Either interface with the action server through code, or for a quick test, type:
-```
-rostopic pub /motion/
-```
-
-and then press tab to complete the message type and create a basic yaml message on the command line.  The commanded location and color fields can be changed to cause the robot to move or change LED colors.
-
-
 
