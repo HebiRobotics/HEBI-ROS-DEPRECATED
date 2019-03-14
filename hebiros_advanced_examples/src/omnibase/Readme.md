@@ -2,6 +2,8 @@
 
 These files are used to interface with the omnibase robot base. This documentation will provie TBD
 
+**Important: to run any of these commands, you will need to run `source devel/setup.sh` from your catkin workspace first**
+
 
 #Running the code
 
