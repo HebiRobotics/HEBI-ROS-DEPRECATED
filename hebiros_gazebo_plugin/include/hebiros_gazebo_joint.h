@@ -4,6 +4,7 @@
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/Vector3.h"
 #include "hebiros_temperature_model.h"
+#include "hebiros_gazebo_pid.h"
 #include "temperature_safety_controller.h"
 
 class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoint> {
@@ -22,15 +23,14 @@ public:
   hebiros::sim::TemperatureModel temperature;
   hebiros::sim::TemperatureSafetyController temperature_safety{155};
 
+  double gear_ratio {};
+
+  hebiros::sim::PidController position_pid;
+  hebiros::sim::PidController velocity_pid;
+  hebiros::sim::PidController effort_pid;
+
   double prev_force {};
   double low_pass_alpha {};
-  double gear_ratio {};
-  double position_prev_error {};
-  double position_elapsed_error {};
-  double velocity_prev_error {};
-  double velocity_elapsed_error {};
-  double effort_prev_error {};
-  double effort_elapsed_error {};
 
   ros::Subscriber imu_subscriber;
 

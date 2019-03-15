@@ -208,9 +208,10 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   hebiros_group->feedback.board_temperature.resize(size);
   hebiros_group->feedback.velocity.resize(size);
   hebiros_group->feedback.effort.resize(size);
-  hebiros_group->feedback.position_command.resize(size);
-  hebiros_group->feedback.velocity_command.resize(size);
-  hebiros_group->feedback.effort_command.resize(size);
+  // Default, return "nan" for feedback, until we set something!
+  hebiros_group->feedback.position_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  hebiros_group->feedback.velocity_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  hebiros_group->feedback.effort_command.resize(size, std::numeric_limits<float>::quiet_NaN());
   hebiros_group->feedback.accelerometer.resize(size);
   hebiros_group->feedback.gyro.resize(size);
 
