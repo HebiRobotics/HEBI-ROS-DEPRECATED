@@ -1,6 +1,6 @@
 #include "temperature_safety_controller.h"
 
-namespace hebiros {
+namespace hebi {
 namespace sim {
 
 TemperatureSafetyController::TemperatureSafetyController(double max_temp) 

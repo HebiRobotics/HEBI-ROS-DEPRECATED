@@ -3,7 +3,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/Vector3.h"
-#include "hebiros_temperature_model.h"
+#include "temperature_model.h"
 #include "hebiros_gazebo_pid.h"
 #include "temperature_safety_controller.h"
 
@@ -20,8 +20,8 @@ public:
   int feedback_index;
   int command_index;
 
-  hebiros::sim::TemperatureModel temperature;
-  hebiros::sim::TemperatureSafetyController temperature_safety{155};
+  hebi::sim::TemperatureModel temperature;
+  hebi::sim::TemperatureSafetyController temperature_safety{155};
 
   double gear_ratio {};
 

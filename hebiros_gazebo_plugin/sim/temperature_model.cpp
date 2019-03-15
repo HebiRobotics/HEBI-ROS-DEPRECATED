@@ -1,6 +1,6 @@
-#include "hebiros_temperature_model.h"
+#include "temperature_model.h"
 
-namespace hebiros {
+namespace hebi {
 namespace sim {
 
 TemperatureModel TemperatureModel::createX5() {
