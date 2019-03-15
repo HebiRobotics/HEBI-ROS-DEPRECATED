@@ -356,30 +356,23 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   CommandMsg target = hebiros_group->command_target;
   int i = hebiros_joint->command_index;
 
-  double target_position, target_velocity, target_effort;
+  double target_position = std::numeric_limits<float>::quiet_NaN();
+  double target_velocity = std::numeric_limits<float>::quiet_NaN();
+  double target_effort = std::numeric_limits<float>::quiet_NaN();
   double position_pid, velocity_pid, effort_pid;
   double position_pwm, velocity_pwm, effort_pwm;
   double intermediate_effort;
-  double gear_ratio, pwm, force, alpha;
+  double pwm, force, alpha;
 
   //Set target positions
   if (i < target.position.size()) {
     target_position = target.position[i];
   }
-  else {
-    target_position = position;
-  }
   if (i < target.velocity.size()) {
     target_velocity = target.velocity[i];
   }
-  else {
-    target_velocity = velocity;
-  }
   if (i < target.effort.size()) {
     target_effort = target.effort[i];
-  }
-  else {
-    target_effort = effort;
   }
 
   //Combine forces using selected strategy
@@ -438,7 +431,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
       pwm = 0;
   }
 
-  gear_ratio = hebiros_joint->gear_ratio;
+  double gear_ratio = hebiros_joint->gear_ratio;
 
   float voltage = 48.0f;
   float motor_velocity = velocity * gear_ratio;
