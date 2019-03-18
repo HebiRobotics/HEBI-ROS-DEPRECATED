@@ -1,4 +1,5 @@
-#include <hebiros_gazebo_plugin.h>
+#include "hebiros_gazebo_plugin.h"
+#include "sensor_msgs/Imu.h"
 
 // Checks the content of a string before the first "." at compile time.
 // Necessary because Gazebo only defines string version numbers.
@@ -129,8 +130,14 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       hebiros_group->feedback.velocity[i] = velocity;
       hebiros_group->feedback.effort[i] = effort;
 
-      hebiros_group->feedback.accelerometer[i] = hebiros_joint->accelerometer;
-      hebiros_group->feedback.gyro[i] = hebiros_joint->gyro;
+      const auto& accel = hebiros_joint->getAccelerometer();
+      hebiros_group->feedback.accelerometer[i].x = accel.x();
+      hebiros_group->feedback.accelerometer[i].y = accel.y();
+      hebiros_group->feedback.accelerometer[i].z = accel.z();
+      const auto& gyro = hebiros_joint->getGyro();
+      hebiros_group->feedback.gyro[i].x = gyro.x();
+      hebiros_group->feedback.gyro[i].y = gyro.y();
+      hebiros_group->feedback.gyro[i].z = gyro.z();
 
       // Add temperature feedback
       hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
@@ -223,6 +230,9 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   return true;
 }
 
+void updateImu(const boost::shared_ptr<sensor_msgs::Imu const> data) {
+}
+
 //Add a joint to an associated group
 void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::string joint_name) {
@@ -252,13 +262,30 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
   }
 
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
-    std::make_shared<HebirosGazeboJoint>(joint_name, model_name, is_x8, this->n);
+    std::make_shared<HebirosGazeboJoint>(joint_name, model_name, is_x8);
+  HebirosGazeboJoint& raw_joint = *hebiros_joint;
+  // Temporarily, we store joint subscriptions in the gazebo ros plugin here, since
+  // the IMU that generates this data is a separate ROS plugin communicating via ROS
+  // messages.
+  //
+  // This will be abstracted into the ROS plugin wrapper in a subsequent refactor
+  hebiros_joint_imu_subs.push_back(n->subscribe<sensor_msgs::Imu>(
+    "hebiros_gazebo_plugin/imu/" + joint_name, 100, 
+    [&raw_joint](const boost::shared_ptr<sensor_msgs::Imu const> data) {
+      auto a = data->linear_acceleration;
+      auto g = data->angular_velocity;
+      raw_joint.updateImu(
+          {static_cast<float>(a.x), static_cast<float>(a.y), static_cast<float>(a.z)},
+          {static_cast<float>(g.x), static_cast<float>(g.y), static_cast<float>(g.z)});
+    }));
+
 
   hebiros_joint->feedback_index = hebiros_group->joints.size();
   hebiros_joint->command_index = hebiros_joint->feedback_index;
 
   HebirosGazeboController::SetSettings(hebiros_group, hebiros_joint);
   hebiros_group->joints[joint_name] = hebiros_joint;
+
 }
 
 //Tell Gazebo about this plugin

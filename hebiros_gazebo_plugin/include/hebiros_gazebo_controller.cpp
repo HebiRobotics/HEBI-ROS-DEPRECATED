@@ -1,5 +1,5 @@
 #include <hebiros_gazebo_controller.h>
-#include "pid.h"
+#include "pid_controller.h"
 
 namespace controller {
 

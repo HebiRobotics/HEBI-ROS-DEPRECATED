@@ -150,7 +150,7 @@ include_directories( ${catkin_INCLUDE_DIRS}
 add_library(hebiros_gazebo_plugin 
   plugin/hebiros_gazebo_plugin.cpp
   include/hebiros_gazebo_group.cpp
-  sim/pid.cpp
+  sim/pid_controller.cpp
   include/hebiros_gazebo_joint.cpp
   sim/temperature_model.cpp
   sim/temperature_safety_controller.cpp

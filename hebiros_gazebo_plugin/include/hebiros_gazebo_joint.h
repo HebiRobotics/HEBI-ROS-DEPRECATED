@@ -1,11 +1,10 @@
 #pragma once
 
-#include "ros/ros.h"
-#include "sensor_msgs/Imu.h"
-#include "geometry_msgs/Vector3.h"
+#include "Eigen/Dense"
 #include "temperature_model.h"
-#include "pid.h"
+#include "pid_controller.h"
 #include "temperature_safety_controller.h"
+#include <memory>
 
 class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoint> {
 
@@ -14,8 +13,6 @@ public:
   // TODO: Make these private.
   std::string name;
   std::string model_name;
-  geometry_msgs::Vector3 accelerometer;
-  geometry_msgs::Vector3 gyro;
 
   int feedback_index;
   int command_index;
@@ -25,7 +22,6 @@ public:
 
   double gear_ratio {};
 
-
   hebi::sim::PidController position_pid;
   hebi::sim::PidController velocity_pid;
   hebi::sim::PidController effort_pid;
@@ -33,11 +29,11 @@ public:
   double prev_force {};
   double low_pass_alpha {};
 
-  ros::Subscriber imu_subscriber;
+  HebirosGazeboJoint(const std::string& name, const std::string& model_name, bool is_x8);
 
-  HebirosGazeboJoint(const std::string& name, const std::string& model_name, bool is_x8, std::shared_ptr<ros::NodeHandle> n);
-
-  void SubIMU(const boost::shared_ptr<sensor_msgs::Imu const> data);
+  void updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro);
+  const Eigen::Vector3f getAccelerometer() { return accelerometer_; }
+  const Eigen::Vector3f getGyro() { return gyro_; }
   bool isX8() const;
 
   // TODO: think about resetting gains on a control strategy switch, as with the modules; potentially
@@ -50,4 +46,9 @@ private:
   // is tangled up in HebirosGazeboController::SetSettings and the plugin
   // add modules to group logic; this will be changed.
   uint8_t control_strategy{};
+
+  // Note -- the accelerometer and gyro feedback must be updated from an external source.
+  // TODO: we should store the position / etc feedback alongside this...
+  Eigen::Vector3f accelerometer_;
+  Eigen::Vector3f gyro_;
 };

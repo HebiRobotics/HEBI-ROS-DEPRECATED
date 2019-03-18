@@ -37,7 +37,11 @@ private:
   bool first_sim_iteration{true};  
   event::ConnectionPtr update_connection;
   std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
-  std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> hebiros_joints;
+  // To remove the ROS dependency from the hebi::sim::Joint class, we keep
+  // the IMU subscriptions here.
+  // TODO: this will be updated when the base hebi gazebo and hebi gazebo ros plugins
+  // are separated
+  std::vector<ros::Subscriber> hebiros_joint_imu_subs;
 
   std::string robot_namespace;
   std::shared_ptr<ros::NodeHandle> n;
