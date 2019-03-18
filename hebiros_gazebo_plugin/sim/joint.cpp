@@ -1,5 +1,9 @@
-#include <hebiros_gazebo_joint.h>
+#include "joint.h"
+
 #include <map>
+
+namespace hebi {
+namespace sim {
 
 /////////////////////////////////
 // TODO: refactor this to be a "Joint Info" structure, owned by the joint, and set
@@ -48,7 +52,7 @@ double getEffortFF(double gear_ratio, bool is_x8) {
 // END REFACTOR TODO
 /////////////////////////////////
 
-HebirosGazeboJoint::HebirosGazeboJoint(const std::string& name_,
+Joint::Joint(const std::string& name_,
   const std::string& model_name_,
   bool is_x8) // TODO: do this better...
   : name(name_), model_name(model_name_),
@@ -62,13 +66,16 @@ HebirosGazeboJoint::HebirosGazeboJoint(const std::string& name_,
 }
 
 //Update IMU feedback from external source
-void HebirosGazeboJoint::updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro) {
+void Joint::updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro) {
   accelerometer_ = accelerometer;
   gyro_ = gyro;
 }
 
-bool HebirosGazeboJoint::isX8() const {
+bool Joint::isX8() const {
   return (model_name == "X8_3" || 
           model_name == "X8_9" ||
           model_name == "X8_16");
 }
+
+} // namespace sim
+} // namespace hebi

@@ -1,14 +1,21 @@
 #pragma once
 
-#include "Eigen/Dense"
-#include "temperature_model.h"
-#include "pid_controller.h"
-#include "temperature_safety_controller.h"
 #include <memory>
 
-class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoint> {
+#include "Eigen/Dense"
+
+#include "pid_controller.h"
+#include "temperature_model.h"
+#include "temperature_safety_controller.h"
+
+namespace hebi {
+namespace sim {
+
+class Joint : public std::enable_shared_from_this<Joint> {
 
 public:
+
+  Joint(const std::string& name, const std::string& model_name, bool is_x8);
 
   // TODO: Make these private.
   std::string name;
@@ -28,8 +35,6 @@ public:
 
   double prev_force {};
   double low_pass_alpha {};
-
-  HebirosGazeboJoint(const std::string& name, const std::string& model_name, bool is_x8);
 
   void updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro);
   const Eigen::Vector3f getAccelerometer() { return accelerometer_; }
@@ -52,3 +57,6 @@ private:
   Eigen::Vector3f accelerometer_;
   Eigen::Vector3f gyro_;
 };
+
+} // namespace sim
+} // namespace hebi

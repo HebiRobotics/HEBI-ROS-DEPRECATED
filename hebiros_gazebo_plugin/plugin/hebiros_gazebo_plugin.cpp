@@ -106,13 +106,13 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
   for (auto joint_pair : hebiros_group->joints) {
 
     std::string joint_name = joint_pair.first;
-    std::shared_ptr<HebirosGazeboJoint> hebiros_joint = hebiros_group->joints[joint_name];
+    std::shared_ptr<hebi::sim::Joint> hebiros_joint = hebiros_group->joints[joint_name];
 
     physics::JointPtr joint = this->model->GetJoint(joint_name+"/"+hebiros_joint->model_name);
 
     if (joint) {
 
-      std::shared_ptr<HebirosGazeboJoint> hebiros_joint = joint_pair.second;
+      std::shared_ptr<hebi::sim::Joint> hebiros_joint = joint_pair.second;
 
       ros::Time current_time = ros::Time::now();
       ros::Duration elapsed_time = current_time - hebiros_group->start_time;
@@ -261,9 +261,9 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
     is_x8 = true;
   }
 
-  std::shared_ptr<HebirosGazeboJoint> hebiros_joint =
-    std::make_shared<HebirosGazeboJoint>(joint_name, model_name, is_x8);
-  HebirosGazeboJoint& raw_joint = *hebiros_joint;
+  std::shared_ptr<hebi::sim::Joint> hebiros_joint =
+    std::make_shared<hebi::sim::Joint>(joint_name, model_name, is_x8);
+  hebi::sim::Joint& raw_joint = *hebiros_joint;
   // Temporarily, we store joint subscriptions in the gazebo ros plugin here, since
   // the IMU that generates this data is a separate ROS plugin communicating via ROS
   // messages.
