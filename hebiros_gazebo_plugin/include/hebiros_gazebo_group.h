@@ -20,7 +20,6 @@ public:
   std::map<std::string, std::shared_ptr<HebirosGazeboJoint>> joints;
   FeedbackMsg feedback;
   CommandMsg command_target;
-  SettingsMsg settings;
   bool check_acknowledgement = false;
   bool acknowledgement = false;
   bool command_received = false;

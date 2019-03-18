@@ -1,6 +1,6 @@
 #pragma once
 
-namespace hebiros {
+namespace hebi {
 namespace sim {
 
 // A simple multi-stage actuator temperature model.

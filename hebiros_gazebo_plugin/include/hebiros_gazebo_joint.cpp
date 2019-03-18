@@ -53,8 +53,8 @@ HebirosGazeboJoint::HebirosGazeboJoint(const std::string& name_,
   std::shared_ptr<ros::NodeHandle> n)
   : name(name_), model_name(model_name_),
     temperature(is_x8 ?
-      hebiros::sim::TemperatureModel::createX8() :
-      hebiros::sim::TemperatureModel::createX5()),
+      hebi::sim::TemperatureModel::createX8() :
+      hebi::sim::TemperatureModel::createX5()),
     gear_ratio(getGearRatio(model_name)),
     position_pid(1),
     velocity_pid(getVelocityFF(gear_ratio, is_x8)),

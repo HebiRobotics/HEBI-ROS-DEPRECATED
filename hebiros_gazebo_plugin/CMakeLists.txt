@@ -134,6 +134,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   #include
+  sim
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -149,10 +150,10 @@ include_directories( ${catkin_INCLUDE_DIRS}
 add_library(hebiros_gazebo_plugin 
   plugin/hebiros_gazebo_plugin.cpp
   include/hebiros_gazebo_group.cpp
-  include/hebiros_gazebo_pid.cpp
+  sim/pid.cpp
   include/hebiros_gazebo_joint.cpp
-  include/hebiros_temperature_model.cpp
-  include/temperature_safety_controller.cpp
+  sim/temperature_model.cpp
+  sim/temperature_safety_controller.cpp
   include/hebiros_gazebo_controller.cpp)
 
 add_dependencies(hebiros_gazebo_plugin ${catkin_EXPORTED_TARGETS})
