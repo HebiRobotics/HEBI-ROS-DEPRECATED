@@ -25,6 +25,7 @@ public:
 
   double gear_ratio {};
 
+
   hebi::sim::PidController position_pid;
   hebi::sim::PidController velocity_pid;
   hebi::sim::PidController effort_pid;
@@ -39,4 +40,14 @@ public:
   void SubIMU(const boost::shared_ptr<sensor_msgs::Imu const> data);
   bool isX8() const;
 
+  // TODO: think about resetting gains on a control strategy switch, as with the modules; potentially
+  // add a "controller" child object for each joint at end of refactor
+  void setControlStrategy(uint8_t strategy) { control_strategy = strategy; }
+  uint8_t getControlStrategy() const { return control_strategy; }
+
+private:
+  // TODO: in refactor, set this during construction; right now, this
+  // is tangled up in HebirosGazeboController::SetSettings and the plugin
+  // add modules to group logic; this will be changed.
+  uint8_t control_strategy{};
 };

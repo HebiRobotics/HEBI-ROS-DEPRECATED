@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 
 namespace hebi {
@@ -21,6 +23,7 @@ public:
   {}
 
   void setGains(const PidGains& gains) { gains_ = gains; }
+  PidGains getGains() const { return gains_; }
 
   double update(double target, double feedback, double dt);
 

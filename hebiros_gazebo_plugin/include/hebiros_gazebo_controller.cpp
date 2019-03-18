@@ -1,4 +1,5 @@
 #include <hebiros_gazebo_controller.h>
+#include "pid.h"
 
 namespace controller {
 
@@ -39,7 +40,6 @@ using namespace controller;
 void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   std::shared_ptr<HebirosGazeboJoint> hebiros_joint) {
 
-  hebiros_group->settings.name.push_back(hebiros_joint->name);
   hebiros_joint->low_pass_alpha = LOW_PASS_ALPHA;
   int i = hebiros_joint->command_index;
 
@@ -47,8 +47,7 @@ void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> he
   // TODO: check previous call to SetSettings -- potentially eliminate?
 
   //Set control strategy
-  hebiros_group->settings.control_strategy.push_back(
-    static_cast<char>(DEFAULT_CONTROL_STRATEGY));
+  hebiros_joint->setControlStrategy(static_cast<uint8_t>(DEFAULT_CONTROL_STRATEGY));
 
   SetDefaultGains(hebiros_group, hebiros_joint);
 }
@@ -59,231 +58,116 @@ void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup
   
   std::string model_name = hebiros_joint->model_name;
   int i = hebiros_joint->command_index;
-  int control_strategy = hebiros_group->settings.control_strategy[i];
+  auto control_strategy = hebiros_joint->getControlStrategy();
 
-  if (control_strategy == 2) {
-    hebiros_group->settings.position_gains.feed_forward.push_back(0);
-    hebiros_group->settings.velocity_gains.feed_forward.push_back(0);
-    hebiros_group->settings.effort_gains.feed_forward.push_back(1);
-  }
-  if (control_strategy == 3 || control_strategy == 4) {
-    hebiros_group->settings.position_gains.feed_forward.push_back(0);
-    hebiros_group->settings.velocity_gains.feed_forward.push_back(1);
-    hebiros_group->settings.effort_gains.feed_forward.push_back(1);
-  }
+  // TODO: move all this logic into joint-specific code, and potentially load files from .xml
+  // files
 
+  // Each of these PID gains initializations is { kp, ki, kd, feed forward }
   if (model_name == "X5_1" && control_strategy == 2) {
-    hebiros_group->settings.position_gains.kp.push_back(5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.1);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
+    hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_1" && control_strategy == 3) {
+    hebiros_joint->position_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_1" && control_strategy == 4) {
+    hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_4" && control_strategy == 2) {
+    hebiros_joint->position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.2f, 0.f, 0.f, 0.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_4" && control_strategy == 3) {
+    hebiros_joint->position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_4" && control_strategy == 4) {
+    hebiros_joint->position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_9" && control_strategy == 2) {
+    hebiros_joint->position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_9" && control_strategy == 3) {
+    hebiros_joint->position_pid.setGains({ 1.5f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_9" && control_strategy == 4) {
+    hebiros_joint->position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X8_3" && control_strategy == 2) {
+    hebiros_joint->position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_3" && control_strategy == 3) {
+    hebiros_joint->position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_3" && control_strategy == 4) {
+    hebiros_joint->position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_9" && control_strategy == 2) {
+    hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_9" && control_strategy == 3) {
+    hebiros_joint->position_pid.setGains({ 2.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_9" && control_strategy == 4) {
+    hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_16" && control_strategy == 2) {
+    hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_16" && control_strategy == 3) {
+    hebiros_joint->position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_16" && control_strategy == 4) {
+    hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else {
+    // Go ahead and set default gains first
+    hebiros_joint->position_pid.setGains({
+      DEFAULT_POSITION_KP, DEFAULT_POSITION_KI, DEFAULT_POSITION_KD, DEFAULT_POSITION_FF });
+    hebiros_joint->velocity_pid.setGains({
+      DEFAULT_VELOCITY_KP, DEFAULT_VELOCITY_KI, DEFAULT_VELOCITY_KD, DEFAULT_VELOCITY_FF });
+    hebiros_joint->effort_pid.setGains({
+      DEFAULT_EFFORT_KP, DEFAULT_EFFORT_KI, DEFAULT_EFFORT_KD, DEFAULT_EFFORT_FF });
   }
-  else if (model_name == "X5_1" && control_strategy == 3) {
-    hebiros_group->settings.position_gains.kp.push_back(0.5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.05);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
+}
+
+// Update the gains for the fields which have information; leave the others unchanged.
+// \return `true` if gains changed, `false` otherwise.
+bool updateGains(hebi::sim::PidGains& gains, const hebiros::PidGainsMsg& msg, size_t i) {
+  bool changed = false;
+  if (i < msg.kp.size()) {
+    gains.kp_ = msg.kp[i];
+    changed = true;
   }
-  else if (model_name == "X5_1" && control_strategy == 4) {
-    hebiros_group->settings.position_gains.kp.push_back(5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.05);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
+  if (i < msg.ki.size()) {
+    gains.ki_ = msg.ki[i];
+    changed = true;
   }
-  else if (model_name == "X5_4" && control_strategy == 2) {
-    hebiros_group->settings.position_gains.kp.push_back(10);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.2);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
+  if (i < msg.kd.size()) {
+    gains.kd_ = msg.kd[i];
+    changed = true;
   }
-  else if (model_name == "X5_4" && control_strategy == 3) {
-    hebiros_group->settings.position_gains.kp.push_back(1);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.05);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
+  if (i < msg.feed_forward.size()) {
+    gains.feed_forward_ = msg.feed_forward[i];
+    changed = true;
   }
-  else if (model_name == "X5_4" && control_strategy == 4) {
-    hebiros_group->settings.position_gains.kp.push_back(10);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.05);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
-  }
-  else if (model_name == "X5_9" && control_strategy == 2) {
-    hebiros_group->settings.position_gains.kp.push_back(15);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.5);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
-  }
-  else if (model_name == "X5_9" && control_strategy == 3) {
-    hebiros_group->settings.position_gains.kp.push_back(1.5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.05);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
-  }
-  else if (model_name == "X5_9" && control_strategy == 4) {
-    hebiros_group->settings.position_gains.kp.push_back(15);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.05);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.25);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.001);
-  }
-  if (model_name == "X8_3" && control_strategy == 2) {
-    hebiros_group->settings.position_gains.kp.push_back(3);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.1);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_3" && control_strategy == 3) {
-    hebiros_group->settings.position_gains.kp.push_back(1);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.03);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_3" && control_strategy == 4) {
-    hebiros_group->settings.position_gains.kp.push_back(3);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.03);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_9" && control_strategy == 2) {
-    hebiros_group->settings.position_gains.kp.push_back(5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.1);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_9" && control_strategy == 3) {
-    hebiros_group->settings.position_gains.kp.push_back(2);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.03);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_9" && control_strategy == 4) {
-    hebiros_group->settings.position_gains.kp.push_back(5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.03);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_16" && control_strategy == 2) {
-    hebiros_group->settings.position_gains.kp.push_back(5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.1);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_16" && control_strategy == 3) {
-    hebiros_group->settings.position_gains.kp.push_back(3);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.03);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else if (model_name == "X8_16" && control_strategy == 4) {
-    hebiros_group->settings.position_gains.kp.push_back(5);
-    hebiros_group->settings.position_gains.ki.push_back(0);
-    hebiros_group->settings.position_gains.kd.push_back(0);
-    hebiros_group->settings.velocity_gains.kp.push_back(0.03);
-    hebiros_group->settings.velocity_gains.ki.push_back(0);
-    hebiros_group->settings.velocity_gains.kd.push_back(0);
-    hebiros_group->settings.effort_gains.kp.push_back(0.1);
-    hebiros_group->settings.effort_gains.ki.push_back(0);
-    hebiros_group->settings.effort_gains.kd.push_back(0.0001);
-  }
-  else {
-    hebiros_group->settings.position_gains.kp.push_back(DEFAULT_POSITION_KP);
-    hebiros_group->settings.position_gains.ki.push_back(DEFAULT_POSITION_KI);
-    hebiros_group->settings.position_gains.kd.push_back(DEFAULT_POSITION_KD);
-    hebiros_group->settings.position_gains.feed_forward.push_back(DEFAULT_POSITION_FF);
-    hebiros_group->settings.velocity_gains.kp.push_back(DEFAULT_VELOCITY_KP);
-    hebiros_group->settings.velocity_gains.ki.push_back(DEFAULT_VELOCITY_KI);
-    hebiros_group->settings.velocity_gains.kd.push_back(DEFAULT_VELOCITY_KD);
-    hebiros_group->settings.velocity_gains.feed_forward.push_back(DEFAULT_VELOCITY_FF);
-    hebiros_group->settings.effort_gains.kp.push_back(DEFAULT_EFFORT_KP);
-    hebiros_group->settings.effort_gains.ki.push_back(DEFAULT_EFFORT_KI);
-    hebiros_group->settings.effort_gains.kd.push_back(DEFAULT_EFFORT_KD);
-    hebiros_group->settings.effort_gains.feed_forward.push_back(DEFAULT_EFFORT_FF);
-  }
+  return changed;
 }
 
 //Change settings for a joint if specifically commanded
@@ -295,55 +179,26 @@ void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup>
 
   //Set name
   if (i < target.settings.name.size()) {
-    hebiros_group->settings.name[i] = target.settings.name[i];
+    hebiros_joint->name = target.settings.name[i];
   }
 
   //Change control strategy
   if (i < target.settings.control_strategy.size()) {
-    hebiros_group->settings.control_strategy[i] = target.settings.control_strategy[i];
+    hebiros_joint->setControlStrategy(target.settings.control_strategy[i]);
   }
 
-  //Change position gains
-  if (i < target.settings.position_gains.kp.size()) {
-    hebiros_group->settings.position_gains.kp[i] = target.settings.position_gains.kp[i];
-  }
-  if (i < target.settings.position_gains.ki.size()) {
-    hebiros_group->settings.position_gains.ki[i] = target.settings.position_gains.ki[i];
-  }
-  if (i < target.settings.position_gains.kd.size()) {
-    hebiros_group->settings.position_gains.kd[i] = target.settings.position_gains.kd[i];
-  }
-  if (i < target.settings.position_gains.feed_forward.size()) {
-    hebiros_group->settings.position_gains.feed_forward[i] = target.settings.position_gains.feed_forward[i];
-  }
+  //Change gains:
+  auto current_pos_gains = hebiros_joint->position_pid.getGains();
+  if (updateGains(current_pos_gains, target.settings.position_gains, i))
+    hebiros_joint->position_pid.setGains(current_pos_gains);
 
-  //Change velocity gains
-  if (i < target.settings.velocity_gains.kp.size()) {
-    hebiros_group->settings.velocity_gains.kp[i] = target.settings.velocity_gains.kp[i];
-  }
-  if (i < target.settings.velocity_gains.ki.size()) {
-    hebiros_group->settings.velocity_gains.ki[i] = target.settings.velocity_gains.ki[i];
-  }
-  if (i < target.settings.velocity_gains.kd.size()) {
-    hebiros_group->settings.velocity_gains.kd[i] = target.settings.velocity_gains.kd[i];
-  }
-  if (i < target.settings.velocity_gains.feed_forward.size()) {
-    hebiros_group->settings.velocity_gains.feed_forward[i] = target.settings.velocity_gains.feed_forward[i];
-  }
+  auto current_vel_gains = hebiros_joint->velocity_pid.getGains();
+  if (updateGains(current_vel_gains, target.settings.velocity_gains, i))
+    hebiros_joint->velocity_pid.setGains(current_vel_gains);
 
-  //Change effort gains
-  if (i < target.settings.effort_gains.kp.size()) {
-    hebiros_group->settings.effort_gains.kp[i] = target.settings.effort_gains.kp[i];
-  }
-  if (i < target.settings.effort_gains.ki.size()) {
-    hebiros_group->settings.effort_gains.ki[i] = target.settings.effort_gains.ki[i];
-  }
-  if (i < target.settings.effort_gains.kd.size()) {
-    hebiros_group->settings.effort_gains.kd[i] = target.settings.effort_gains.kd[i];
-  }
-  if (i < target.settings.effort_gains.feed_forward.size()) {
-    hebiros_group->settings.effort_gains.feed_forward[i] = target.settings.effort_gains.feed_forward[i];
-  }
+  auto current_eff_gains = hebiros_joint->effort_pid.getGains();
+  if (updateGains(current_eff_gains, target.settings.effort_gains, i))
+    hebiros_joint->effort_pid.setGains(current_eff_gains);
 }
 
 // TODO: the conversion helper functions will be moved at later point during refactoring
@@ -386,13 +241,7 @@ double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup>
   }
 
   //Combine forces using selected strategy
-  int control_strategy = hebiros_group->settings.control_strategy[i];
-  // TODO: handle this elsewhere (in the settings handler) after refactoring is complete;
-  // at this point, appropriate conversion helper functions will be added.
-  size_t cmd_index = hebiros_joint->command_index;
-  hebiros_joint->position_pid.setGains(convertToSimGains(hebiros_group->settings.position_gains, cmd_index));
-  hebiros_joint->velocity_pid.setGains(convertToSimGains(hebiros_group->settings.velocity_gains, cmd_index));
-  hebiros_joint->effort_pid.setGains(convertToSimGains(hebiros_group->settings.effort_gains, cmd_index));
+  int control_strategy = hebiros_joint->getControlStrategy();
 
   switch (control_strategy) {
     case 0:
