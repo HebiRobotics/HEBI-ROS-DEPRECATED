@@ -4,7 +4,7 @@
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/Vector3.h"
 #include "temperature_model.h"
-#include "hebiros_gazebo_pid.h"
+#include "pid.h"
 #include "temperature_safety_controller.h"
 
 class HebirosGazeboJoint : public std::enable_shared_from_this<HebirosGazeboJoint> {
@@ -25,9 +25,9 @@ public:
 
   double gear_ratio {};
 
-  hebiros::sim::PidController position_pid;
-  hebiros::sim::PidController velocity_pid;
-  hebiros::sim::PidController effort_pid;
+  hebi::sim::PidController position_pid;
+  hebi::sim::PidController velocity_pid;
+  hebi::sim::PidController effort_pid;
 
   double prev_force {};
   double low_pass_alpha {};

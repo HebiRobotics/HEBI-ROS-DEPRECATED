@@ -1,10 +1,11 @@
-#include "hebiros_gazebo_pid.h"
+#include "pid.h"
+#include <cmath>
 
-namespace hebiros {
+namespace hebi {
 namespace sim {
 
 // Update and return the new output command
-double PidController::update(double target, double feedback, double dt, const PidGainsMsg& pid_gains, size_t gain_idx) {
+double PidController::update(double target, double feedback, double dt) {
   // "Disable" the controller if commands are nan
   if (std::isnan(target)) {
     return 0;
@@ -19,15 +20,12 @@ double PidController::update(double target, double feedback, double dt, const Pi
   prev_error_ = error_p;
   elapsed_error_ = error_i;
 
-
-  // TODO: store gains instead of looking them up
-  // here...
   return
-    pid_gains.kp[gain_idx] * error_p +
-    pid_gains.ki[gain_idx] * error_i +
-    pid_gains.kd[gain_idx] * error_d +
-    pid_gains.feed_forward[gain_idx] * ff_scale_ * target;
+    gains_.kp_ * error_p +
+    gains_.ki_ * error_i +
+    gains_.kd_ * error_d +
+    gains_.feed_forward_ * ff_scale_ * target;
 }
 
 } // namespace simulation
-} // namespace hebiros
+} // namespace hebi
