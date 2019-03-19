@@ -53,8 +53,8 @@ using GazeboWrapper = GazeboHelper<GetGazeboVersion(GAZEBO_VERSION), physics::Jo
 
 //Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-     
-  this->model = _model;
+
+  HebiGazeboPlugin::Load(_model, _sdf);
 
   int argc = 0;
   char **argv = NULL;
@@ -105,14 +105,11 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
   for (auto joint_pair : hebiros_group->joints) {
 
-    std::string joint_name = joint_pair.first;
-    std::shared_ptr<hebi::sim::Joint> hebiros_joint = hebiros_group->joints[joint_name];
+    auto hebiros_joint = joint_pair.second;
 
-    physics::JointPtr joint = this->model->GetJoint(joint_name+"/"+hebiros_joint->model_name);
+    physics::JointPtr joint = model_->GetJoint(hebiros_joint->name+"/"+hebiros_joint->model_name);
 
     if (joint) {
-
-      std::shared_ptr<hebi::sim::Joint> hebiros_joint = joint_pair.second;
 
       ros::Time current_time = ros::Time::now();
       ros::Duration elapsed_time = current_time - hebiros_group->start_time;
@@ -174,7 +171,7 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       }
     }
     else {
-      ROS_WARN("Joint %s not found", joint_name.c_str());
+      ROS_WARN("Joint %s not found", hebiros_joint->name.c_str());
     }
   }
 }
@@ -239,31 +236,31 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
 
   std::string model_name = "";
   bool is_x8 = false;
-  if (this->model->GetJoint(joint_name+"/X5_1")) {
+  if (model_->GetJoint(joint_name+"/X5_1")) {
     model_name = "X5_1";
   }
-  else if (this->model->GetJoint(joint_name+"/X5_4")) {
+  else if (model_->GetJoint(joint_name+"/X5_4")) {
     model_name = "X5_4";
   }
-  else if (this->model->GetJoint(joint_name+"/X5_9")) {
+  else if (model_->GetJoint(joint_name+"/X5_9")) {
     model_name = "X5_9";
   }
-  else if (this->model->GetJoint(joint_name+"/X8_3")) {
+  else if (model_->GetJoint(joint_name+"/X8_3")) {
     model_name = "X8_3";
     is_x8 = true;
   }
-  else if (this->model->GetJoint(joint_name+"/X8_9")) {
+  else if (model_->GetJoint(joint_name+"/X8_9")) {
     model_name = "X8_9";
     is_x8 = true;
   }
-  else if (this->model->GetJoint(joint_name+"/X8_16")) {
+  else if (model_->GetJoint(joint_name+"/X8_16")) {
     model_name = "X8_16";
     is_x8 = true;
   }
 
-  std::shared_ptr<hebi::sim::Joint> hebiros_joint =
-    std::make_shared<hebi::sim::Joint>(joint_name, model_name, is_x8);
-  hebi::sim::Joint& raw_joint = *hebiros_joint;
+  // Get a weak reference to store in the individual groups
+  auto raw_joint = addJoint(std::make_unique<hebi::sim::Joint>(joint_name, model_name, is_x8));
+
   // Temporarily, we store joint subscriptions in the gazebo ros plugin here, since
   // the IMU that generates this data is a separate ROS plugin communicating via ROS
   // messages.
@@ -271,20 +268,20 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
   // This will be abstracted into the ROS plugin wrapper in a subsequent refactor
   hebiros_joint_imu_subs.push_back(n->subscribe<sensor_msgs::Imu>(
     "hebiros_gazebo_plugin/imu/" + joint_name, 100, 
-    [&raw_joint](const boost::shared_ptr<sensor_msgs::Imu const> data) {
+    [raw_joint](const boost::shared_ptr<sensor_msgs::Imu const> data) {
       auto a = data->linear_acceleration;
       auto g = data->angular_velocity;
-      raw_joint.updateImu(
+      raw_joint->updateImu(
           {static_cast<float>(a.x), static_cast<float>(a.y), static_cast<float>(a.z)},
           {static_cast<float>(g.x), static_cast<float>(g.y), static_cast<float>(g.z)});
     }));
 
 
-  hebiros_joint->feedback_index = hebiros_group->joints.size();
-  hebiros_joint->command_index = hebiros_joint->feedback_index;
+  raw_joint->feedback_index = hebiros_group->joints.size();
+  raw_joint->command_index = raw_joint->feedback_index;
 
-  HebirosGazeboController::SetSettings(hebiros_group, hebiros_joint);
-  hebiros_group->joints[joint_name] = hebiros_joint;
+  HebirosGazeboController::SetSettings(hebiros_group, raw_joint);
+  hebiros_group->joints[joint_name] = raw_joint;
 
 }
 

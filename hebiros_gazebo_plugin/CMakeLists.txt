@@ -148,6 +148,7 @@ include_directories( ${catkin_INCLUDE_DIRS}
 )
 
 add_library(hebiros_gazebo_plugin 
+  plugin/hebi_gazebo_plugin.cpp
   plugin/hebiros_gazebo_plugin.cpp
   include/hebiros_gazebo_group.cpp
   sim/pid_controller.cpp

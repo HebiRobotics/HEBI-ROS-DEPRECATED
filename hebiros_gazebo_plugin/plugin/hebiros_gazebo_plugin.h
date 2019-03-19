@@ -1,14 +1,14 @@
 #pragma once
 
 #include <gazebo/common/common.hh>
-#include <gazebo/gazebo.hh>
-#include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 #include "std_srvs/Empty.h"
+
+#include "hebi_gazebo_plugin.h"
 
 #include "hebiros/FeedbackMsg.h"
 #include "hebiros/CommandMsg.h"
@@ -17,23 +17,22 @@
 #include "hebiros/SetFeedbackFrequencySrv.h"
 
 #include "hebiros_gazebo_group.h"
-#include "joint.h"
 #include "hebiros_gazebo_controller.h"
 
 using namespace hebiros;
 using namespace gazebo;
 
-class HebirosGazeboPlugin: public ModelPlugin {
+class HebirosGazeboPlugin : public hebi::sim::HebiGazeboPlugin {
 
 public:
   HebirosGazeboPlugin() = default;
+  
+  void Load(physics::ModelPtr model, sdf::ElementPtr sdf) override;
 
-  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-  void OnUpdate(const common::UpdateInfo & _info);
+  void OnUpdate(const common::UpdateInfo & info);
 
 private:
 
-  physics::ModelPtr model;
   bool first_sim_iteration{true};  
   event::ConnectionPtr update_connection;
   std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;

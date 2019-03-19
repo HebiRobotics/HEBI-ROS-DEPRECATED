@@ -17,7 +17,7 @@ public:
 
   // TODO: Make these private.
   std::string name;
-  std::map<std::string, std::shared_ptr<hebi::sim::Joint>> joints;
+  std::map<std::string, hebi::sim::Joint*> joints;
   FeedbackMsg feedback;
   CommandMsg command_target;
   bool check_acknowledgement = false;

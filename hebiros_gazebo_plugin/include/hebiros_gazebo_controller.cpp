@@ -38,7 +38,7 @@ using namespace controller;
 
 //Set defaults settings for a joint once
 void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<hebi::sim::Joint> hebiros_joint) {
+  hebi::sim::Joint* hebiros_joint) {
 
   hebiros_joint->low_pass_alpha = LOW_PASS_ALPHA;
   int i = hebiros_joint->command_index;
@@ -54,7 +54,7 @@ void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> he
 
 //Initialize gains with default values based on model and control strategy
 void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<hebi::sim::Joint> hebiros_joint) {
+  hebi::sim::Joint* hebiros_joint) {
   
   std::string model_name = hebiros_joint->model_name;
   int i = hebiros_joint->command_index;
@@ -172,7 +172,7 @@ bool updateGains(hebi::sim::PidGains& gains, const hebiros::PidGainsMsg& msg, si
 
 //Change settings for a joint if specifically commanded
 void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<hebi::sim::Joint> hebiros_joint) {
+  hebi::sim::Joint* hebiros_joint) {
 
   CommandMsg target = hebiros_group->command_target;
   int i = hebiros_joint->command_index;
@@ -213,7 +213,7 @@ hebi::sim::PidGains convertToSimGains(const hebiros::PidGainsMsg& msg, size_t in
 
 //Compute output force to the joint based on PID and control strategy
 double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::shared_ptr<hebi::sim::Joint> hebiros_joint,
+  hebi::sim::Joint* hebiros_joint,
   double position, double velocity, double effort, const ros::Duration& iteration_time) {
 
   auto dt = iteration_time.toSec();

@@ -50,7 +50,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
     std::string joint_name = data->name[i];
 
     if (joints.find(joint_name) != joints.end()) {
-      std::shared_ptr<hebi::sim::Joint> hebiros_joint = joints[joint_name];
+      auto hebiros_joint = joints[joint_name];
       hebiros_joint->command_index = i;
 
       HebirosGazeboController::ChangeSettings(shared_from_this(),
