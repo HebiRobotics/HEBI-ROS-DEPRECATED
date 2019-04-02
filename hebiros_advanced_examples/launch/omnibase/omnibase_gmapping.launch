@@ -1,0 +1,77 @@
+<launch>
+  <!-- Arguments -->
+
+  <!--arg name="configuration_basename" default="rosie_lds_2d.lua"/-->
+  <arg name="set_base_frame" default="base_footprint"/>
+  <arg name="set_odom_frame" default="odom"/>
+  <arg name="set_map_frame"  default="map"/>
+  <arg name="x_pos" default="0.0"/>
+  <arg name="y_pos" default="0.0"/>
+  <arg name="z_pos" default="0.0"/>
+
+
+  <!-- Gmapping -->
+  <node pkg="gmapping" type="slam_gmapping" name="omnibase_slam_gmapping" output="screen">
+    
+    <param name="base_frame" value="$(arg set_base_frame)"/>
+    <param name="odom_frame" value="$(arg set_odom_frame)"/>
+    <param name="map_frame"  value="$(arg set_map_frame)"/>
+    <param name="map_update_interval" value="2.0"/>
+    <param name="maxUrange" value="5.5"/>
+    <param name="sigma" value="0.05"/>
+    <param name="kernelSize" value="1"/>
+    <param name="lstep" value="0.05"/>
+    <param name="astep" value="0.05"/>
+    <param name="iterations" value="5"/>
+    <param name="lsigma" value="0.075"/>
+    <param name="ogain" value="3.0"/>
+    <param name="lskip" value="0"/>
+    <param name="minimumScore" value="50"/>
+    <param name="srr" value="0.1"/>
+    <param name="srt" value="0.2"/>
+    <param name="str" value="0.1"/>
+    <param name="stt" value="0.2"/>
+    <param name="linearUpdate" value="0.2"/>
+    <param name="angularUpdate" value="0.25"/>
+    <param name="temporalUpdate" value="5.0"/>
+    <param name="resampleThreshold" value="0.5"/>
+    <param name="particles" value="100"/>
+    <param name="xmin" value="-10.0"/>
+    <param name="ymin" value="-10.0"/>
+    <param name="xmax" value="5.5"/>
+    <param name="ymax" value="5.5"/>
+    <param name="delta" value="0.025"/>
+    <param name="llsamplerange" value="0.01"/>
+    <param name="llsamplestep" value="0.01"/>
+    <param name="lasamplerange" value="0.005"/>
+    <param name="lasamplestep" value="0.005"/>
+  </node>
+
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    
+    <param name="ignore_timestamp" value="false"/>
+  </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hebiros_advanced_examples)/rviz/rosie_gazebo_model.rviz"/>
+
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find hebiros_description)/urdf/rosie.xacro" />
+
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model rosie -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+
+<!--RP Lidar-->
+  <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+  <param name="serial_port"         type="string" value="/dev/ttyUSB0"/>  
+  <param name="serial_baudrate"     type="int"    value="256000"/><!--A3 -->
+  <param name="frame_id"            type="string" value="base_scan"/>
+  <param name="inverted"            type="bool"   value="false"/>
+  <param name="angle_compensate"    type="bool"   value="true"/>
+  <param name="scan_mode"           type="string" value="Sensitivity"/>
+  </node>
+
+
+
+</launch>
