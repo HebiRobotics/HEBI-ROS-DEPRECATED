@@ -1,0 +1,118 @@
+<?xml version="1.0" ?>
+<robot name="rosie_test" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find hebiros_description)/urdf/common_properties.xacro"/>
+  <xacro:include filename="$(find hebiros_description)/urdf/x_library.xacro"/>
+  <xacro:include filename="$(find hebiros_description)/urdf/x5M.xacro"/>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link" />
+    <origin xyz="0 0 0.010" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="-0.1625 0.1775 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <!--box size="0.50 0.50 0.10"/-->
+        <mesh filename="package://hebiros_description/meshes/rosie_simplified_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="light_black"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.50 0.50 0.1"/>
+      </geometry>
+    </collision>
+    
+  </link>
+<!---->
+  <joint name="Wheel1_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="HEBI/Wheel1"/>
+    <origin xyz="0.0680 0.135 0.030" rpy="0.523599 1.5708 1.5708"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+
+  <joint name="wheel_2_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="HEBI/Wheel2"/>
+    <origin xyz="0.0680 -0.135 0.030" rpy="-0.523599 1.5708 -1.5708"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+
+  <joint name="wheel_3_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="HEBI/Wheel3"/>
+    <origin xyz="-0.155 0.0 0.030" rpy="0 1.5708 3.14159"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+
+  <xacro:x5M joint="HEBI/Wheel1" child="omniwheel1" model="X5_4"/>
+  <xacro:x5M joint="HEBI/Wheel2" child="omniwheel2" model="X5_4"/>
+  <xacro:x5M joint="HEBI/Wheel3" child="omniwheel3" model="X5_4"/>
+
+
+  <link name="omniwheel1">
+    <visual>
+      <origin xyz="0 0 0.030" rpy="0 0 0"/>
+      <geometry>
+        <!--box size="0.50 0.50 0.10"/-->
+        <mesh filename="package://hebiros_description/meshes/omni_25k.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="light_black"/>
+    </visual>
+
+  </link>
+
+
+  <link name="omniwheel2">
+    <visual>
+      <origin xyz="0 0 0.030" rpy="0 0 0"/>
+      <geometry>
+        <!--box size="0.50 0.50 0.10"/-->
+        <mesh filename="package://hebiros_description/meshes/omni_25k.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="light_black"/>
+    </visual>
+  </link>  
+
+  <link name="omniwheel3">
+    <visual>
+      <origin xyz="0 0 .030 " rpy="0 0 0"/>
+      <geometry>
+        <!--box size="0.50 0.50 0.10"/-->
+        <mesh filename="package://hebiros_description/meshes/omni_25k.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="light_black"/>
+    </visual>
+  </link>
+
+
+  <!-- -->
+
+  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <origin xyz="0 0 0.180" rpy="0 0 1.5708"/>
+  </joint>
+
+  <link name="base_scan">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://hebiros_description/meshes/lds.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="dark"/>
+    </visual>
+  </link>
+
+
+</robot>
