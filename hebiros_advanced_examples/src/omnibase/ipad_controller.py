@@ -70,11 +70,11 @@ while (running):
 	io_b = group_feedback.io.b
 	controlA = group_command.io.a
 
-	if(io_b.get_int(1) !=0 && drive_sate = False):	
+	if(io_b.get_int(1) !=0 && drive_state = False):	
 		drive_state = True;
 		print("Drive Enabled")
 		ROS_INFO("Drive Enabled")
-	if(io_b.get_int(2) !=0 && drive_sate = True):	
+	if(io_b.get_int(2) !=0 && drive_state = True):	
 		drive_state = False;
 		print("Drive Disabled")
 		ROS_INFO("Drive Disabled")
