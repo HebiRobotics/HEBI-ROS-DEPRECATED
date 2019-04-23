@@ -1,0 +1,19 @@
+<launch>
+  <!-- Arguments -->
+
+  <arg name="cmd_vel_topic" default="cmd_vel" />
+  <arg name="odom_topic" default="odom" />
+
+  <!-- move_base -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+    <rosparam file="$(find rosie_navigation)/param/costmap_common_params_rosie.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find rosie_navigation)/param/costmap_common_params_rosie.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find rosie_navigation)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find rosie_navigation)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find rosie_navigation)/param/move_base_params.yaml" command="load" />
+    <rosparam file="$(find rosie_navigation)/param/dwa_local_planner_params_rosie.yaml" command="load" />
+    <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+    <remap from="odom" to="$(arg odom_topic)"/>
+  </node>
+</launch>
