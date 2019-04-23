@@ -1,42 +1,43 @@
 TrajectoryPlannerROS:
 
 # Robot Configuration Parameters
-  max_vel_x: 1.0
-  min_vel_x: 0.5
-  #max_vel_y: 1.0
-  #min_vel_y: 0.5
+  max_vel_x: 2.0 #0.5
+  min_vel_x: -1.0
+  max_vel_y: 2.0
+  min_vel_y: -1.0
 
-  y_vels: [-1.0,-0.5,0.5,1.0]
+ # y_vels: [-1.0,-1.0,1.0,1.0]
 
-  max_vel_theta: 1.0
-  min_vel_theta: 0.5
-  min_in_place_vel_theta: 0.50
+  max_vel_theta: 0
+  min_vel_theta: 0
+  min_in_place_vel_theta: 0.0 #0.50
+  max_in_place_vel_theta: 1.0 #0.50
 
 
-  acc_lim_x: 1.0
-  acc_lim_y: 1.0
-  acc_lim_theta: 1.0
+  acc_lim_x: 1.0 #1
+  acc_lim_y: 1.0 #1
+  acc_lim_theta: 1.0 #1.0
 
 # Goal Tolerance Parameters
-  xy_goal_tolerance: 0.10 #.10
+  xy_goal_tolerance: 0.10 #.10`
   yaw_goal_tolerance: 0.10  #.05
-# goal_distance_bias: 0.6
-# path_distance_bias: 0.8
+#  goal_distance_bias: 0.6
+#  path_distance_bias: 0.8
 
 
 # Differential-drive robot configuration
   holonomic_robot: true
 
 # Forward Simulation Parameters
-  sim_time: 1.0
-  vx_samples: 10
-  vy_samples: 10
-  vtheta_samples: 10
-  sim_granularity: 0.20  #0.05
+  sim_time: 0.5
+  vx_samples: 30
+  vy_samples: 30
+  vtheta_samples: 00
+  sim_granularity: 0.05 #0.05
 
 
 
-#  heading_lookahead: 0.325
-#  meter_scoring: true
-#  heading_scoring: false
-#  dwa: false
+  #heading_lookahead: 0.325
+  #meter_scoring: false
+  #heading_scoring: false
+  #dwa: true
