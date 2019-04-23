@@ -1,11 +1,11 @@
 
 
-#Rosie Navigation & Mapping Instructions
+# Rosie Navigation & Mapping Instructions
 
 
 **Important: All of the mapping and navigation code on Rosie is in the lidar_workspace catkin directory; to run any of these commands, you will need to run `source devel/setup.sh` from your catkin workspace first**
 
-# Installation & Setup
+## Installation & Setup
 
 Before you can start building maps and using the navigation stack with your robot, you need to add the following ROS repositories to your /SRC folder in your Catkin workspace. These are the open source libraries used for mapping (GMapping) and navigation in ROS. They are currently compatible with ROS Kinetic and Melodic.
 
@@ -31,7 +31,7 @@ In order to use any USB-based Lidar, you need to enable access to the USB ports 
 sudo gpasswd --add ${USER} dialout
 ```
 
-# Rosie Mapping
+## Rosie Mapping
 
 In order to run the mapping demo on Rosie, there are two files that need to be run on Rosie's cpu.
 
@@ -50,7 +50,7 @@ Using the Mobile I/O controller, drive Rosie around to build a map. When the map
 rosrun map_server map_saver -f FILENAME
 ```
 
-# Rosie Navigation
+## Rosie Navigation
 
 In order to run the navigation demo, a couple things need to be taken care of prior.
 First, you must have created a map using the gmapping demo (.pgm and .yaml file); you must set this map in the rosie_nav.launch file as the default map.
@@ -61,7 +61,9 @@ Two files need to be run in order to start the demo. The first is the omnibase_n
 roslaunch hebiros_advanced_examples omnibase_navigation_mobile_IO.launch 
 ```
 
-The second file is the Rosie Navigation launch file. This file starts the lidar and the map server, and opens an RViz instance  to demonstrate the mapping. Use this command if using Rosie_Navigation repository:
+The second file is the Rosie Navigation launch file. This file starts the lidar and the map server, and opens an RViz instance  to demonstrate the mapping. 
+
+Use this command if using Rosie_Navigation repository:
 ```
 roslaunch rosie_navigation rosie_nav.launch 
 ```
