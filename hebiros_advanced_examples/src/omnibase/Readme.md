@@ -1,8 +1,29 @@
 # Overview
 
-These files are used to interface with the omnibase robot base. This documentation provides instruciton to run each of the nodes, as well as information on the ROS messages used by each file.
+These files are used to interface with the omnibase robot base. This documentation provides instruction to run each of the nodes, as well as information on the ROS messages used by each file.
 
 **Important: to run any of these commands, you will need to run `source devel/setup.sh` from your catkin workspace first**
+
+
+# Initial Setup
+
+In a new directory (or your existing catkin workspace), run the following:
+
+```
+mkdir src
+cd src
+git clone https://github.com/HebiRobotics/HEBI-ROS.git
+git checkout develop
+catkin_init_workspace
+cd ..
+```
+
+To build the catkin workspace, run the following commands:
+```
+catkin_make clean
+catkin_make
+source devel/setup.bash
+```
 
 # Running the code
 
