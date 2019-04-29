@@ -1,7 +1,6 @@
 <launch>
   <!-- Arguments -->
 
-  <!--arg name="configuration_basename" default="rosie_lds_2d.lua"/-->
   <arg name="set_base_frame" default="base_footprint"/>
   <arg name="set_odom_frame" default="odom"/>
   <arg name="set_map_frame"  default="map"/>
@@ -54,10 +53,10 @@
     <param name="ignore_timestamp" value="false"/>
   </node>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hebiros_advanced_examples)/rviz/rosie_gazebo_model.rviz"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hebiros_advanced_examples)/rviz/omnibase_gazebo_model.rviz"/>
 
 
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find hebiros_description)/urdf/rosie.xacro" />
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find hebiros_description)/urdf/omnibase.xacro" />
 
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model rosie -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
 

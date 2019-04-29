@@ -1,6 +1,6 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find Mapping_Navigation)/maps/Hebi_map.yaml"/>
+  <arg name="map_file" default="$(find mapping_navigation)/maps/Hebi_map.yaml"/>
   <arg name="open_rviz" default="true"/>
   <arg name="x_pos" default="0.0"/>
   <arg name="y_pos" default="0.0"/>
@@ -12,11 +12,10 @@
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
 
   <!-- AMCL -->
-  <include file="$(find Mapping_Navigation)/amcl.launch"/>
+  <include file="$(find mapping_navigation)/amcl.launch"/>
 
   <!-- move_base -->
-  <include file="$(find Mapping_Navigation)/move_base.launch"/>
-
+  <include file="$(find mapping_navigation)/move_base.launch"/>
 
 
 <!--RP Lidar-->
@@ -32,16 +31,16 @@
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
-          args="-d $(find Mapping_Navigation)/rviz/Rosie_navigation.rviz"/>
+          args="-d $(find mapping_navigation)/rviz/omnibase_navigation.rviz"/>
   </group>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
     respawn="false" output="screen"/>
 
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find hebiros_description)/urdf/rosie.xacro" />
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find hebiros_description)/urdf/omnibase.xacro" />
 
-  <!--node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model rosie -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" /-->  
+  <!--node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model omnibase -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" /-->  
 
-  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model rosie -param robot_description" /> 
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model omnibase -param robot_description" /> 
 
 </launch>
