@@ -1,8 +1,8 @@
 # Omnibase Navigation & Mapping Instructions
 
 
-**Important: In order to run the Navigation & Mapping code, you must already have a catkin workspace setup with omnibase code running using the HEBI-ROS repository. 
-To run any of these Roslaunch commands, you will need to run `source devel/setup.sh` from your catkin workspace first**
+**Important: In order to run the Navigation & Mapping code, you must already have a catkin workspace setup with omnibase code running using the HEBI-ROS repository. Please visit this link for setup instruction: https://github.com/HebiRobotics/HEBI-ROS/tree/develop/hebiros_advanced_examples/src/omnibase**
+
 
 # Installation & Setup
 
@@ -26,14 +26,15 @@ git clone https://github.com/ros-planning/navigation_msgs.git
 
 
 ### FOR KINETIC ONLY -- FIX BUILD OF NAVIGATION PACKAGE!
+```
 cd navigation
 git checkout kinetic-devel
 rm -r fake_localization
 cd ..
-
+```
 ## RPLidar Setup
 
-### USB config
+### USB Configuration
 
 In order to use any USB-based Lidar, you need to enable access to the USB ports serial connection (/dev/ttyUSB0). The easiest way to do this is by adding your user account to the dialout group, using this command:
 ```
