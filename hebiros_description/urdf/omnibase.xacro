@@ -119,7 +119,7 @@
     <visual>
       <origin xyz="0 0 0.030" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/omni_25k.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://hebiros_description/meshes/omniwheels.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="light_black"/>
     </visual>
@@ -131,7 +131,7 @@
     <visual>
       <origin xyz="0 0 0.030" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/omni_25k.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://hebiros_description/meshes/omniwheels.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="light_black"/>
     </visual>
@@ -141,7 +141,7 @@
     <visual>
       <origin xyz="0 0 .030 " rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/omni_25k.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://hebiros_description/meshes/omniwheels.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="light_black"/>
     </visual>
