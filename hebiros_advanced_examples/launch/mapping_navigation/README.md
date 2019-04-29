@@ -1,7 +1,7 @@
 # Omnibase Navigation & Mapping Instructions
 
 
-**Important: In order to run the Navigation & Mapping code, you must already have a catkin workspace setup with omnibase code running using the HEBI-ROS repository. Please visit this link for setup instruction: https://github.com/HebiRobotics/HEBI-ROS/tree/develop/hebiros_advanced_examples/src/omnibase**
+**Important: In order to run the Navigation & Mapping code, you must already have a catkin workspace setup with omnibase code running using the HEBI-ROS and the hebi-cpp-api-ros repositories. Please visit this link for setup instruction: https://github.com/HebiRobotics/HEBI-ROS/tree/develop/hebiros_advanced_examples/src/omnibase**
 
 
 # Installation & Setup

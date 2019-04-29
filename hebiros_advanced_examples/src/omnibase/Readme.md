@@ -13,7 +13,10 @@ In a new directory (or your existing catkin workspace), run the following:
 mkdir src
 cd src
 git clone https://github.com/HebiRobotics/HEBI-ROS.git
+git clone https://github.com/HebiRobotics/hebi_cpp_api_ros
+cd HEBI-ROS
 git checkout develop
+cd ..
 catkin_init_workspace
 cd ..
 ```

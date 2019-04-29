@@ -110,16 +110,16 @@ int main(int argc, char ** argv) {
   // Construct the group using 3 known modules, connected to the network
   AddGroupFromNamesSrv add_group_srv;
   add_group_srv.request.group_name = group_name;
-  add_group_srv.request.names = {"_Wheel1", "_Wheel2", "_Wheel3"};
+  add_group_srv.request.names = {"Wheel1", "Wheel2", "Wheel3"};
   add_group_srv.request.families = {"Rosie"};
 
   // Call the add_group_from_urdf service to create a group until it succeeds
   while(!add_group_client.call(add_group_srv)) {}
 
   sensor_msgs::JointState command_msg;
-  command_msg.name.push_back("Rosie/_Wheel1");
-  command_msg.name.push_back("Rosie/_Wheel2");
-  command_msg.name.push_back("Rosie/_Wheel3");
+  command_msg.name.push_back("Rosie/Wheel1");
+  command_msg.name.push_back("Rosie/Wheel2");
+  command_msg.name.push_back("Rosie/Wheel3");
 
   command_msg.velocity.resize(3);
   command_msg.position.resize(3);
