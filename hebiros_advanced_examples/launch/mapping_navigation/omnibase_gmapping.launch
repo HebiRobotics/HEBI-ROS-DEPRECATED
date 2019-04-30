@@ -53,7 +53,7 @@
     <param name="ignore_timestamp" value="false"/>
   </node>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hebiros_advanced_examples)/rviz/omnibase_gazebo_model.rviz"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hebiros_advanced_examples)/rviz/omnibase_simple_gazebo_model.rviz"/>
 
 
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find hebiros_description)/urdf/omnibase.xacro" />

@@ -31,7 +31,7 @@
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
-          args="-d $(find hebiros_advanced_examples)/launch/rviz/omnibase_navigation.rviz"/>
+          args="-d $(find hebiros_advanced_examples)/rviz/omnibase_navigation.rviz"/>
   </group>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
