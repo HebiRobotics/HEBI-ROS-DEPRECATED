@@ -77,6 +77,15 @@ rosrun map_server map_saver -f FILENAME
 
 (Note: running the map_saver command should be done in the same directory which you are saving the map to; if you try to specify a directory or path in the "FILENAME", you will need to manually edit the .yaml file after saving to fix the relative path reference between yaml and pgm)
 
+### Tuning Mapping
+
+To tune the speed and accuracy of the mapping demo using the GMapping library, you can change some of the key parameters found in the omnibase_gmapping launch file. Here are the recommended parameters to start with:
+```minimumScore```: This sets the inimum score for considering the outcome of the scan matching good (default: 50)
+```linearUpdate```: Increase this value to allow more time between updates from the laser (default: 0.1)
+```particles```: Change this value to set the number of particles used in the filter (default: 100)
+
+For a full list of parameters and their relvance to mapping, please refer to the GMapping wiki: http://wiki.ros.org/gmapping
+
 
 ## Rosie Navigation
 
