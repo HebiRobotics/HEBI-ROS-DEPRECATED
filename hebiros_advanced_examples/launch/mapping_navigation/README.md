@@ -137,9 +137,9 @@ In order to customize and tune the navigation stack, you can modify the paramete
 
 For a full list of parameters and their relevance to the navigation, please refer to the following wiki pages:
 
-http://wiki.ros.org/dwa_local_planner#Parameters
-http://wiki.ros.org/base_local_planner#Parameters
-http://wiki.ros.org/amcl#Parameters
+http://wiki.ros.org/dwa_local_planner#Parameters                                                  
+http://wiki.ros.org/base_local_planner#Parameters                                                          
+http://wiki.ros.org/amcl#Parameters                                                                       
 http://wiki.ros.org/move_base#Parameters
 
 
