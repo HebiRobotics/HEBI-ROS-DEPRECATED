@@ -131,5 +131,16 @@ pose:
     z: 0.0
     w: 1.0" 
 ```
+### Tuning Navigation
 
-Note that the parameters for the planner, affecting speed, accuracy, etc, are given in the `mapping_navigation/param` folder.
+In order to customize and tune the navigation stack, you can modify the parameter files found in the `mapping_navigation/param` folder. These parameters affect speed, accuracy, localization, and costmaps.
+
+For a full list of parameters and their relevance to the navigation, please refer to the following wiki pages:
+
+http://wiki.ros.org/dwa_local_planner#Parameters
+http://wiki.ros.org/base_local_planner#Parameters
+http://wiki.ros.org/amcl#Parameters
+http://wiki.ros.org/move_base#Parameters
+
+
+
