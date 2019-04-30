@@ -1,6 +1,6 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find mapping_navigation)/maps/Hebi_map.yaml"/>
+  <arg name="map_file" default="$(find hebiros_advanced_examples)/launch/mapping_navigation/maps/Hebi_map.yaml"/>
   <arg name="open_rviz" default="true"/>
   <arg name="x_pos" default="0.0"/>
   <arg name="y_pos" default="0.0"/>
@@ -12,10 +12,10 @@
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
 
   <!-- AMCL -->
-  <include file="$(find mapping_navigation)/amcl.launch"/>
+  <include file="$(find hebiros_advanced_examples)/launch/mapping_navigation/amcl.launch"/>
 
   <!-- move_base -->
-  <include file="$(find mapping_navigation)/move_base.launch"/>
+  <include file="$(find hebiros_advanced_examples)/launch/mapping_navigation/move_base.launch"/>
 
 
 <!--RP Lidar-->
@@ -31,7 +31,7 @@
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
-          args="-d $(find mapping_navigation)/rviz/omnibase_navigation.rviz"/>
+          args="-d $(find hebiros_advanced_examples)/launch/rviz/omnibase_navigation.rviz"/>
   </group>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"

@@ -7,12 +7,12 @@
   <!-- move_base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
-    <rosparam file="$(find rosie_navigation)/param/costmap_common_params_rosie.yaml" command="load" ns="global_costmap" />
-    <rosparam file="$(find rosie_navigation)/param/costmap_common_params_rosie.yaml" command="load" ns="local_costmap" />
-    <rosparam file="$(find rosie_navigation)/param/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find rosie_navigation)/param/global_costmap_params.yaml" command="load" />
-    <rosparam file="$(find rosie_navigation)/param/move_base_params.yaml" command="load" />
-    <rosparam file="$(find rosie_navigation)/param/dwa_local_planner_params_rosie.yaml" command="load" />
+    <rosparam file="$(find hebiros_advanced_examples)/launch/mapping_navigation/param/costmap_common_params_omnibase.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find hebiros_advanced_examples)/launch/mapping_navigation/param/costmap_common_params_omnibase.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find hebiros_advanced_examples)/launch/mapping_navigation/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find hebiros_advanced_examples)/launch/mapping_navigation/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find hebiros_advanced_examples)/launch/mapping_navigation/param/move_base_params.yaml" command="load" />
+    <rosparam file="$(find hebiros_advanced_examples)/launch/mapping_navigation/param/dwa_local_planner_params_omnibase.yaml" command="load" />
     <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
     <remap from="odom" to="$(arg odom_topic)"/>
   </node>
