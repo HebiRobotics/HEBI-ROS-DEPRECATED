@@ -28,7 +28,7 @@
       </geometry>
     </collision>
   </link>
-<!---->
+
   <joint name="module1_joint" type="fixed">
     <parent link="base_link"/>
     <child link="module1"/>
