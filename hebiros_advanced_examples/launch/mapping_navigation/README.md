@@ -26,7 +26,6 @@ sudo apt-get install libsdl1.2-dev
 sudo apt-get install libsdl-image1.2-dev
 ```
 
-
 ### FOR KINETIC ONLY -- FIX BUILD OF NAVIGATION PACKAGE!
 ```
 cd navigation
