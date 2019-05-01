@@ -98,7 +98,7 @@ The first is the omnibase_teleop_mobile_IO file, initializes the omnibase node a
 roslaunch hebiros_advanced_examples omnibase_teleop_mobile_IO.launch 
 ```
 
-The second file that needs to be run is the gmapping launch file. This starts up the RPLidar module as well as RViz. Use this command:
+The second file that needs to be run is the mapping launch file. This starts up the RPLidar module as well as RViz. Use this command:
 ```
 roslaunch hebiros_advanced_examples omnibase_gmapping.launch 
 ```
@@ -113,7 +113,7 @@ Using the Mobile I/O controller, drive the omnibase around to build a map. When 
 rosrun map_server map_saver -f FILENAME
 ```
 
-(Note: running the map_saver command should be done in the same directory which you are saving the map to; if you try to specify a directory or path in the "FILENAME", you will need to manually edit the .yaml file after saving to fix the relative path reference between yaml and pgm)
+(Note: running the map_saver command should be done in the same directory which you are saving the map to; if you try to specify a directory or path in the "FILENAME", you will need to manually edit the yaml file after saving to fix the relative path reference between yaml and pgm files)
 
 ### Tuning Mapping
 
