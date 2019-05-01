@@ -29,6 +29,16 @@ cd ..
 ```
 ## RPLidar Setup
 
+### Installation
+
+To use the RP Lidar system with the omnibase, you need to clone the source code into your catkin workspace. From your workspace directory, run these commands:
+```
+cd src
+git clone https://github.com/robopeak/rplidar_ros.git
+cd ..
+catkin_make
+```
+
 ### USB Configuration
 
 In order to use any USB-based Lidar, you need to enable access to the USB ports serial connection (/dev/ttyUSB0). The easiest way to do this is by adding your user account to the dialout group, using this command:

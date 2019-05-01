@@ -10,7 +10,7 @@
 
 
   <!-- Gmapping -->
-  <node pkg="gmapping" type="slam_gmapping" name="omnibase_slam_gmapping" args="scan:=$(arg set_scan_default)" output="screen">
+  <node name="omnibase_slam_gmapping" pkg="gmapping" type="slam_gmapping"  args="scan:=$(arg set_scan_default)" output="screen">
     
     <param name="base_frame" value="$(arg set_base_frame)"/>
     <param name="odom_frame" value="$(arg set_odom_frame)"/>
