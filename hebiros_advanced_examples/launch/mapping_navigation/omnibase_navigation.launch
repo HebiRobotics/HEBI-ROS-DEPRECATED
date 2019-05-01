@@ -1,12 +1,10 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find hebiros_advanced_examples)/launch/mapping_navigation/maps/Hebi_map.yaml"/>
+  <arg name="map_file" default="$(find hebiros_advanced_examples)/launch/mapping_navigation/maps/default_map.yaml"/>
   <arg name="open_rviz" default="true"/>
   <arg name="x_pos" default="0.0"/>
   <arg name="y_pos" default="0.0"/>
   <arg name="z_pos" default="0.0"/>
-
-
 
   <!-- Map server -->
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>

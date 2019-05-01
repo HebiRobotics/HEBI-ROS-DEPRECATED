@@ -42,9 +42,7 @@
     <param name="odom_alpha4"               value="0.2"/>
     <param name="odom_alpha5"               value="0.1"/>
     <param name="odom_frame_id"             value="odom"/>
-    <param name="base_frame_id"             value="base_footprint"/>
-    <!--param name="global_frame_id"           value="map"/-->
-        
+    <param name="base_frame_id"             value="base_footprint"/>      
 
   </node>
 </launch>

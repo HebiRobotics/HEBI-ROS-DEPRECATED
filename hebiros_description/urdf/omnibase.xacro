@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
 <robot name="rosie_test" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:include filename="$(find hebiros_description)/urdf/common_properties.xacro"/>
   <xacro:include filename="$(find hebiros_description)/urdf/x_library.xacro"/>
   <xacro:include filename="$(find hebiros_description)/urdf/x_series_common.xacro"/>
 
@@ -28,35 +27,30 @@
         <box size="0.50 0.50 0.1"/>
       </geometry>
     </collision>
-    
   </link>
 <!---->
   <joint name="module1_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="HEBI/Module1"/>
+    <child link="module1"/>
     <origin xyz="0.055 0.110 0.030" rpy="0.523599 1.5708 1.5708"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-
   <joint name="module2_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="HEBI/Module2"/>
+    <child link="module2"/>
     <origin xyz="0.055 -0.110 0.030" rpy="-0.523599 1.5708 -1.5708"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-
   <joint name="module3_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="HEBI/Module3"/>
+    <child link="module3"/>
     <origin xyz="-0.125 0.0 0.030" rpy="0 1.5708 3.14159"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-
-
-  <link name="HEBI/Module1">
+  <link name="module1">
     <visual>
       <origin xyz="0 0 0.030" rpy="0 0 0"/>
       <geometry>
@@ -65,11 +59,9 @@
       </geometry>
       <xacro:red_material/>
     </visual>
-
   </link>
 
-
-  <link name="HEBI/Module2">
+  <link name="module2">
     <visual>
       <origin xyz="0 0 0.030" rpy="0 0 0"/>
       <geometry>
@@ -80,7 +72,7 @@
     </visual>
   </link>  
 
-  <link name="HEBI/Module3">
+  <link name="module3">
     <visual>
       <origin xyz="0 0 .030 " rpy="0 0 0"/>
       <geometry>
@@ -92,28 +84,25 @@
   </link>
 
   <joint name="omniwheel1_joint" type="fixed">
-    <parent link="HEBI/Module1"/>
+    <parent link="module1"/>
     <child link="omniwheel1"/>
     <origin xyz="0 0 .060" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-
   <joint name="omniwheel2_joint" type="fixed">
-    <parent link="HEBI/Module2"/>
+    <parent link="module2"/>
     <child link="omniwheel2"/>
     <origin xyz="0 0 0.060" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-
   <joint name="omniwheel3_joint" type="fixed">
-    <parent link="HEBI/Module3"/>
+    <parent link="module3"/>
     <child link="omniwheel3"/>
     <origin xyz="0.0 0.0 0.060" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
-
 
   <link name="omniwheel1">
     <visual>
@@ -123,9 +112,7 @@
       </geometry>
       <material name="light_black"/>
     </visual>
-
   </link>
-
 
   <link name="omniwheel2">
     <visual>
@@ -147,24 +134,29 @@
     </visual>
   </link>
 
-
-  <!-- LIDAR Information-->
-
+  <!-- LIDAR Module Information-->
   <joint name="scan_joint" type="fixed">
     <parent link="base_link"/>
     <child link="base_scan"/>
     <origin xyz="0 0 0.180" rpy="0 0 1.5708"/>
   </joint>
 
-  <link name="base_scan">
+  <link name="base_scan">  
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://hebiros_description/meshes/lds.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://hebiros_description/meshes/simple_lidar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="dark"/>
     </visual>
   </link>
 
+  <!-- Color Parameters-->  
+  <material name="dark">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+  <material name="light_black">
+    <color rgba="0.4 0.4 0.4 1.0"/>
+  </material>
 
 </robot>
