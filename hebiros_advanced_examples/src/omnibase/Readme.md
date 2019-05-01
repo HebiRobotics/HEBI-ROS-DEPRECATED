@@ -50,6 +50,7 @@ This launch file is the same as example_omnibase_odometry, but instead of runnin
 ```
 roslaunch hebiros_advanced_examples omnibase_teleop_mobile_IO.launch 
 ```
+**Note: If you use the Mobile I/O controller, be sure to disable the controller (press B8) before closing the ROS master node on your PC**
 
 ## Mobile I/O app interface:
 

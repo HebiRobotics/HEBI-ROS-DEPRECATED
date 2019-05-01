@@ -20,6 +20,13 @@ git clone https://github.com/ros/geometry2.git
 git clone https://github.com/ros-planning/navigation_msgs.git
 ```
 
+In addition to the source code, there are a couple of libraries that need to be installed on your machine. Please make sure the following are installed by running these commands:
+```
+sudo apt-get install libsdl1.2-dev
+sudo apt-get install libsdl-image1.2-dev
+```
+
+
 ### FOR KINETIC ONLY -- FIX BUILD OF NAVIGATION PACKAGE!
 ```
 cd navigation
@@ -99,7 +106,7 @@ roslaunch hebiros_advanced_examples omnibase_gmapping.launch
 
 If you plan on using a laser filter to modify the scan data, you also need to launch the filter (with name <filtername>). This can be done using this command:
 ```
-roslaunch laser_filters <filtername>.launch
+roslaunch hebiros_advanced_examples <filtername>.launch
 ```
 
 Using the Mobile I/O controller, drive the omnibase around to build a map. When the map is finished, use the map server to save the map to the local directory with the filename FILENAME:
