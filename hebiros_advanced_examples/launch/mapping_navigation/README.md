@@ -6,7 +6,7 @@
 
 # Installation & Setup
 
-Before you can start building maps and using the navigation stack with your robot, you need to add the following ROS repositories to your /SRC folder in your catkin workspace. These are the open source libraries used for mapping (GMapping) and navigation in ROS. They are currently compatible with ROS Kinetic and Melodic.
+Before you can start building maps and using the navigation stack with your robot, you need to add the following ROS repositories to your `src` folder in your catkin workspace. These are the open source libraries used for mapping (GMapping) and navigation in ROS. They are currently compatible with ROS Kinetic and Melodic.
 
 ```
 git clone https://github.com/ros-perception/openslam_gmapping
