@@ -12,6 +12,7 @@
   <url type="repository">https://github.com/HebiRobotics/HEBI-ROS.git</url>
   <url type="bugtracker">https://github.com/HebiRobotics/HEBI-ROS/issues</url>
 
+  <author email="sami@hebirobotics.com">Sami Mian</author>
   <author email="x@hebirobotics.com">Xavier Artache</author>
   <author email="matt@hebirobotics.com">Matthew Tesch</author>
 

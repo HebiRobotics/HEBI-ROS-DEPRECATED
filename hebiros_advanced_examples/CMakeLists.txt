@@ -50,6 +50,8 @@ install(PROGRAMS
 install(FILES
   launch/omnibase/example_omnibase_odometry.launch
   launch/omnibase/example_omnibase_free_roam.launch
+  launch/mapping_navigation/omnibase_gmapping.launch
+  launch/mapping_navigation/omnibase_navigation.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
