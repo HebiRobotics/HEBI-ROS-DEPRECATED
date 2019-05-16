@@ -92,6 +92,7 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
   for (auto group_pair : hebiros_groups) {
     auto hebiros_group = group_pair.second;
 
+    // TODO: change this to update each module...?
     // Get the time elapsed since the last iteration
     ros::Duration iteration_time = current_time - hebiros_group->prev_time;
     hebiros_group->prev_time = current_time;
@@ -142,25 +143,31 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       hebiros_group->feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
 
       if (hebiros_group->command_received) {
-        double force = HebirosGazeboController::ComputeForce(hebiros_group, hebiros_joint,
+        // TODO: SENDER ID!!!!! Generate this properly.
+        uint64_t sender_id = 1;
+        int j = hebiros_joint->command_index;
+        auto p_cmd = std::numeric_limits<double>::quiet_NaN();
+        auto v_cmd = std::numeric_limits<double>::quiet_NaN();
+        auto e_cmd = std::numeric_limits<double>::quiet_NaN();
+        if (j < hebiros_group->command_target.position.size())
+          p_cmd = hebiros_group->command_target.position[j];
+        if (j < hebiros_group->command_target.velocity.size())
+          v_cmd = hebiros_group->command_target.velocity[j];
+        if (j < hebiros_group->command_target.effort.size())
+          e_cmd = hebiros_group->command_target.effort[j];
+
+        hebiros_joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, hebiros_group->command_lifetime/1000.0, elapsed_time.toSec());
+
+
+        // TODO: move this to the joint's update function...and have the right default for 0 pwm!
+        double force = HebirosGazeboController::ComputeForce(hebiros_joint,
           position, velocity, effort, iteration_time);
 
-        if ((hebiros_group->command_lifetime == 0) || (
-          elapsed_time.toSec() <= hebiros_group->command_lifetime/1000.0)) {
+        joint->SetForce(0, force);
 
-          joint->SetForce(0, force);
-        }
-
-        int j = hebiros_joint->command_index;
-        if (i < hebiros_group->command_target.position.size()) {
-          hebiros_group->feedback.position_command[j] = hebiros_group->command_target.position[j];
-        }
-        if (i < hebiros_group->command_target.velocity.size()) {
-          hebiros_group->feedback.velocity_command[j] = hebiros_group->command_target.velocity[j];
-        }
-        if (i < hebiros_group->command_target.effort.size()) {
-          hebiros_group->feedback.effort_command[j] = hebiros_group->command_target.effort[j];
-        }
+        hebiros_group->feedback.position_command[j] = p_cmd;
+        hebiros_group->feedback.velocity_command[j] = v_cmd;
+        hebiros_group->feedback.effort_command[j] = e_cmd;
       }
 
       if (!hebiros_group->feedback_pub.getTopic().empty() &&

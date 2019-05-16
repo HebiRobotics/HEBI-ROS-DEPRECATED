@@ -77,5 +77,34 @@ bool Joint::isX8() const {
           model_name == "X8_16");
 }
 
+bool Joint::setCommand(double pos, double vel, double eff, uint64_t sender_id, double lifetime_s, SimTime t) {
+  if (command_end_time == 0 || t > command_end_time || command_sender_id == 0 || sender_id == command_sender_id)
+  {
+    command_end_time = (lifetime_s == 0) ? 0 : (t + lifetime_s);
+    command_sender_id = sender_id;
+    position_cmd = pos;
+    velocity_cmd = vel;
+    effort_cmd = eff;
+  }
+}
+
+void Joint::update(SimTime t) {
+  if (command_end_time == 0) {
+    // Command that has no lifetime -- do nothing
+  }
+  else if (t > command_end_time) {
+    // Cancel the command if we are past its expiration
+    command_sender_id = 0;
+    command_end_time = 0;
+    position_cmd = std::numeric_limits<double>::quiet_NaN();
+    velocity_cmd = std::numeric_limits<double>::quiet_NaN();
+    effort_cmd = std::numeric_limits<double>::quiet_NaN();
+  }
+
+  // Otherwise, continue with the current command.
+
+  // TODO: calculate feedback here...
+}
+
 } // namespace sim
 } // namespace hebi

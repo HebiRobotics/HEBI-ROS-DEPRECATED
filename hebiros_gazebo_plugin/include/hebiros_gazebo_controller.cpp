@@ -212,33 +212,23 @@ hebi::sim::PidGains convertToSimGains(const hebiros::PidGainsMsg& msg, size_t in
 }
 
 //Compute output force to the joint based on PID and control strategy
-double HebirosGazeboController::ComputeForce(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
+double HebirosGazeboController::ComputeForce(
   hebi::sim::Joint* hebiros_joint,
   double position, double velocity, double effort, const ros::Duration& iteration_time) {
 
   auto dt = iteration_time.toSec();
 
-  CommandMsg target = hebiros_group->command_target;
   int i = hebiros_joint->command_index;
 
-  double target_position = std::numeric_limits<float>::quiet_NaN();
-  double target_velocity = std::numeric_limits<float>::quiet_NaN();
-  double target_effort = std::numeric_limits<float>::quiet_NaN();
+  //Set target positions
+  double target_position = hebiros_joint->position_cmd;
+  double target_velocity = hebiros_joint->velocity_cmd;
+  double target_effort = hebiros_joint->effort_cmd;
+
   double position_pid, velocity_pid, effort_pid;
   double position_pwm, velocity_pwm, effort_pwm;
   double intermediate_effort;
   double pwm, force, alpha;
-
-  //Set target positions
-  if (i < target.position.size()) {
-    target_position = target.position[i];
-  }
-  if (i < target.velocity.size()) {
-    target_velocity = target.velocity[i];
-  }
-  if (i < target.effort.size()) {
-    target_effort = target.effort[i];
-  }
 
   //Combine forces using selected strategy
   int control_strategy = hebiros_joint->getControlStrategy();
