@@ -16,11 +16,7 @@ public:
     hebi::sim::Joint* hebiros_joint,
     double position, double velocity, double effort, double iteration_time);
   
-  static void SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
-    hebi::sim::Joint* hebiros_joint);
-  
-  static void SetDefaultGains(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
-    hebi::sim::Joint* hebiros_joint);
+  static void SetDefaultGains(hebi::sim::Joint* hebiros_joint);
   
   static double Clip(double x, double low, double high);
 

@@ -104,7 +104,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
 
       // Change control strategy
       if (i < data->settings.control_strategy.size()) {
-        hebiros_joint->setControlStrategy(data->settings.control_strategy[i]);
+        hebiros_joint->setControlStrategy(static_cast<hebi::sim::Joint::ControlStrategy>(data->settings.control_strategy[i]));
       }
 
       // TODO: consider changing this to either direct setting of individual parameters,

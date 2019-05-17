@@ -3,20 +3,8 @@
 
 namespace controller {
 
-enum class control_strategies {
-  CONTROL_STRATEGY_OFF = 0,
-  CONTROL_STRATEGY_DIRECT_PWM = 1,
-  CONTROL_STRATEGY_2 = 2,
-  CONTROL_STRATEGY_3 = 3,
-  CONTROL_STRATEGY_4 = 4
-};
-
-static constexpr control_strategies DEFAULT_CONTROL_STRATEGY = control_strategies::CONTROL_STRATEGY_3;
-
 static constexpr double MAX_PWM = 1.0;
 static constexpr double MIN_PWM = -1.0;
-
-static constexpr double LOW_PASS_ALPHA = 0.1;
 
 static constexpr double DEFAULT_POSITION_KP = 0.5;
 static constexpr double DEFAULT_POSITION_KI = 0.0;
@@ -35,24 +23,8 @@ static constexpr double DEFAULT_EFFORT_FF = 1.0;
 
 using namespace controller;
 
-
-//Set defaults settings for a joint once
-void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  hebi::sim::Joint* hebiros_joint) {
-
-  hebiros_joint->low_pass_alpha = LOW_PASS_ALPHA;
-
-  //Set gear ratio
-  // TODO: check previous call to SetSettings -- potentially eliminate?
-
-  //Set control strategy
-  hebiros_joint->setControlStrategy(static_cast<uint8_t>(DEFAULT_CONTROL_STRATEGY));
-
-  SetDefaultGains(hebiros_group, hebiros_joint);
-}
-
 //Initialize gains with default values based on model and control strategy
-void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
+void HebirosGazeboController::SetDefaultGains(
   hebi::sim::Joint* hebiros_joint) {
   
   std::string model_name = hebiros_joint->model_name;
@@ -62,75 +34,75 @@ void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup
   // files
 
   // Each of these PID gains initializations is { kp, ki, kd, feed forward }
-  if (model_name == "X5_1" && control_strategy == 2) {
+  if (model_name == "X5_1" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_1" && control_strategy == 3) {
+  } else if (model_name == "X5_1" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     hebiros_joint->position_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_1" && control_strategy == 4) {
+  } else if (model_name == "X5_1" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_4" && control_strategy == 2) {
+  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     hebiros_joint->position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.2f, 0.f, 0.f, 0.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_4" && control_strategy == 3) {
+  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     hebiros_joint->position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_4" && control_strategy == 4) {
+  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     hebiros_joint->position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_9" && control_strategy == 2) {
+  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     hebiros_joint->position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_9" && control_strategy == 3) {
+  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     hebiros_joint->position_pid.setGains({ 1.5f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_9" && control_strategy == 4) {
+  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     hebiros_joint->position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X8_3" && control_strategy == 2) {
+  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     hebiros_joint->position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_3" && control_strategy == 3) {
+  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     hebiros_joint->position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_3" && control_strategy == 4) {
+  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     hebiros_joint->position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_9" && control_strategy == 2) {
+  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_9" && control_strategy == 3) {
+  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     hebiros_joint->position_pid.setGains({ 2.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_9" && control_strategy == 4) {
+  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_16" && control_strategy == 2) {
+  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_16" && control_strategy == 3) {
+  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     hebiros_joint->position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_16" && control_strategy == 4) {
+  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     hebiros_joint->position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     hebiros_joint->velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     hebiros_joint->effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
@@ -173,18 +145,18 @@ double HebirosGazeboController::ComputeForce(
   double pwm, force, alpha;
 
   //Combine forces using selected strategy
-  int control_strategy = hebiros_joint->getControlStrategy();
-
+  auto control_strategy = hebiros_joint->getControlStrategy();
+  using CS = hebi::sim::Joint::ControlStrategy;
   switch (control_strategy) {
-    case 0:
+    case CS::Off:
       pwm = 0;
       break;
 
-    case 1:
+    case CS::DirectPWM:
       pwm = Clip(target_effort, MIN_PWM, MAX_PWM);
       break;
 
-    case 2:
+    case CS::Strategy2:
       position_pid =
         hebiros_joint->position_pid.update(target_position, position, dt);
       velocity_pid =
@@ -196,7 +168,7 @@ double HebirosGazeboController::ComputeForce(
       pwm = effort_pwm;
       break;
 
-    case 3:
+    case CS::Strategy3:
       position_pwm = Clip(
         hebiros_joint->position_pid.update(target_position, position, dt),
         MIN_PWM, MAX_PWM);
@@ -209,7 +181,7 @@ double HebirosGazeboController::ComputeForce(
       pwm = Clip(position_pwm + velocity_pwm + effort_pwm, MIN_PWM, MAX_PWM);
       break;
 
-    case 4:
+    case CS::Strategy4:
       position_pid = hebiros_joint->position_pid.update(target_position, position, dt);
       intermediate_effort = target_effort + position_pid;
       effort_pwm = Clip(

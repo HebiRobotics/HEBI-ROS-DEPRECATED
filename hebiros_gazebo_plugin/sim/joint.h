@@ -19,6 +19,15 @@ namespace sim {
 class Joint : public std::enable_shared_from_this<Joint> {
 
 public:
+
+  enum class ControlStrategy {
+    Off = 0,
+    DirectPWM = 1,
+    Strategy2 = 2,
+    Strategy3 = 3,
+    Strategy4 = 4
+  };
+
   using SimTime = double;
 
   Joint(const std::string& name, const std::string& model_name, bool is_x8);
@@ -51,8 +60,8 @@ public:
 
   // TODO: think about resetting gains on a control strategy switch, as with the modules; potentially
   // add a "controller" child object for each joint at end of refactor
-  void setControlStrategy(uint8_t strategy) { control_strategy = strategy; }
-  uint8_t getControlStrategy() const { return control_strategy; }
+  void setControlStrategy(ControlStrategy strategy) { control_strategy = strategy; }
+  ControlStrategy getControlStrategy() const { return control_strategy; }
 
   // Try to set this command on the joint.  Return "false" if it was ignored (e.g., this module was
   // locked out).
@@ -81,10 +90,7 @@ public:
   double effort_fbk {};
 
 private:
-  // TODO: in refactor, set this during construction; right now, this
-  // is tangled up in HebirosGazeboController::SetSettings and the plugin
-  // add modules to group logic; this will be changed.
-  uint8_t control_strategy{};
+  ControlStrategy control_strategy{ControlStrategy::Strategy3};
 
   // Note -- the accelerometer and gyro feedback must be updated from an external source.
   // TODO: we should store the position / etc feedback alongside this...

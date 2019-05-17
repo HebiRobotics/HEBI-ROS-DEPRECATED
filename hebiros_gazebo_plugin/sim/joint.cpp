@@ -10,6 +10,8 @@ namespace sim {
 // on construction...
 /////////////////////////////////
 
+static constexpr double LOW_PASS_ALPHA = 0.1;
+
 static constexpr double GEAR_RATIO_X5_1 = 272.22;
 static constexpr double GEAR_RATIO_X8_3 = 272.22;
 static constexpr double GEAR_RATIO_X5_4 = 762.22;
@@ -62,7 +64,8 @@ Joint::Joint(const std::string& name_,
     gear_ratio(getGearRatio(model_name)),
     position_pid(1),
     velocity_pid(getVelocityFF(gear_ratio, is_x8)),
-    effort_pid(getEffortFF(gear_ratio, is_x8)) {
+    effort_pid(getEffortFF(gear_ratio, is_x8)),
+    low_pass_alpha(LOW_PASS_ALPHA) {
 }
 
 //Update IMU feedback from external source
