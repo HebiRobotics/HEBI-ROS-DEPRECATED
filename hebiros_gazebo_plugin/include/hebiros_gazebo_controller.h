@@ -19,9 +19,6 @@ public:
   static void SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
     hebi::sim::Joint* hebiros_joint);
   
-  static void ChangeSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
-    hebi::sim::Joint* hebiros_joint);
-  
   static void SetDefaultGains(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
     hebi::sim::Joint* hebiros_joint);
   

@@ -85,7 +85,9 @@ bool Joint::setCommand(double pos, double vel, double eff, uint64_t sender_id, d
     position_cmd = pos;
     velocity_cmd = vel;
     effort_cmd = eff;
+    return true;
   }
+  return false;
 }
 
 void Joint::update(SimTime t) {

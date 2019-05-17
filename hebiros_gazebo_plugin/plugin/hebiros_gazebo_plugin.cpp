@@ -142,33 +142,10 @@ void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiro
       hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
       hebiros_group->feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
 
-      if (hebiros_group->command_received) {
-        // TODO: SENDER ID!!!!! Generate this properly.
-        uint64_t sender_id = 1;
-        int j = hebiros_joint->command_index;
-        auto p_cmd = std::numeric_limits<double>::quiet_NaN();
-        auto v_cmd = std::numeric_limits<double>::quiet_NaN();
-        auto e_cmd = std::numeric_limits<double>::quiet_NaN();
-        if (j < hebiros_group->command_target.position.size())
-          p_cmd = hebiros_group->command_target.position[j];
-        if (j < hebiros_group->command_target.velocity.size())
-          v_cmd = hebiros_group->command_target.velocity[j];
-        if (j < hebiros_group->command_target.effort.size())
-          e_cmd = hebiros_group->command_target.effort[j];
-
-        hebiros_joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, hebiros_group->command_lifetime/1000.0, elapsed_time.toSec());
-
-
-        // TODO: move this to the joint's update function...and have the right default for 0 pwm!
-        double force = HebirosGazeboController::ComputeForce(hebiros_joint,
-          position, velocity, effort, iteration_time);
-
-        joint->SetForce(0, force);
-
-        hebiros_group->feedback.position_command[j] = p_cmd;
-        hebiros_group->feedback.velocity_command[j] = v_cmd;
-        hebiros_group->feedback.effort_command[j] = e_cmd;
-      }
+      // TODO: move this to the joint's update function...and have the right default for 0 pwm!
+      double force = HebirosGazeboController::ComputeForce(hebiros_joint,
+        position, velocity, effort, iteration_time);
+      joint->SetForce(0, force);
 
       if (!hebiros_group->feedback_pub.getTopic().empty() &&
         feedback_time.toSec() >= 1.0/hebiros_group->feedback_frequency) {
@@ -285,7 +262,6 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
 
 
   raw_joint->feedback_index = hebiros_group->joints.size();
-  raw_joint->command_index = raw_joint->feedback_index;
 
   HebirosGazeboController::SetSettings(hebiros_group, raw_joint);
   hebiros_group->joints[joint_name] = raw_joint;

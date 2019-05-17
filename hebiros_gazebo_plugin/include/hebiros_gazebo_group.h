@@ -19,10 +19,8 @@ public:
   std::string name;
   std::map<std::string, hebi::sim::Joint*> joints;
   FeedbackMsg feedback;
-  CommandMsg command_target;
   bool check_acknowledgement = false;
   bool acknowledgement = false;
-  bool command_received = false;
   bool group_added = false;
   int command_lifetime = 100;
   int feedback_frequency = 100;

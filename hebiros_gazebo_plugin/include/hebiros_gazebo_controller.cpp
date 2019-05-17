@@ -41,7 +41,6 @@ void HebirosGazeboController::SetSettings(std::shared_ptr<HebirosGazeboGroup> he
   hebi::sim::Joint* hebiros_joint) {
 
   hebiros_joint->low_pass_alpha = LOW_PASS_ALPHA;
-  int i = hebiros_joint->command_index;
 
   //Set gear ratio
   // TODO: check previous call to SetSettings -- potentially eliminate?
@@ -57,7 +56,6 @@ void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup
   hebi::sim::Joint* hebiros_joint) {
   
   std::string model_name = hebiros_joint->model_name;
-  int i = hebiros_joint->command_index;
   auto control_strategy = hebiros_joint->getControlStrategy();
 
   // TODO: move all this logic into joint-specific code, and potentially load files from .xml
@@ -147,60 +145,6 @@ void HebirosGazeboController::SetDefaultGains(std::shared_ptr<HebirosGazeboGroup
   }
 }
 
-// Update the gains for the fields which have information; leave the others unchanged.
-// \return `true` if gains changed, `false` otherwise.
-bool updateGains(hebi::sim::PidGains& gains, const hebiros::PidGainsMsg& msg, size_t i) {
-  bool changed = false;
-  if (i < msg.kp.size()) {
-    gains.kp_ = msg.kp[i];
-    changed = true;
-  }
-  if (i < msg.ki.size()) {
-    gains.ki_ = msg.ki[i];
-    changed = true;
-  }
-  if (i < msg.kd.size()) {
-    gains.kd_ = msg.kd[i];
-    changed = true;
-  }
-  if (i < msg.feed_forward.size()) {
-    gains.feed_forward_ = msg.feed_forward[i];
-    changed = true;
-  }
-  return changed;
-}
-
-//Change settings for a joint if specifically commanded
-void HebirosGazeboController::ChangeSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  hebi::sim::Joint* hebiros_joint) {
-
-  CommandMsg target = hebiros_group->command_target;
-  int i = hebiros_joint->command_index;
-
-  //Set name
-  if (i < target.settings.name.size()) {
-    hebiros_joint->name = target.settings.name[i];
-  }
-
-  //Change control strategy
-  if (i < target.settings.control_strategy.size()) {
-    hebiros_joint->setControlStrategy(target.settings.control_strategy[i]);
-  }
-
-  //Change gains:
-  auto current_pos_gains = hebiros_joint->position_pid.getGains();
-  if (updateGains(current_pos_gains, target.settings.position_gains, i))
-    hebiros_joint->position_pid.setGains(current_pos_gains);
-
-  auto current_vel_gains = hebiros_joint->velocity_pid.getGains();
-  if (updateGains(current_vel_gains, target.settings.velocity_gains, i))
-    hebiros_joint->velocity_pid.setGains(current_vel_gains);
-
-  auto current_eff_gains = hebiros_joint->effort_pid.getGains();
-  if (updateGains(current_eff_gains, target.settings.effort_gains, i))
-    hebiros_joint->effort_pid.setGains(current_eff_gains);
-}
-
 // TODO: the conversion helper functions will be moved at later point during refactoring
 hebi::sim::PidGains convertToSimGains(const hebiros::PidGainsMsg& msg, size_t index) {
   return hebi::sim::PidGains {
@@ -217,8 +161,6 @@ double HebirosGazeboController::ComputeForce(
   double position, double velocity, double effort, const ros::Duration& iteration_time) {
 
   auto dt = iteration_time.toSec();
-
-  int i = hebiros_joint->command_index;
 
   //Set target positions
   double target_position = hebiros_joint->position_cmd;

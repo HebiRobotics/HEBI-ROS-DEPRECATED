@@ -26,14 +26,16 @@ public:
   std::string name;
   std::string model_name;
 
+  // TODO: REMOVE!
   int feedback_index;
-  int command_index;
 
   hebi::sim::TemperatureModel temperature;
   hebi::sim::TemperatureSafetyController temperature_safety{155};
 
   double gear_ratio {};
 
+  // TODO: make private; update settings through "setSettings"...but then we need a lot of
+  // "optional" logic...perhaps better to handle this in the wrapper classes and expose more here.
   hebi::sim::PidController position_pid;
   hebi::sim::PidController velocity_pid;
   hebi::sim::PidController effort_pid;
