@@ -10,16 +10,6 @@ static constexpr double MIN_PWM = -1.0;
 
 using namespace controller;
 
-// TODO: the conversion helper functions will be moved at later point during refactoring
-hebi::sim::PidGains convertToSimGains(const hebiros::PidGainsMsg& msg, size_t index) {
-  return hebi::sim::PidGains {
-    static_cast<float>(msg.kp[index]),
-    static_cast<float>(msg.ki[index]),
-    static_cast<float>(msg.kd[index]),
-    static_cast<float>(msg.feed_forward[index])
-  };
-}
-
 //Compute output force to the joint based on PID and control strategy
 double HebirosGazeboController::ComputeForce(
   hebi::sim::Joint* hebiros_joint,
