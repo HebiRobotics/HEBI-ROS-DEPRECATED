@@ -19,6 +19,11 @@ namespace sim {
 class Joint : public std::enable_shared_from_this<Joint> {
 
 public:
+  enum class JointType {
+    X5_1, X5_4, X5_9,
+    X8_3, X8_9, X8_16,
+    Unknown
+  };
 
   enum class ControlStrategy {
     Off = 0,
@@ -32,9 +37,10 @@ public:
 
   Joint(const std::string& name, const std::string& model_name, bool is_x8);
 
-  // TODO: Make these private.
+  std::string getModelName() { return model_name; }
+
+  // TODO: Make this private.
   std::string name;
-  std::string model_name;
 
   // TODO: REMOVE!
   int feedback_index;
@@ -90,6 +96,10 @@ public:
   double effort_fbk {};
 
 private:
+  // TODO: remove; make this a getter generated from joint_type if necessary?
+  std::string model_name;
+  JointType joint_type;
+
   ControlStrategy control_strategy{ControlStrategy::Strategy3};
 
   // Note -- the accelerometer and gyro feedback must be updated from an external source.

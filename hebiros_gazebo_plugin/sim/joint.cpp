@@ -12,6 +12,19 @@ namespace sim {
 
 static constexpr double LOW_PASS_ALPHA = 0.1;
 
+static constexpr double DEFAULT_POSITION_KP = 0.5;
+static constexpr double DEFAULT_POSITION_KI = 0.0;
+static constexpr double DEFAULT_POSITION_KD = 0.0;
+static constexpr double DEFAULT_POSITION_FF = 0.0;
+static constexpr double DEFAULT_VELOCITY_KP = 0.05;
+static constexpr double DEFAULT_VELOCITY_KI = 0.0;
+static constexpr double DEFAULT_VELOCITY_KD = 0.0;
+static constexpr double DEFAULT_VELOCITY_FF = 1.0;
+static constexpr double DEFAULT_EFFORT_KP = 0.25;
+static constexpr double DEFAULT_EFFORT_KI = 0.0;
+static constexpr double DEFAULT_EFFORT_KD = 0.001;
+static constexpr double DEFAULT_EFFORT_FF = 1.0;
+
 static constexpr double GEAR_RATIO_X5_1 = 272.22;
 static constexpr double GEAR_RATIO_X8_3 = 272.22;
 static constexpr double GEAR_RATIO_X5_4 = 762.22;
@@ -57,15 +70,121 @@ double getEffortFF(double gear_ratio, bool is_x8) {
 Joint::Joint(const std::string& name_,
   const std::string& model_name_,
   bool is_x8) // TODO: do this better...
-  : name(name_), model_name(model_name_),
+  : name(name_),
     temperature(is_x8 ?
       hebi::sim::TemperatureModel::createX8() :
       hebi::sim::TemperatureModel::createX5()),
-    gear_ratio(getGearRatio(model_name)),
+    gear_ratio(getGearRatio(model_name_)),
     position_pid(1),
     velocity_pid(getVelocityFF(gear_ratio, is_x8)),
     effort_pid(getEffortFF(gear_ratio, is_x8)),
-    low_pass_alpha(LOW_PASS_ALPHA) {
+    low_pass_alpha(LOW_PASS_ALPHA),
+    model_name(model_name_) {
+
+  // Set joint type:
+  if (model_name == "X5_1")
+    joint_type = JointType::X5_1;
+  else if (model_name == "X5_4")
+    joint_type = JointType::X5_4;
+  else if (model_name == "X5_9")
+    joint_type = JointType::X5_9;
+  else if (model_name == "X8_3")
+    joint_type = JointType::X8_3;
+  else if (model_name == "X8_9")
+    joint_type = JointType::X8_9;
+  else if (model_name == "X8_16")
+    joint_type = JointType::X8_16;
+  else
+    joint_type = JointType::Unknown;
+
+  // Set default gains:
+  // TODO: cleaner way to do this? Map structure?
+  // Each of these PID gains initializations is { kp, ki, kd, feed forward }
+  
+  // TODO: move all this logic into joint-specific code, and potentially load files from .xml
+  // files
+
+  if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy2) {
+    position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy3) {
+    position_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy4) {
+    position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_4" && control_strategy == ControlStrategy::Strategy2) {
+    position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.2f, 0.f, 0.f, 0.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+    position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+    position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+    position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+    position_pid.setGains({ 1.5f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+    position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
+  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+    position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+    position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+    position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+    position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+    position_pid.setGains({ 2.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+    position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+    position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+    position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+    position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
+    velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
+    effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
+  } else {
+    // Go ahead and set default gains first
+    position_pid.setGains({
+      DEFAULT_POSITION_KP, DEFAULT_POSITION_KI, DEFAULT_POSITION_KD, DEFAULT_POSITION_FF });
+    velocity_pid.setGains({
+      DEFAULT_VELOCITY_KP, DEFAULT_VELOCITY_KI, DEFAULT_VELOCITY_KD, DEFAULT_VELOCITY_FF });
+    effort_pid.setGains({
+      DEFAULT_EFFORT_KP, DEFAULT_EFFORT_KI, DEFAULT_EFFORT_KD, DEFAULT_EFFORT_FF });
+  }
 }
 
 //Update IMU feedback from external source

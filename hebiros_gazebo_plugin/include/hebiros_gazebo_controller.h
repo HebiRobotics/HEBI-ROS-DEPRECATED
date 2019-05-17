@@ -16,8 +16,6 @@ public:
     hebi::sim::Joint* hebiros_joint,
     double position, double velocity, double effort, double iteration_time);
   
-  static void SetDefaultGains(hebi::sim::Joint* hebiros_joint);
-  
   static double Clip(double x, double low, double high);
 
 };

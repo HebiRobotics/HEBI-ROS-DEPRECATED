@@ -211,8 +211,6 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
 
   raw_joint->feedback_index = hebiros_group->joints.size();
 
-  // TODO: move to joint constructor...
-  HebirosGazeboController::SetDefaultGains(raw_joint);
   hebiros_group->joints[joint_name] = raw_joint;
 
 }
