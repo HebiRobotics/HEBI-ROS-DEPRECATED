@@ -91,11 +91,12 @@ void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
     joint->effort_fbk = GazeboWrapper::effort(gazebo_joint);
 
     joint->update(sim_time.Double());
-      
-    // TODO: move this to the joint's update function...and have the right default for 0 pwm!
-    double force = HebirosGazeboController::ComputeForce(joint.get(),
-      joint->position_fbk, joint->velocity_fbk, joint->effort_fbk, iteration_time.Double());
+     
+    joint->computePwm(iteration_time.Double());
 
+    // TODO: move this to the joint's compute force function...
+    double force = HebirosGazeboController::ComputeForce(joint.get(), iteration_time.Double());
+  
     gazebo_joint->SetForce(0, force);
   }
 }

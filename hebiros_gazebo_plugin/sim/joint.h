@@ -76,6 +76,10 @@ public:
   // Should be called each sim cycle.  Updates command lockouts and generates feedback.
   void update(SimTime t);
 
+  // The position/velocity/effort feedback should be set before this is called; this generates
+  // PWM command to send to the "motor"
+  void computePwm(double dt);
+
   // TODO: make all this private when refactor is done
   SimTime command_end_time {};
   // If non-zero, this is the sender corresponding to the timeout above. If command end

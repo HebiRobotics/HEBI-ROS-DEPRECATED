@@ -10,6 +10,9 @@ namespace sim {
 // on construction...
 /////////////////////////////////
 
+static constexpr double MAX_PWM = 1.0;
+static constexpr double MIN_PWM = -1.0;
+
 static constexpr double LOW_PASS_ALPHA = 0.1;
 
 static constexpr double DEFAULT_POSITION_KP = 0.5;
@@ -228,6 +231,70 @@ void Joint::update(SimTime t) {
   // Otherwise, continue with the current command.
 
   // TODO: calculate feedback here...
+}
+
+//Limit x to a value from low to high
+static double Clip(double x, double low, double high) {
+  return std::min(std::max(x, low), high);
+}
+
+void Joint::computePwm(double dt) {
+//  HebirosGazeboController::ComputeForce(this, position_fbk, velocity_fbk, effort_fbk, dt);
+  
+  // Compute PWM command using selected strategy
+  double position_pid_out, velocity_pid_out, effort_pid_out;
+  double intermediate_effort;
+  switch (control_strategy) {
+    case ControlStrategy::Off:
+      pwm_cmd = 0;
+      break;
+
+    case ControlStrategy::DirectPWM:
+      pwm_cmd = Clip(effort_cmd, MIN_PWM, MAX_PWM);
+      break;
+
+    case ControlStrategy::Strategy2:
+      position_pid_out =
+        position_pid.update(position_cmd, position_fbk, dt);
+      velocity_pid_out =
+        velocity_pid.update(velocity_cmd, velocity_fbk, dt);
+      intermediate_effort = effort_cmd + position_pid_out + velocity_pid_out;
+      pwm_cmd = Clip(
+        effort_pid.update(intermediate_effort, effort_fbk, dt),
+        MIN_PWM, MAX_PWM);
+      break;
+
+    case ControlStrategy::Strategy3:
+      position_pid_out = Clip(
+        position_pid.update(position_cmd, position_fbk, dt),
+        MIN_PWM, MAX_PWM);
+      velocity_pid_out = Clip(
+        velocity_pid.update(velocity_cmd, velocity_fbk, dt),
+        MIN_PWM, MAX_PWM);
+      effort_pid_out = Clip(
+        effort_pid.update(effort_cmd, effort_fbk, dt),
+        MIN_PWM, MAX_PWM);
+      pwm_cmd = Clip(position_pid_out + velocity_pid_out + effort_pid_out, MIN_PWM, MAX_PWM);
+      break;
+
+    case ControlStrategy::Strategy4:
+      position_pid_out = position_pid.update(position_cmd, position_fbk, dt);
+      intermediate_effort = effort_cmd + position_pid_out;
+      effort_pid_out = Clip(
+        effort_pid.update(intermediate_effort, effort_fbk, dt),
+        MIN_PWM, MAX_PWM);
+      velocity_pid_out = Clip(
+        velocity_pid.update(velocity_cmd, velocity_fbk, dt),
+        MIN_PWM, MAX_PWM);
+      pwm_cmd = Clip(velocity_pid_out + effort_pid_out, MIN_PWM, MAX_PWM);
+      break;
+
+    default:
+      pwm_cmd = 0;
+  }
+ 
+  // Apply safety limits
+  pwm_cmd = temperature_safety.limit(pwm_cmd);
 }
 
 } // namespace sim
