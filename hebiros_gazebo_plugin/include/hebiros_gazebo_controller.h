@@ -14,7 +14,7 @@ public:
   
   static double ComputeForce(
     hebi::sim::Joint* hebiros_joint,
-    double position, double velocity, double effort, const ros::Duration& iteration_time);
+    double position, double velocity, double effort, double iteration_time);
   
   static void SetSettings(std::shared_ptr<HebirosGazeboGroup> hebiros_group, 
     hebi::sim::Joint* hebiros_joint);

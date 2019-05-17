@@ -14,7 +14,8 @@ namespace sim {
 // Generally, each "OnUpdate" call of the main loop, the joint should:
 // (1) have any commands set w/ `setCommand` (this can be called multiple times per cycle; only
 // one will end up taking effect, depending on which senders are locked out)
-// (2) have the `update` function run.
+// (2) have the `update` function run, which generates its PWM command
+// (3) have its feedback set
 class Joint : public std::enable_shared_from_this<Joint> {
 
 public:
@@ -70,6 +71,14 @@ public:
   double position_cmd { std::numeric_limits<double>::quiet_NaN() };
   double velocity_cmd { std::numeric_limits<double>::quiet_NaN() };
   double effort_cmd { std::numeric_limits<double>::quiet_NaN() };
+
+  // Internal PWM command; set from PID loops, and computed during update().
+  double pwm_cmd {};
+
+  // Feedback; set immediately after "update" call.
+  double position_fbk {};
+  double velocity_fbk {};
+  double effort_fbk {};
 
 private:
   // TODO: in refactor, set this during construction; right now, this

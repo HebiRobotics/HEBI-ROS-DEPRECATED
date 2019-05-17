@@ -1,56 +1,6 @@
 #include "hebiros_gazebo_plugin.h"
 #include "sensor_msgs/Imu.h"
 
-// Checks the content of a string before the first "." at compile time.
-// Necessary because Gazebo only defines string version numbers.
-// Note: This requires -std=c++14 or higher to compile
-constexpr int GetGazeboVersion (char const* string_ver) {
-  int res = 0;
-  int i = 0;
-  while (string_ver[i] != '\0' && string_ver[i] >= '0' && string_ver[i] <= '9') {
-    res *= 10;
-    res += static_cast<int>(string_ver[i] - '0');
-    ++i;
-  }
-  return res;
-}
-
-// This is a templated struct that allows for wrapping some of the Gazebo
-// code for which compilation differse between versions; we use partial
-// template specialization to compile the appropriate version.
-template<int GazeboVersion, typename JointType> struct GazeboHelper {
-  static_assert(GazeboVersion == 7 || GazeboVersion == 9, "Unknown version of gazebo");
-  // Default implementations so that the above assertion is the only compilation error
-  static double position(JointType joint) { return 0; }
-  static double effort(JointType joint) { return 0; }
-};
-
-template<typename JointType> struct GazeboHelper<7, JointType> {
-  static double position(JointType joint) {
-    return joint->GetAngle(0).Radian(); 
-  }
-
-  static double effort(JointType joint) {
-    auto trans = joint->GetChild()->GetInitialRelativePose().rot;
-    auto wrench = joint->GetForceTorque(0);
-    return (-1 * (trans * wrench.body1Torque)).z;
-  }
-};
-
-template<typename JointType> struct GazeboHelper<9, JointType> {
-  static double position(JointType joint) {
-    return joint->Position(0);
-  }
-
-  static double effort(JointType joint) {
-    auto trans = joint->GetChild()->InitialRelativePose().Rot();
-    physics::JointWrench wrench = joint->GetForceTorque(0);
-    return (-1 * (trans * wrench.body1Torque)).Z();
-  }
-};
-
-using GazeboWrapper = GazeboHelper<GetGazeboVersion(GAZEBO_VERSION), physics::JointPtr>;
-
 //Load the model and sdf from Gazebo
 void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
@@ -77,7 +27,7 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 }
 
 //Update the joints at every simulation iteration
-void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
+void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
 
   if (this->first_sim_iteration) {
     this->first_sim_iteration = false;
@@ -89,6 +39,13 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
 
   ros::Time current_time = ros::Time::now();
 
+  // TODO: if we cache commands later for thread-safety, this is where we would read them and
+  // set them on the joints.
+
+  // Update the feedback / controller for each joint in the simulation:
+  OnUpdateBase(info);
+
+  // Fill in the feedback:
   for (auto group_pair : hebiros_groups) {
     auto hebiros_group = group_pair.second;
 
@@ -102,61 +59,52 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & _info) {
   }
 }
 
-//Publish feedback and compute PID control to command a joint
+// Publish feedback and compute PID control to command a joint
+// TODO: move this to the group?
 void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
   for (auto joint_pair : hebiros_group->joints) {
 
     auto hebiros_joint = joint_pair.second;
 
-    physics::JointPtr joint = model_->GetJoint(hebiros_joint->name+"/"+hebiros_joint->model_name);
+    ros::Time current_time = ros::Time::now();
+    ros::Duration elapsed_time = current_time - hebiros_group->start_time;
+    ros::Duration feedback_time = current_time - hebiros_group->prev_feedback_time;
 
-    if (joint) {
+    int i = hebiros_joint->feedback_index;
 
-      ros::Time current_time = ros::Time::now();
-      ros::Duration elapsed_time = current_time - hebiros_group->start_time;
-      ros::Duration feedback_time = current_time - hebiros_group->prev_feedback_time;
+    //joint->SetProvideFeedback(true);
+    //double velocity = joint->GetVelocity(0);
 
-      int i = hebiros_joint->feedback_index;
+    hebiros_group->feedback.position[i] = hebiros_joint->position_fbk;
+    hebiros_group->feedback.velocity[i] = hebiros_joint->velocity_fbk;
+    hebiros_group->feedback.effort[i] = hebiros_joint->effort_fbk;
 
-      joint->SetProvideFeedback(true);
-      double velocity = joint->GetVelocity(0);
+    const auto& accel = hebiros_joint->getAccelerometer();
+    hebiros_group->feedback.accelerometer[i].x = accel.x();
+    hebiros_group->feedback.accelerometer[i].y = accel.y();
+    hebiros_group->feedback.accelerometer[i].z = accel.z();
+    const auto& gyro = hebiros_joint->getGyro();
+    hebiros_group->feedback.gyro[i].x = gyro.x();
+    hebiros_group->feedback.gyro[i].y = gyro.y();
+    hebiros_group->feedback.gyro[i].z = gyro.z();
 
-      double position = GazeboWrapper::position(joint);
-      double effort = GazeboWrapper::effort(joint);
+    // Add temperature feedback
+    hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
+    hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
+    hebiros_group->feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
 
-      hebiros_group->feedback.position[i] = position;
-      hebiros_group->feedback.velocity[i] = velocity;
-      hebiros_group->feedback.effort[i] = effort;
+    // Command feedback
+    hebiros_group->feedback.position_command[i] = hebiros_joint->position_cmd;
+    hebiros_group->feedback.velocity_command[i] = hebiros_joint->velocity_cmd;
+    hebiros_group->feedback.effort_command[i] = hebiros_joint->effort_cmd;
 
-      const auto& accel = hebiros_joint->getAccelerometer();
-      hebiros_group->feedback.accelerometer[i].x = accel.x();
-      hebiros_group->feedback.accelerometer[i].y = accel.y();
-      hebiros_group->feedback.accelerometer[i].z = accel.z();
-      const auto& gyro = hebiros_joint->getGyro();
-      hebiros_group->feedback.gyro[i].x = gyro.x();
-      hebiros_group->feedback.gyro[i].y = gyro.y();
-      hebiros_group->feedback.gyro[i].z = gyro.z();
+    if (!hebiros_group->feedback_pub.getTopic().empty() &&
+      feedback_time.toSec() >= 1.0/hebiros_group->feedback_frequency) {
 
-      // Add temperature feedback
-      hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
-      hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
-      hebiros_group->feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
-
-      // TODO: move this to the joint's update function...and have the right default for 0 pwm!
-      double force = HebirosGazeboController::ComputeForce(hebiros_joint,
-        position, velocity, effort, iteration_time);
-      joint->SetForce(0, force);
-
-      if (!hebiros_group->feedback_pub.getTopic().empty() &&
-        feedback_time.toSec() >= 1.0/hebiros_group->feedback_frequency) {
-
-        hebiros_group->feedback_pub.publish(hebiros_group->feedback);
-        hebiros_group->prev_feedback_time = current_time;
-      }
+      hebiros_group->feedback_pub.publish(hebiros_group->feedback);
+      hebiros_group->prev_feedback_time = current_time;
     }
-    else {
-      ROS_WARN("Joint %s not found", hebiros_joint->name.c_str());
-    }
+
   }
 }
 

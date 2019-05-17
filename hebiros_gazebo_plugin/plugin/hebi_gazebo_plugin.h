@@ -28,6 +28,10 @@ protected:
 
 private:
   std::vector<std::unique_ptr<Joint>> joints_;
+
+  // The previous time through the loop
+  gazebo::common::Time prev_time_;
+  bool first_time_;
 };
     
 } // namespace sim

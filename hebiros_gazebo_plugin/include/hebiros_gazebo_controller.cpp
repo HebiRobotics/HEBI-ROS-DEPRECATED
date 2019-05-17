@@ -158,9 +158,9 @@ hebi::sim::PidGains convertToSimGains(const hebiros::PidGainsMsg& msg, size_t in
 //Compute output force to the joint based on PID and control strategy
 double HebirosGazeboController::ComputeForce(
   hebi::sim::Joint* hebiros_joint,
-  double position, double velocity, double effort, const ros::Duration& iteration_time) {
+  double position, double velocity, double effort, double iteration_time) {
 
-  auto dt = iteration_time.toSec();
+  auto dt = iteration_time;
 
   //Set target positions
   double target_position = hebiros_joint->position_cmd;

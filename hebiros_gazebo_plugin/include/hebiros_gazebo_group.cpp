@@ -94,12 +94,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
       }
       // TODO: verify nans are handled correctly; what about empty commands?
       if (has_command) {
-        if (hebiros_joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime/1000.0, elapsed_time.toSec())) {
-          // TODO: move feedback to joint!
-          feedback.position_command[i] = p_cmd;
-          feedback.velocity_command[i] = v_cmd;
-          feedback.effort_command[i] = e_cmd;
-        }
+        hebiros_joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime/1000.0, current_time.toSec());
       }
 
       // Set name
