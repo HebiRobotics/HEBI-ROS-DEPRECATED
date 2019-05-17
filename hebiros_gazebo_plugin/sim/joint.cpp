@@ -239,8 +239,6 @@ static double Clip(double x, double low, double high) {
 }
 
 void Joint::computePwm(double dt) {
-//  HebirosGazeboController::ComputeForce(this, position_fbk, velocity_fbk, effort_fbk, dt);
-  
   // Compute PWM command using selected strategy
   double position_pid_out, velocity_pid_out, effort_pid_out;
   double intermediate_effort;
@@ -295,6 +293,57 @@ void Joint::computePwm(double dt) {
  
   // Apply safety limits
   pwm_cmd = temperature_safety.limit(pwm_cmd);
+}
+  
+double Joint::generateForce(double dt) {
+  //Set target positions
+  double force, alpha;
+
+  float voltage = 48.0f;
+  float motor_velocity = velocity_fbk * gear_ratio;
+  float speed_constant = 1530.0f;
+  float term_resist = 9.99f;
+  if (isX8()) {
+    speed_constant = 1360.0f;
+    term_resist = 3.19f;
+  }
+
+  if (pwm_cmd == 0) {
+    force = 0;
+  }
+  else {
+    // TODO: use temp compensation here, too?
+    force = ((pwm_cmd * voltage - (motor_velocity / speed_constant)) / term_resist) * 0.00626 * gear_ratio * 0.65;
+  }
+
+  float prev_winding_temp = temperature.getMotorWindingTemperature();
+
+  // Get components of power into the motor
+
+  // Temperature compensated speed constant
+  float comp_speed_constant = speed_constant * 1.05f * // Experimental tuning factor                           
+    (1.f + .001f * (prev_winding_temp - 20.f)); // .001 is speed constant change per temperature change 
+  float winding_resistance = term_resist * 
+    (1.f + .004f * (prev_winding_temp - 20.f)); // .004 is resistance change per temperature change for copper 
+  float back_emf = (motor_velocity * 30.f / M_PI) / comp_speed_constant;
+  float winding_voltage = pwm_cmd * voltage - back_emf;
+
+  // TODO: could add ripple current estimate here, too
+
+  // Update temperature:
+  // Power = I^2R, but I = V/R so I^2R = V^2/R:
+
+  double power_in = winding_voltage * winding_voltage / winding_resistance;
+  temperature.update(power_in, dt);
+  temperature_safety.update(temperature.getMotorWindingTemperature());
+
+  // Low pass?
+
+  //alpha = low_pass_alpha;
+  //force = (force * alpha) + prev_force * (1 - alpha);
+  //prev_force = force;
+
+  return force;
 }
 
 } // namespace sim

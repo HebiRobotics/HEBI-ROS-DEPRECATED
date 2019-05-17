@@ -76,9 +76,15 @@ public:
   // Should be called each sim cycle.  Updates command lockouts and generates feedback.
   void update(SimTime t);
 
+  // TODO: consider calling "computePwm" and "generateForce" from update(), and making them private.
+
   // The position/velocity/effort feedback should be set before this is called; this generates
   // PWM command to send to the "motor"
   void computePwm(double dt);
+
+  // Generate an effort command for the virtual motor output, based on the commanded PWM signal.
+  // Also updates temperature model with this information.
+  double generateForce(double dt);
 
   // TODO: make all this private when refactor is done
   SimTime command_end_time {};
@@ -92,6 +98,7 @@ public:
   double effort_cmd { std::numeric_limits<double>::quiet_NaN() };
 
   // Internal PWM command; set from PID loops, and computed during update().
+  // TODO: make private!
   double pwm_cmd {};
 
   // Feedback; set immediately after "update" call.

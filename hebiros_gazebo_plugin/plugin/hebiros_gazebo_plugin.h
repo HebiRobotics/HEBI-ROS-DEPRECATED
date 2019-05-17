@@ -17,7 +17,6 @@
 #include "hebiros/SetFeedbackFrequencySrv.h"
 
 #include "hebiros_gazebo_group.h"
-#include "hebiros_gazebo_controller.h"
 
 using namespace hebiros;
 using namespace gazebo;

@@ -1,6 +1,5 @@
 #include "hebi_gazebo_plugin.h"
 #include <gazebo/physics/physics.hh>
-#include "hebiros_gazebo_controller.h"
 
 // Checks the content of a string before the first "." at compile time.
 // Necessary because Gazebo only defines string version numbers.
@@ -94,9 +93,8 @@ void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
      
     joint->computePwm(iteration_time.Double());
 
-    // TODO: move this to the joint's compute force function...
-    double force = HebirosGazeboController::ComputeForce(joint.get(), iteration_time.Double());
-  
+    double force = joint->generateForce(iteration_time.Double());
+
     gazebo_joint->SetForce(0, force);
   }
 }

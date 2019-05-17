@@ -1,5 +1,4 @@
 #include <hebiros_gazebo_group.h>
-#include "hebiros_gazebo_controller.h"
 
 HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   std::shared_ptr<ros::NodeHandle> n) {

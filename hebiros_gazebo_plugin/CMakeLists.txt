@@ -154,8 +154,7 @@ add_library(hebiros_gazebo_plugin
   sim/pid_controller.cpp
   sim/joint.cpp
   sim/temperature_model.cpp
-  sim/temperature_safety_controller.cpp
-  include/hebiros_gazebo_controller.cpp)
+  sim/temperature_safety_controller.cpp)
 
 add_dependencies(hebiros_gazebo_plugin ${catkin_EXPORTED_TARGETS})
 
