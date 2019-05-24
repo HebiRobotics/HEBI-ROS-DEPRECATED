@@ -28,46 +28,43 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
     &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
 }
   
-void HebirosGazeboGroup::AddJoint(const std::string& family, const std::string& name, hebi::sim::Joint* hebi_joint) {
-  // TODO: change from map to avoid implicit feedback index
-  joints[family + "/" + name] = hebi_joint;
+void HebirosGazeboGroup::AddJoint(hebi::sim::Joint* hebi_joint) {
+  joints.push_back(hebi_joint);
 }
 
 void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
- for (auto joint_pair : joints) {
-    auto hebiros_joint = joint_pair.second;
+  int i = 0;
+  for (auto joint : joints) {
 
     ros::Time current_time = ros::Time::now();
     ros::Duration elapsed_time = current_time - start_time;
     ros::Duration feedback_time = current_time - prev_feedback_time;
 
-    int i = hebiros_joint->feedback_index;
-
     //joint->SetProvideFeedback(true);
     //double velocity = joint->GetVelocity(0);
 
-    feedback.position[i] = hebiros_joint->position_fbk;
-    feedback.velocity[i] = hebiros_joint->velocity_fbk;
-    feedback.effort[i] = hebiros_joint->effort_fbk;
+    feedback.position[i] = joint->position_fbk;
+    feedback.velocity[i] = joint->velocity_fbk;
+    feedback.effort[i] = joint->effort_fbk;
 
-    const auto& accel = hebiros_joint->getAccelerometer();
+    const auto& accel = joint->getAccelerometer();
     feedback.accelerometer[i].x = accel.x();
     feedback.accelerometer[i].y = accel.y();
     feedback.accelerometer[i].z = accel.z();
-    const auto& gyro = hebiros_joint->getGyro();
+    const auto& gyro = joint->getGyro();
     feedback.gyro[i].x = gyro.x();
     feedback.gyro[i].y = gyro.y();
     feedback.gyro[i].z = gyro.z();
 
     // Add temperature feedback
-    feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
-    feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
-    feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
+    feedback.motor_winding_temperature[i] = joint->temperature.getMotorWindingTemperature();
+    feedback.motor_housing_temperature[i] = joint->temperature.getMotorHousingTemperature();
+    feedback.board_temperature[i] = joint->temperature.getActuatorBodyTemperature();
 
     // Command feedback
-    feedback.position_command[i] = hebiros_joint->position_cmd;
-    feedback.velocity_command[i] = hebiros_joint->velocity_cmd;
-    feedback.effort_command[i] = hebiros_joint->effort_cmd;
+    feedback.position_command[i] = joint->position_cmd;
+    feedback.velocity_command[i] = joint->velocity_cmd;
+    feedback.effort_command[i] = joint->effort_cmd;
 
     if (!feedback_pub.getTopic().empty() &&
       feedback_time.toSec() >= 1.0/feedback_frequency) {
@@ -75,6 +72,8 @@ void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
       feedback_pub.publish(feedback);
       prev_feedback_time = current_time;
     }
+
+    ++i;
   }
 }
 
@@ -113,13 +112,13 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
   this->prev_time = current_time;
   ros::Duration elapsed_time = current_time - start_time;
 
-
-
   for (int i = 0; i < data->name.size(); i++) {
     std::string joint_name = data->name[i];
 
-    if (joints.find(joint_name) != joints.end()) {
-      auto hebiros_joint = joints[joint_name];
+    auto joint_it = std::find_if(joints.begin(), joints.end(), [&joint_name](auto j) { return j->name == joint_name; } );
+
+    if (joint_it != joints.end()) {
+      auto joint = *joint_it;
 
       // TODO: SENDER ID!!!!! Generate this properly.
       uint64_t sender_id = 1;
@@ -143,34 +142,34 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
       }
       // TODO: verify nans are handled correctly; what about empty commands?
       if (has_command) {
-        hebiros_joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime/1000.0, current_time.toSec());
+        joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime/1000.0, current_time.toSec());
       }
 
       // Set name
       if (i < data->settings.name.size()) {
-        hebiros_joint->name = data->settings.name[i];
+        joint->name = data->settings.name[i];
       }
 
       // Change control strategy
       if (i < data->settings.control_strategy.size()) {
-        hebiros_joint->setControlStrategy(static_cast<hebi::sim::Joint::ControlStrategy>(data->settings.control_strategy[i]));
+        joint->setControlStrategy(static_cast<hebi::sim::Joint::ControlStrategy>(data->settings.control_strategy[i]));
       }
 
       // TODO: consider changing this to either direct setting of individual parameters,
       // or an entire separate "optional" message layer...
 
       // Change gains:
-      auto current_pos_gains = hebiros_joint->position_pid.getGains();
+      auto current_pos_gains = joint->position_pid.getGains();
       if (updateGains(current_pos_gains, data->settings.position_gains, i))
-        hebiros_joint->position_pid.setGains(current_pos_gains);
+        joint->position_pid.setGains(current_pos_gains);
 
-      auto current_vel_gains = hebiros_joint->velocity_pid.getGains();
+      auto current_vel_gains = joint->velocity_pid.getGains();
       if (updateGains(current_vel_gains, data->settings.velocity_gains, i))
-        hebiros_joint->velocity_pid.setGains(current_vel_gains);
+        joint->velocity_pid.setGains(current_vel_gains);
 
-      auto current_eff_gains = hebiros_joint->effort_pid.getGains();
+      auto current_eff_gains = joint->effort_pid.getGains();
       if (updateGains(current_eff_gains, data->settings.effort_gains, i))
-        hebiros_joint->effort_pid.setGains(current_eff_gains);
+        joint->effort_pid.setGains(current_eff_gains);
 
     }
   }

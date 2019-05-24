@@ -54,15 +54,9 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
     ros::Duration iteration_time = current_time - hebiros_group->prev_time;
     hebiros_group->prev_time = current_time;
     if (hebiros_group->group_added) {
-      UpdateGroup(hebiros_group, iteration_time);
+      hebiros_group->UpdateFeedback(iteration_time);
     }
   }
-}
-
-// Publish feedback and compute PID control to command a joint
-// TODO: move this to the group?
-void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
- 
 }
 
 //Service callback which adds a group with corresponding joints
@@ -116,9 +110,6 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   return true;
 }
 
-void updateImu(const boost::shared_ptr<sensor_msgs::Imu const> data) {
-}
-
 //Add a joint to an associated group
 void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
   const std::string& family, const std::string& name) {
@@ -141,10 +132,7 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
           {static_cast<float>(g.x), static_cast<float>(g.y), static_cast<float>(g.z)});
     }));
 
-
-  raw_joint->feedback_index = hebiros_group->size();
-
-  hebiros_group->AddJoint(family, name, raw_joint);
+  hebiros_group->AddJoint(raw_joint);
 
 }
 

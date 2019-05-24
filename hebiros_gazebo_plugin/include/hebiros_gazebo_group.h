@@ -15,7 +15,7 @@ class HebirosGazeboGroup : public std::enable_shared_from_this<HebirosGazeboGrou
 
 public:
 
-  void AddJoint(const std::string& family, const std::string& name, hebi::sim::Joint* hebi_joint);
+  void AddJoint(hebi::sim::Joint* hebi_joint);
 
   void UpdateFeedback(const ros::Duration& iteration_time);
 
@@ -48,6 +48,5 @@ public:
   bool SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res);
 
 private:
-  std::map<std::string, hebi::sim::Joint*> joints;
-
+  std::vector<hebi::sim::Joint*> joints;
 };

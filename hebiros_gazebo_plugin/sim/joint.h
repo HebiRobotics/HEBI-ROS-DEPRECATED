@@ -41,9 +41,6 @@ public:
   // TODO: Make this private.
   std::string name;
 
-  // TODO: REMOVE!
-  int feedback_index;
-
   hebi::sim::TemperatureModel temperature;
   hebi::sim::TemperatureSafetyController temperature_safety{155};
 
