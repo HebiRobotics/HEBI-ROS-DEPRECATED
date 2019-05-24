@@ -36,8 +36,6 @@ public:
 
   static std::unique_ptr<Joint> tryCreate(const std::string& family, const std::string& name, const std::string& type);
 
-  std::string getModelName() { return model_name; }
-
   // TODO: Make this private.
   std::string name;
 

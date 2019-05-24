@@ -27,7 +27,11 @@ protected:
   Joint* getJoint(const std::string& family, const std::string& name);
 
 private:
-  std::vector<std::unique_ptr<Joint>> joints_;
+  struct JointAndModel {
+    std::unique_ptr<Joint> hebi_joint;
+    gazebo::physics::JointPtr gazebo_joint;
+  };
+  std::vector<JointAndModel> joints_;
 
   // The previous time through the loop
   gazebo::common::Time prev_time_;
