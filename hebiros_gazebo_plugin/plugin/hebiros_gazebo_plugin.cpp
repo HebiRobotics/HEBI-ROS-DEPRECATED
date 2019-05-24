@@ -51,8 +51,8 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
 
     // TODO: change this to update each module...?
     // Get the time elapsed since the last iteration
-    ros::Duration iteration_time = current_time - hebiros_group->prev_time;
-    hebiros_group->prev_time = current_time;
+    ros::Duration iteration_time = current_time - hebiros_group->GetPrevTime();
+    hebiros_group->SetPrevTime(current_time);
     hebiros_group->UpdateFeedback(iteration_time);
   }
 }
