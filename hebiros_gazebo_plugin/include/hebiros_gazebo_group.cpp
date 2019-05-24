@@ -27,6 +27,56 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
     "hebiros_gazebo_plugin/set_feedback_frequency/"+name, boost::bind(
     &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
 }
+  
+void HebirosGazeboGroup::AddJoint(const std::string& family, const std::string& name, hebi::sim::Joint* hebi_joint) {
+  // TODO: change from map to avoid implicit feedback index
+  joints[family + "/" + name] = hebi_joint;
+}
+
+void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
+ for (auto joint_pair : joints) {
+    auto hebiros_joint = joint_pair.second;
+
+    ros::Time current_time = ros::Time::now();
+    ros::Duration elapsed_time = current_time - start_time;
+    ros::Duration feedback_time = current_time - prev_feedback_time;
+
+    int i = hebiros_joint->feedback_index;
+
+    //joint->SetProvideFeedback(true);
+    //double velocity = joint->GetVelocity(0);
+
+    feedback.position[i] = hebiros_joint->position_fbk;
+    feedback.velocity[i] = hebiros_joint->velocity_fbk;
+    feedback.effort[i] = hebiros_joint->effort_fbk;
+
+    const auto& accel = hebiros_joint->getAccelerometer();
+    feedback.accelerometer[i].x = accel.x();
+    feedback.accelerometer[i].y = accel.y();
+    feedback.accelerometer[i].z = accel.z();
+    const auto& gyro = hebiros_joint->getGyro();
+    feedback.gyro[i].x = gyro.x();
+    feedback.gyro[i].y = gyro.y();
+    feedback.gyro[i].z = gyro.z();
+
+    // Add temperature feedback
+    feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
+    feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
+    feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
+
+    // Command feedback
+    feedback.position_command[i] = hebiros_joint->position_cmd;
+    feedback.velocity_command[i] = hebiros_joint->velocity_cmd;
+    feedback.effort_command[i] = hebiros_joint->effort_cmd;
+
+    if (!feedback_pub.getTopic().empty() &&
+      feedback_time.toSec() >= 1.0/feedback_frequency) {
+
+      feedback_pub.publish(feedback);
+      prev_feedback_time = current_time;
+    }
+  }
+}
 
 // Update the gains for the fields which have information; leave the others unchanged.
 // \return `true` if gains changed, `false` otherwise.

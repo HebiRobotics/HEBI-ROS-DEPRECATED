@@ -15,9 +15,14 @@ class HebirosGazeboGroup : public std::enable_shared_from_this<HebirosGazeboGrou
 
 public:
 
+  void AddJoint(const std::string& family, const std::string& name, hebi::sim::Joint* hebi_joint);
+
+  void UpdateFeedback(const ros::Duration& iteration_time);
+
+  size_t size() { return joints.size(); };
+
   // TODO: Make these private.
   std::string name;
-  std::map<std::string, hebi::sim::Joint*> joints;
   FeedbackMsg feedback;
   bool check_acknowledgement = false;
   bool acknowledgement = false;
@@ -41,5 +46,8 @@ public:
   bool SrvAcknowledge(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
   bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res);
   bool SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res);
+
+private:
+  std::map<std::string, hebi::sim::Joint*> joints;
 
 };

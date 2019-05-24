@@ -62,50 +62,7 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
 // Publish feedback and compute PID control to command a joint
 // TODO: move this to the group?
 void HebirosGazeboPlugin::UpdateGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const ros::Duration& iteration_time) {
-  for (auto joint_pair : hebiros_group->joints) {
-
-    auto hebiros_joint = joint_pair.second;
-
-    ros::Time current_time = ros::Time::now();
-    ros::Duration elapsed_time = current_time - hebiros_group->start_time;
-    ros::Duration feedback_time = current_time - hebiros_group->prev_feedback_time;
-
-    int i = hebiros_joint->feedback_index;
-
-    //joint->SetProvideFeedback(true);
-    //double velocity = joint->GetVelocity(0);
-
-    hebiros_group->feedback.position[i] = hebiros_joint->position_fbk;
-    hebiros_group->feedback.velocity[i] = hebiros_joint->velocity_fbk;
-    hebiros_group->feedback.effort[i] = hebiros_joint->effort_fbk;
-
-    const auto& accel = hebiros_joint->getAccelerometer();
-    hebiros_group->feedback.accelerometer[i].x = accel.x();
-    hebiros_group->feedback.accelerometer[i].y = accel.y();
-    hebiros_group->feedback.accelerometer[i].z = accel.z();
-    const auto& gyro = hebiros_joint->getGyro();
-    hebiros_group->feedback.gyro[i].x = gyro.x();
-    hebiros_group->feedback.gyro[i].y = gyro.y();
-    hebiros_group->feedback.gyro[i].z = gyro.z();
-
-    // Add temperature feedback
-    hebiros_group->feedback.motor_winding_temperature[i] = hebiros_joint->temperature.getMotorWindingTemperature();
-    hebiros_group->feedback.motor_housing_temperature[i] = hebiros_joint->temperature.getMotorHousingTemperature();
-    hebiros_group->feedback.board_temperature[i] = hebiros_joint->temperature.getActuatorBodyTemperature();
-
-    // Command feedback
-    hebiros_group->feedback.position_command[i] = hebiros_joint->position_cmd;
-    hebiros_group->feedback.velocity_command[i] = hebiros_joint->velocity_cmd;
-    hebiros_group->feedback.effort_command[i] = hebiros_joint->effort_cmd;
-
-    if (!hebiros_group->feedback_pub.getTopic().empty() &&
-      feedback_time.toSec() >= 1.0/hebiros_group->feedback_frequency) {
-
-      hebiros_group->feedback_pub.publish(hebiros_group->feedback);
-      hebiros_group->prev_feedback_time = current_time;
-    }
-
-  }
+ 
 }
 
 //Service callback which adds a group with corresponding joints
@@ -136,7 +93,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
     }
   }
 
-  int size = hebiros_group->joints.size();
+  int size = hebiros_group->size();
 
   hebiros_group->feedback.position.resize(size);
   hebiros_group->feedback.motor_winding_temperature.resize(size);
@@ -185,9 +142,9 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
     }));
 
 
-  raw_joint->feedback_index = hebiros_group->joints.size();
+  raw_joint->feedback_index = hebiros_group->size();
 
-  hebiros_group->joints[family + "/" + name] = raw_joint;
+  hebiros_group->AddJoint(family, name, raw_joint);
 
 }
 
