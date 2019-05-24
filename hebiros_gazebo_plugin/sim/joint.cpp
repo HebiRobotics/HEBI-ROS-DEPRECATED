@@ -13,8 +13,6 @@ namespace sim {
 static constexpr double MAX_PWM = 1.0;
 static constexpr double MIN_PWM = -1.0;
 
-static constexpr double LOW_PASS_ALPHA = 0.1;
-
 static constexpr double DEFAULT_POSITION_KP = 0.5;
 static constexpr double DEFAULT_POSITION_KI = 0.0;
 static constexpr double DEFAULT_POSITION_KD = 0.0;
@@ -92,16 +90,15 @@ bool isX8(Joint::JointType jt)
 
 Joint::Joint(const std::string& name_,
   JointType joint_type_)
-  : name(name_),
+  : joint_type(joint_type_),
+    gear_ratio(gear_ratios.at(joint_type_)),
     temperature(isX8(joint_type_) ?
       hebi::sim::TemperatureModel::createX8() :
       hebi::sim::TemperatureModel::createX5()),
-    gear_ratio(gear_ratios.at(joint_type_)),
+    name(name_),
     position_pid(1),
     velocity_pid(getVelocityFF(gear_ratio, isX8(joint_type_))),
-    effort_pid(getEffortFF(gear_ratio, isX8(joint_type_))),
-    low_pass_alpha(LOW_PASS_ALPHA),
-    joint_type(joint_type_) {
+    effort_pid(getEffortFF(gear_ratio, isX8(joint_type_))) {
 
   // Set default gains:
   // TODO: cleaner way to do this? Map structure?
@@ -211,7 +208,11 @@ bool Joint::setCommand(double pos, double vel, double eff, uint64_t sender_id, d
   return false;
 }
 
-void Joint::update(SimTime t) {
+void Joint::update(SimTime t, double pos_fbk, double vel_fbk, double eff_fbk) {
+  position_fbk = pos_fbk;
+  velocity_fbk = vel_fbk;
+  effort_fbk = eff_fbk;
+
   if (command_end_time == 0) {
     // Command that has no lifetime -- do nothing
   }
@@ -335,7 +336,7 @@ double Joint::generateForce(double dt) {
 
   // Low pass?
 
-  //alpha = low_pass_alpha;
+  //alpha = 0.1;
   //force = (force * alpha) + prev_force * (1 - alpha);
   //prev_force = force;
 

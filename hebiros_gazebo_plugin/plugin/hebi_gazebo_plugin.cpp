@@ -102,11 +102,11 @@ void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
 
   for (auto& j : joints_) {
     j.gazebo_joint->SetProvideFeedback(true);
-    j.hebi_joint->velocity_fbk = j.gazebo_joint->GetVelocity(0);
-    j.hebi_joint->position_fbk = GazeboWrapper::position(j.gazebo_joint);
-    j.hebi_joint->effort_fbk = GazeboWrapper::effort(j.gazebo_joint);
+    double velocity_fbk = j.gazebo_joint->GetVelocity(0);
+    double position_fbk = GazeboWrapper::position(j.gazebo_joint);
+    double effort_fbk = GazeboWrapper::effort(j.gazebo_joint);
 
-    j.hebi_joint->update(sim_time.Double());
+    j.hebi_joint->update(sim_time.Double(), position_fbk, velocity_fbk, effort_fbk);
     j.hebi_joint->computePwm(iteration_time);
 
     double force = j.hebi_joint->generateForce(iteration_time);
@@ -120,7 +120,7 @@ Joint* HebiGazeboPlugin::getJoint(const std::string& family, const std::string& 
   auto full_name = family + "/" + name;
   for (auto& joint : joints_)
   {
-    if (joint.hebi_joint->name == full_name)
+    if (joint.hebi_joint->getName() == full_name)
     {
       return joint.hebi_joint.get();
     }

@@ -97,7 +97,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
     //
     // This will be abstracted into the ROS plugin wrapper in a subsequent refactor
     hebiros_joint_imu_subs.push_back(n->subscribe<sensor_msgs::Imu>(
-      "hebiros_gazebo_plugin/imu/" + joint->name, 100, 
+      "hebiros_gazebo_plugin/imu/" + joint->getName(), 100, 
       [joint](const boost::shared_ptr<sensor_msgs::Imu const> data) {
         auto a = data->linear_acceleration;
         auto g = data->angular_velocity;

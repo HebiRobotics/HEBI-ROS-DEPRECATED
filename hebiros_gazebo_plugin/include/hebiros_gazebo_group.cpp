@@ -10,7 +10,7 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   for (auto joint : joints_)
   {
     joints.push_back(joint);
-    feedback.name.push_back(joint->name);
+    feedback.name.push_back(joint->getName());
   }
 
   feedback.position.resize(size);
@@ -66,9 +66,9 @@ void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
     //joint->SetProvideFeedback(true);
     //double velocity = joint->GetVelocity(0);
 
-    feedback.position[i] = joint->position_fbk;
-    feedback.velocity[i] = joint->velocity_fbk;
-    feedback.effort[i] = joint->effort_fbk;
+    feedback.position[i] = joint->getPositionFbk();
+    feedback.velocity[i] = joint->getVelocityFbk();
+    feedback.effort[i] = joint->getEffortFbk();
 
     const auto& accel = joint->getAccelerometer();
     feedback.accelerometer[i].x = accel.x();
@@ -80,14 +80,14 @@ void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
     feedback.gyro[i].z = gyro.z();
 
     // Add temperature feedback
-    feedback.motor_winding_temperature[i] = joint->temperature.getMotorWindingTemperature();
-    feedback.motor_housing_temperature[i] = joint->temperature.getMotorHousingTemperature();
-    feedback.board_temperature[i] = joint->temperature.getActuatorBodyTemperature();
+    feedback.motor_winding_temperature[i] = joint->getTemperature().getMotorWindingTemperature();
+    feedback.motor_housing_temperature[i] = joint->getTemperature().getMotorHousingTemperature();
+    feedback.board_temperature[i] = joint->getTemperature().getActuatorBodyTemperature();
 
     // Command feedback
-    feedback.position_command[i] = joint->position_cmd;
-    feedback.velocity_command[i] = joint->velocity_cmd;
-    feedback.effort_command[i] = joint->effort_cmd;
+    feedback.position_command[i] = joint->getPositionCmd();
+    feedback.velocity_command[i] = joint->getVelocityCmd();
+    feedback.effort_command[i] = joint->getEffortCmd();
 
     if (!feedback_pub.getTopic().empty() &&
       feedback_time.toSec() >= 1.0/feedback_frequency) {
@@ -138,7 +138,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
   for (int i = 0; i < data->name.size(); i++) {
     std::string joint_name = data->name[i];
 
-    auto joint_it = std::find_if(joints.begin(), joints.end(), [&joint_name](auto j) { return j->name == joint_name; } );
+    auto joint_it = std::find_if(joints.begin(), joints.end(), [&joint_name](auto j) { return j->getName() == joint_name; } );
 
     if (joint_it != joints.end()) {
       auto joint = *joint_it;
@@ -170,7 +170,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
 
       // Set name
       if (i < data->settings.name.size()) {
-        joint->name = data->settings.name[i];
+        joint->setName(data->settings.name[i]);
       }
 
       // Change control strategy
@@ -182,17 +182,17 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> da
       // or an entire separate "optional" message layer...
 
       // Change gains:
-      auto current_pos_gains = joint->position_pid.getGains();
+      auto current_pos_gains = joint->getPositionPid().getGains();
       if (updateGains(current_pos_gains, data->settings.position_gains, i))
-        joint->position_pid.setGains(current_pos_gains);
+        joint->getPositionPid().setGains(current_pos_gains);
 
-      auto current_vel_gains = joint->velocity_pid.getGains();
+      auto current_vel_gains = joint->getVelocityPid().getGains();
       if (updateGains(current_vel_gains, data->settings.velocity_gains, i))
-        joint->velocity_pid.setGains(current_vel_gains);
+        joint->getVelocityPid().setGains(current_vel_gains);
 
-      auto current_eff_gains = joint->effort_pid.getGains();
+      auto current_eff_gains = joint->getEffortPid().getGains();
       if (updateGains(current_eff_gains, data->settings.effort_gains, i))
-        joint->effort_pid.setGains(current_eff_gains);
+        joint->getEffortPid().setGains(current_eff_gains);
 
     }
   }

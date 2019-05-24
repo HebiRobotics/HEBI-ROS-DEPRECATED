@@ -36,38 +36,38 @@ public:
 
   static std::unique_ptr<Joint> tryCreate(const std::string& family, const std::string& name, const std::string& type);
 
-  // TODO: Make this private.
-  std::string name;
-
-  hebi::sim::TemperatureModel temperature;
-  hebi::sim::TemperatureSafetyController temperature_safety{155};
-
-  double gear_ratio {};
-
-  // TODO: make private; update settings through "setSettings"...but then we need a lot of
-  // "optional" logic...perhaps better to handle this in the wrapper classes and expose more here.
-  hebi::sim::PidController position_pid;
-  hebi::sim::PidController velocity_pid;
-  hebi::sim::PidController effort_pid;
-
-  double prev_force {};
-  double low_pass_alpha {};
-
   void updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro);
   const Eigen::Vector3f getAccelerometer() { return accelerometer_; }
   const Eigen::Vector3f getGyro() { return gyro_; }
+  const hebi::sim::TemperatureModel& getTemperature() { return temperature; }
+
+  hebi::sim::PidController& getPositionPid() { return position_pid; }
+  hebi::sim::PidController& getVelocityPid() { return velocity_pid; }
+  hebi::sim::PidController& getEffortPid() { return effort_pid; }
+
+  std::string getName() { return name; }
+  void setName(const std::string& name) { this->name = name; }
 
   // TODO: think about resetting gains on a control strategy switch, as with the modules; potentially
   // add a "controller" child object for each joint at end of refactor
   void setControlStrategy(ControlStrategy strategy) { control_strategy = strategy; }
   ControlStrategy getControlStrategy() const { return control_strategy; }
 
+  double getPositionCmd() { return position_cmd; }
+  double getVelocityCmd() { return velocity_cmd; }
+  double getEffortCmd() { return effort_cmd; }
+  double getPwmCmd() { return pwm_cmd; }
+
+  double getPositionFbk() { return position_fbk; }
+  double getVelocityFbk() { return velocity_fbk; }
+  double getEffortFbk() { return effort_fbk; }
+
   // Try to set this command on the joint.  Return "false" if it was ignored (e.g., this module was
   // locked out).
   bool setCommand(double pos, double vel, double eff, uint64_t sender_id, double lifetime_s, SimTime t);
 
   // Should be called each sim cycle.  Updates command lockouts and generates feedback.
-  void update(SimTime t);
+  void update(SimTime t, double pos_fbk, double vel_fbk, double eff_fbk);
 
   // TODO: consider calling "computePwm" and "generateForce" from update(), and making them private.
 
@@ -79,37 +79,61 @@ public:
   // Also updates temperature model with this information.
   double generateForce(double dt);
 
-  // TODO: make all this private when refactor is done
+private:
+  Joint(const std::string& name, JointType joint_type);
+
+  const JointType joint_type;
+  const double gear_ratio;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Internals/Controllers/Settings:
+  //////////////////////////////////////////////////////////////////////////////
+
+  hebi::sim::TemperatureModel temperature;
+  hebi::sim::TemperatureSafetyController temperature_safety{155};
+  
+  // Module name -- note that this should be kept consistent with the physics' joint
+  std::string name;
+
+  // TODO: make private; update settings through "setSettings"...but then we need a lot of
+  // "optional" logic...perhaps better to handle this in the wrapper classes and expose more here.
+  hebi::sim::PidController position_pid;
+  hebi::sim::PidController velocity_pid;
+  hebi::sim::PidController effort_pid;
+
+  ControlStrategy control_strategy{ControlStrategy::Strategy3};
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Commands:
+  //////////////////////////////////////////////////////////////////////////////
+
   SimTime command_end_time {};
   // If non-zero, this is the sender corresponding to the timeout above. If command end
   // time is zero, this is ignored; otherwise, this is the only sender that can send
   // commands to the module.
   uint64_t command_sender_id {};
 
+  // Currently commanded position, velocity, and effort.
   double position_cmd { std::numeric_limits<double>::quiet_NaN() };
   double velocity_cmd { std::numeric_limits<double>::quiet_NaN() };
   double effort_cmd { std::numeric_limits<double>::quiet_NaN() };
 
   // Internal PWM command; set from PID loops, and computed during update().
-  // TODO: make private!
   double pwm_cmd {};
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Feedback:
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Note -- the accelerometer and gyro feedback must be updated from an external source.
+  Eigen::Vector3f accelerometer_;
+  Eigen::Vector3f gyro_;
 
   // Feedback; set immediately after "update" call.
   double position_fbk {};
   double velocity_fbk {};
   double effort_fbk {};
 
-private:
-  Joint(const std::string& name, JointType joint_type);
-
-  JointType joint_type;
-
-  ControlStrategy control_strategy{ControlStrategy::Strategy3};
-
-  // Note -- the accelerometer and gyro feedback must be updated from an external source.
-  // TODO: we should store the position / etc feedback alongside this...
-  Eigen::Vector3f accelerometer_;
-  Eigen::Vector3f gyro_;
 };
 
 } // namespace sim
