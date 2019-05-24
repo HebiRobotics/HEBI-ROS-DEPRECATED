@@ -47,8 +47,5 @@ private:
   ros::ServiceServer add_group_srv;
   ros::ServiceServer acknowledge_srv;
 
-  void AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group, const std::string& family, const std::string& name);
-
   bool SrvAddGroup(AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);
-
 };

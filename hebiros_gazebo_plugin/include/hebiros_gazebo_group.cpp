@@ -1,7 +1,34 @@
 #include <hebiros_gazebo_group.h>
 
 HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
+  const std::vector<hebi::sim::Joint*>& joints_,
   std::shared_ptr<ros::NodeHandle> n) {
+
+  int size = joints_.size();
+
+  feedback.name.resize(size);
+  for (auto joint : joints_)
+  {
+    joints.push_back(joint);
+    feedback.name.push_back(joint->name);
+  }
+
+  feedback.position.resize(size);
+  feedback.motor_winding_temperature.resize(size);
+  feedback.motor_housing_temperature.resize(size);
+  feedback.board_temperature.resize(size);
+  feedback.velocity.resize(size);
+  feedback.effort.resize(size);
+  // Default, return "nan" for feedback, until we set something!
+  feedback.position_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  feedback.velocity_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  feedback.effort_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  feedback.accelerometer.resize(size);
+  feedback.gyro.resize(size);
+
+  feedback_pub = n->advertise<FeedbackMsg>(
+    "hebiros_gazebo_plugin/feedback/" + name, 100);
+
   this->name = name;
 
   ros::Time current_time = ros::Time::now();
@@ -28,10 +55,6 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
     &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
 }
   
-void HebirosGazeboGroup::AddJoint(hebi::sim::Joint* hebi_joint) {
-  joints.push_back(hebi_joint);
-}
-
 void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
   int i = 0;
   for (auto joint : joints) {

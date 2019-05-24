@@ -14,12 +14,7 @@ using namespace hebiros;
 class HebirosGazeboGroup : public std::enable_shared_from_this<HebirosGazeboGroup> {
 
 public:
-
-  void AddJoint(hebi::sim::Joint* hebi_joint);
-
   void UpdateFeedback(const ros::Duration& iteration_time);
-
-  size_t size() { return joints.size(); };
 
   // TODO: Make these private.
   std::string name;
@@ -39,7 +34,9 @@ public:
   ros::ServiceServer command_lifetime_srv;
   ros::ServiceServer feedback_frequency_srv;
 
-  HebirosGazeboGroup(std::string name, std::shared_ptr<ros::NodeHandle> n);
+  HebirosGazeboGroup(std::string name,
+    const std::vector<hebi::sim::Joint*>& joints_,
+    std::shared_ptr<ros::NodeHandle> n);
 
   void SubCommand(const boost::shared_ptr<CommandMsg const> data);
   bool SrvAcknowledge(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
