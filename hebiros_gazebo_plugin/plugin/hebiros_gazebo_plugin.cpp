@@ -53,9 +53,7 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
     // Get the time elapsed since the last iteration
     ros::Duration iteration_time = current_time - hebiros_group->prev_time;
     hebiros_group->prev_time = current_time;
-    if (hebiros_group->group_added) {
-      hebiros_group->UpdateFeedback(iteration_time);
-    }
+    hebiros_group->UpdateFeedback(iteration_time);
   }
 }
 
@@ -70,8 +68,6 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
 
   std::shared_ptr<HebirosGazeboGroup> hebiros_group =
     std::make_shared<HebirosGazeboGroup>(req.group_name, this->n);
-
-  hebiros_groups[req.group_name] = hebiros_group;
 
   for (int i = 0; i < req.families.size(); i++) {
     for (int j = 0; j < req.names.size(); j++) {
@@ -105,7 +101,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   hebiros_group->feedback_pub = this->n->advertise<FeedbackMsg>(
     "hebiros_gazebo_plugin/feedback/"+req.group_name, 100);
 
-  hebiros_group->group_added = true;
+  hebiros_groups[req.group_name] = hebiros_group;
 
   return true;
 }

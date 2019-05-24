@@ -26,7 +26,6 @@ public:
   FeedbackMsg feedback;
   bool check_acknowledgement = false;
   bool acknowledgement = false;
-  bool group_added = false;
   int command_lifetime = 100;
   int feedback_frequency = 100;
 
