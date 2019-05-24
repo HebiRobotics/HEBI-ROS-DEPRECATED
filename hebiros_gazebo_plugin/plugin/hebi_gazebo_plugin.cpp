@@ -56,6 +56,35 @@ namespace sim {
 
 void HebiGazeboPlugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) {
   model_ = model;
+
+  // Go through each joint in the model, looking for anything matching a
+  // <family>/<name>/<type> naming pattern, where <type> is a recognized
+  // module type.
+  // We add references to the matching joints so we can simulate them.
+  for (auto& j : model_->GetJoints())
+  {
+    auto full_name = j->GetName();
+    auto first_slash = full_name.find("/");
+    // No slash!
+    if (first_slash == std::string::npos)
+      continue;
+    auto second_slash = full_name.find("/", first_slash + 1);
+    if (second_slash == std::string::npos)
+      continue;
+    
+    // Get type:
+    auto family = full_name.substr(0, first_slash);
+    auto name = full_name.substr(first_slash + 1, second_slash - first_slash - 1);
+    auto type = full_name.substr(second_slash + 1);
+
+    auto hebi_joint = Joint::tryCreate(family, name, type);
+
+    if (hebi_joint)
+    {
+      std::cout << "Adding parsed joint " << family << "/" << name << " of type: " << type << "\n";
+      joints_.push_back(std::move(hebi_joint));
+    }
+  }
 }
 
 void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
@@ -98,14 +127,18 @@ void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
     gazebo_joint->SetForce(0, force);
   }
 }
-
-Joint* HebiGazeboPlugin::addJoint(std::unique_ptr<Joint> joint) {
-  // TODO: keep this from creating duplicate joints for identical model objects...
-  // but then we need to refactor groups/joints a bit so the feedback index isn't kept
-  // in the group itself.
-  auto raw_ptr = joint.get();
-  joints_.push_back(std::move(joint));
-  return raw_ptr;
+  
+Joint* HebiGazeboPlugin::getJoint(const std::string& family, const std::string& name)
+{
+  auto full_name = family + "/" + name;
+  for (auto& joint : joints_)
+  {
+    if (joint->name == full_name)
+    {
+      return joint.get();
+    }
+  }
+  return nullptr;
 }
 
 } // namespace sim

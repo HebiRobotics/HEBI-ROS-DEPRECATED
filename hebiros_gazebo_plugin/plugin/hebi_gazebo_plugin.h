@@ -22,9 +22,9 @@ protected:
   
   gazebo::physics::ModelPtr model_;
 
-  // Returns a raw pointer that can be kept as a weak reference; the unique pointer is
-  // stored in this Plugin as a "registry" of all modules.
-  Joint* addJoint(std::unique_ptr<Joint> joint);
+  // If this joint is found, returns a raw pointer that can be kept as a weak reference.
+  // Otherwise, returns nullptr.
+  Joint* getJoint(const std::string& family, const std::string& name);
 
 private:
   std::vector<std::unique_ptr<Joint>> joints_;

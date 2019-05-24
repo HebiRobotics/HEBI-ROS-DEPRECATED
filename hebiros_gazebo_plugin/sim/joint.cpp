@@ -69,43 +69,55 @@ double getEffortFF(double gear_ratio, bool is_x8) {
 /////////////////////////////////
 // END REFACTOR TODO
 /////////////////////////////////
+  
+std::unique_ptr<Joint> Joint::tryCreate(const std::string& family, const std::string& name, const std::string& type)
+{
+  // Set joint type:
+  JointType joint_type;
+  if (type == "X5_1")
+    joint_type = JointType::X5_1;
+  else if (type == "X5_4")
+    joint_type = JointType::X5_4;
+  else if (type == "X5_9")
+    joint_type = JointType::X5_9;
+  else if (type == "X8_3")
+    joint_type = JointType::X8_3;
+  else if (type == "X8_9")
+    joint_type = JointType::X8_9;
+  else if (type == "X8_16")
+    joint_type = JointType::X8_16;
+  else
+    return nullptr;
+  // TODO: remove string type in constructor
+  return std::unique_ptr<Joint>(new Joint(family + "/" + name, joint_type, type));
+}
+
+bool isX8(Joint::JointType jt)
+{
+  using JT = Joint::JointType;
+  return jt == JT::X8_3 || jt == JT::X8_9 || jt == JT::X8_16;
+}
 
 Joint::Joint(const std::string& name_,
-  const std::string& model_name_,
-  bool is_x8) // TODO: do this better...
+  JointType joint_type_,
+  const std::string& model_name_)
   : name(name_),
-    temperature(is_x8 ?
+    temperature(isX8(joint_type_) ?
       hebi::sim::TemperatureModel::createX8() :
       hebi::sim::TemperatureModel::createX5()),
     gear_ratio(getGearRatio(model_name_)),
     position_pid(1),
-    velocity_pid(getVelocityFF(gear_ratio, is_x8)),
-    effort_pid(getEffortFF(gear_ratio, is_x8)),
+    velocity_pid(getVelocityFF(gear_ratio, isX8(joint_type_))),
+    effort_pid(getEffortFF(gear_ratio, isX8(joint_type_))),
     low_pass_alpha(LOW_PASS_ALPHA),
-    model_name(model_name_) {
-
-  // Set joint type:
-  if (model_name == "X5_1")
-    joint_type = JointType::X5_1;
-  else if (model_name == "X5_4")
-    joint_type = JointType::X5_4;
-  else if (model_name == "X5_9")
-    joint_type = JointType::X5_9;
-  else if (model_name == "X8_3")
-    joint_type = JointType::X8_3;
-  else if (model_name == "X8_9")
-    joint_type = JointType::X8_9;
-  else if (model_name == "X8_16")
-    joint_type = JointType::X8_16;
-  else
-    joint_type = JointType::Unknown;
+    model_name(model_name_),
+    joint_type(joint_type_) {
 
   // Set default gains:
   // TODO: cleaner way to do this? Map structure?
   // Each of these PID gains initializations is { kp, ki, kd, feed forward }
   
-  // TODO: move all this logic into joint-specific code, and potentially load files from .xml
-  // files
+  // TODO: potentially load files from .xml files
 
   if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy2) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
@@ -194,12 +206,6 @@ Joint::Joint(const std::string& name_,
 void Joint::updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro) {
   accelerometer_ = accelerometer;
   gyro_ = gyro;
-}
-
-bool Joint::isX8() const {
-  return (model_name == "X8_3" || 
-          model_name == "X8_9" ||
-          model_name == "X8_16");
 }
 
 bool Joint::setCommand(double pos, double vel, double eff, uint64_t sender_id, double lifetime_s, SimTime t) {
@@ -303,7 +309,7 @@ double Joint::generateForce(double dt) {
   float motor_velocity = velocity_fbk * gear_ratio;
   float speed_constant = 1530.0f;
   float term_resist = 9.99f;
-  if (isX8()) {
+  if (isX8(joint_type)) {
     speed_constant = 1360.0f;
     term_resist = 3.19f;
   }

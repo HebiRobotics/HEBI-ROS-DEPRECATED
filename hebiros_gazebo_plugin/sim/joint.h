@@ -21,8 +21,7 @@ class Joint : public std::enable_shared_from_this<Joint> {
 public:
   enum class JointType {
     X5_1, X5_4, X5_9,
-    X8_3, X8_9, X8_16,
-    Unknown
+    X8_3, X8_9, X8_16
   };
 
   enum class ControlStrategy {
@@ -35,7 +34,7 @@ public:
 
   using SimTime = double;
 
-  Joint(const std::string& name, const std::string& model_name, bool is_x8);
+  static std::unique_ptr<Joint> tryCreate(const std::string& family, const std::string& name, const std::string& type);
 
   std::string getModelName() { return model_name; }
 
@@ -62,7 +61,6 @@ public:
   void updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro);
   const Eigen::Vector3f getAccelerometer() { return accelerometer_; }
   const Eigen::Vector3f getGyro() { return gyro_; }
-  bool isX8() const;
 
   // TODO: think about resetting gains on a control strategy switch, as with the modules; potentially
   // add a "controller" child object for each joint at end of refactor
@@ -107,6 +105,8 @@ public:
   double effort_fbk {};
 
 private:
+  Joint(const std::string& name, JointType joint_type, const std::string& model_name);
+
   // TODO: remove; make this a getter generated from joint_type if necessary?
   std::string model_name;
   JointType joint_type;

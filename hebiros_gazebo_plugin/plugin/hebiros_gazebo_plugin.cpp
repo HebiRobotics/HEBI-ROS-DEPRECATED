@@ -131,7 +131,7 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
         std::string joint_name = req.families[i]+"/"+req.names[j];
         hebiros_group->feedback.name.push_back(joint_name);
 
-        AddJointToGroup(hebiros_group, joint_name);
+        AddJointToGroup(hebiros_group, req.families[i], req.names[j]);
       }
     }
   }
@@ -164,34 +164,10 @@ void updateImu(const boost::shared_ptr<sensor_msgs::Imu const> data) {
 
 //Add a joint to an associated group
 void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> hebiros_group,
-  std::string joint_name) {
-
-  std::string model_name = "";
-  bool is_x8 = false;
-  if (model_->GetJoint(joint_name+"/X5_1")) {
-    model_name = "X5_1";
-  }
-  else if (model_->GetJoint(joint_name+"/X5_4")) {
-    model_name = "X5_4";
-  }
-  else if (model_->GetJoint(joint_name+"/X5_9")) {
-    model_name = "X5_9";
-  }
-  else if (model_->GetJoint(joint_name+"/X8_3")) {
-    model_name = "X8_3";
-    is_x8 = true;
-  }
-  else if (model_->GetJoint(joint_name+"/X8_9")) {
-    model_name = "X8_9";
-    is_x8 = true;
-  }
-  else if (model_->GetJoint(joint_name+"/X8_16")) {
-    model_name = "X8_16";
-    is_x8 = true;
-  }
+  const std::string& family, const std::string& name) {
 
   // Get a weak reference to store in the individual groups
-  auto raw_joint = addJoint(std::make_unique<hebi::sim::Joint>(joint_name, model_name, is_x8));
+  auto raw_joint = getJoint(family, name);
 
   // Temporarily, we store joint subscriptions in the gazebo ros plugin here, since
   // the IMU that generates this data is a separate ROS plugin communicating via ROS
@@ -199,7 +175,7 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
   //
   // This will be abstracted into the ROS plugin wrapper in a subsequent refactor
   hebiros_joint_imu_subs.push_back(n->subscribe<sensor_msgs::Imu>(
-    "hebiros_gazebo_plugin/imu/" + joint_name, 100, 
+    "hebiros_gazebo_plugin/imu/" + family + "/" + name, 100, 
     [raw_joint](const boost::shared_ptr<sensor_msgs::Imu const> data) {
       auto a = data->linear_acceleration;
       auto g = data->angular_velocity;
@@ -211,7 +187,7 @@ void HebirosGazeboPlugin::AddJointToGroup(std::shared_ptr<HebirosGazeboGroup> he
 
   raw_joint->feedback_index = hebiros_group->joints.size();
 
-  hebiros_group->joints[joint_name] = raw_joint;
+  hebiros_group->joints[family + "/" + name] = raw_joint;
 
 }
 
