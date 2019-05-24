@@ -35,23 +35,14 @@ static constexpr double GEAR_RATIO_X8_9 = 762.22;
 static constexpr double GEAR_RATIO_X5_9 = 1742.22;
 static constexpr double GEAR_RATIO_X8_16 = 1462.222;
 
-static constexpr double DEFAULT_GEAR_RATIO = 272.22;
-
-static std::map<std::string, double> gear_ratios = {
-  {"X5_1", GEAR_RATIO_X5_1},
-  {"X5_4", GEAR_RATIO_X5_4},
-  {"X5_9", GEAR_RATIO_X5_9},
-  {"X8_3", GEAR_RATIO_X8_3},
-  {"X8_9", GEAR_RATIO_X8_9},
-  {"X8_16", GEAR_RATIO_X8_16}
+static std::map<Joint::JointType, double> gear_ratios = {
+  {Joint::JointType::X5_1, 272.22},
+  {Joint::JointType::X5_4, 762.22},
+  {Joint::JointType::X5_9, 1742.22},
+  {Joint::JointType::X8_3, 272.22},
+  {Joint::JointType::X8_9, 762.22},
+  {Joint::JointType::X8_16, 1462.222}
 };
-
-double getGearRatio(const std::string& model_name) {
-  if (gear_ratios.find(model_name) != gear_ratios.end()) {
-    return gear_ratios[model_name];
-  }
-  return DEFAULT_GEAR_RATIO;
-}
 
 double getVelocityFF(double gear_ratio, bool is_x8) {
   double voltage = 48;
@@ -88,8 +79,9 @@ std::unique_ptr<Joint> Joint::tryCreate(const std::string& family, const std::st
     joint_type = JointType::X8_16;
   else
     return nullptr;
-  // TODO: remove string type in constructor
-  return std::unique_ptr<Joint>(new Joint(family + "/" + name, joint_type, type));
+
+  // Create module if it is a valid type
+  return std::unique_ptr<Joint>(new Joint(family + "/" + name, joint_type));
 }
 
 bool isX8(Joint::JointType jt)
@@ -99,18 +91,16 @@ bool isX8(Joint::JointType jt)
 }
 
 Joint::Joint(const std::string& name_,
-  JointType joint_type_,
-  const std::string& model_name_)
+  JointType joint_type_)
   : name(name_),
     temperature(isX8(joint_type_) ?
       hebi::sim::TemperatureModel::createX8() :
       hebi::sim::TemperatureModel::createX5()),
-    gear_ratio(getGearRatio(model_name_)),
+    gear_ratio(gear_ratios.at(joint_type_)),
     position_pid(1),
     velocity_pid(getVelocityFF(gear_ratio, isX8(joint_type_))),
     effort_pid(getEffortFF(gear_ratio, isX8(joint_type_))),
     low_pass_alpha(LOW_PASS_ALPHA),
-    model_name(model_name_),
     joint_type(joint_type_) {
 
   // Set default gains:
@@ -119,75 +109,75 @@ Joint::Joint(const std::string& name_,
   
   // TODO: potentially load files from .xml files
 
-  if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy2) {
+  if (joint_type == JointType::X5_1 && control_strategy == ControlStrategy::Strategy2) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy3) {
+  } else if (joint_type == JointType::X5_1 && control_strategy == ControlStrategy::Strategy3) {
     position_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_1" && control_strategy == ControlStrategy::Strategy4) {
+  } else if (joint_type == JointType::X5_1 && control_strategy == ControlStrategy::Strategy4) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_4" && control_strategy == ControlStrategy::Strategy2) {
+  } else if (joint_type == JointType::X5_4 && control_strategy == ControlStrategy::Strategy2) {
     position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.2f, 0.f, 0.f, 0.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+  } else if (joint_type == JointType::X5_4 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_4" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+  } else if (joint_type == JointType::X5_4 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     position_pid.setGains({ 10.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+  } else if (joint_type == JointType::X5_9 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.5f, 0.f, 0.f, 0.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+  } else if (joint_type == JointType::X5_9 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     position_pid.setGains({ 1.5f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X5_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+  } else if (joint_type == JointType::X5_9 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     position_pid.setGains({ 15.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.05f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.25f, 0.f, 0.001f, 1.f });
-  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+  } else if (joint_type == JointType::X8_3 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+  } else if (joint_type == JointType::X8_3 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     position_pid.setGains({ 1.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_3" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+  } else if (joint_type == JointType::X8_3 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+  } else if (joint_type == JointType::X8_9 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+  } else if (joint_type == JointType::X8_9 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     position_pid.setGains({ 2.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_9" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+  } else if (joint_type == JointType::X8_9 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
+  } else if (joint_type == JointType::X8_16 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy2) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.1f, 0.f, 0.f, 0.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
+  } else if (joint_type == JointType::X8_16 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy3) {
     position_pid.setGains({ 3.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });
-  } else if (model_name == "X8_16" && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
+  } else if (joint_type == JointType::X8_16 && control_strategy == hebi::sim::Joint::ControlStrategy::Strategy4) {
     position_pid.setGains({ 5.f, 0.f, 0.f, 0.f });
     velocity_pid.setGains({ 0.03f, 0.f, 0.f, 1.f });
     effort_pid.setGains({ 0.1f, 0.f, 0.0001f, 1.f });

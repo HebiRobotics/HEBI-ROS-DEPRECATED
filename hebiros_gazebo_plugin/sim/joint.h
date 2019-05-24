@@ -100,10 +100,8 @@ public:
   double effort_fbk {};
 
 private:
-  Joint(const std::string& name, JointType joint_type, const std::string& model_name);
+  Joint(const std::string& name, JointType joint_type);
 
-  // TODO: remove; make this a getter generated from joint_type if necessary?
-  std::string model_name;
   JointType joint_type;
 
   ControlStrategy control_strategy{ControlStrategy::Strategy3};
