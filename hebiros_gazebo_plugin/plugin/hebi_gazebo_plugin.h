@@ -12,6 +12,7 @@ class HebiGazeboPlugin : public gazebo::ModelPlugin {
 
 public:
   HebiGazeboPlugin() = default;
+  virtual ~HebiGazeboPlugin() = default;
   
   void Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) override;
 
@@ -25,6 +26,12 @@ protected:
   // If this joint is found, returns a raw pointer that can be kept as a weak reference.
   // Otherwise, returns nullptr.
   Joint* getJoint(const std::string& family, const std::string& name);
+
+  // Useful for iterating through the joints.  If this exceeds the number of available
+  // joints, return `nullptr`.
+  Joint* getJoint(size_t index);
+
+  size_t getNumJoints() const { return joints_.size(); }
 
 private:
   struct JointAndModel {

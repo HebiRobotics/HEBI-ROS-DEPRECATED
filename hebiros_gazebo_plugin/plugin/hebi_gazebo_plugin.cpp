@@ -127,6 +127,13 @@ Joint* HebiGazeboPlugin::getJoint(const std::string& family, const std::string& 
   }
   return nullptr;
 }
+  
+Joint* HebiGazeboPlugin::getJoint(size_t index)
+{
+  if (index >= joints_.size())
+    return nullptr;
+  return joints_[index].hebi_joint.get();
+}
 
 } // namespace sim
 } // namespace hebi
