@@ -6,39 +6,34 @@ namespace sim {
 namespace plugin {
 
 //Load the model and sdf from Gazebo
-void HebirosGazeboPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-
-  HebiGazeboPlugin::Load(_model, _sdf);
+void HebirosGazeboPlugin::onLoad(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
   int argc = 0;
   char **argv = NULL;
   ros::init(argc, argv, "hebiros_gazebo_plugin_node");
 
-  this->robot_namespace = "";
+  robot_namespace_ = "";
   if (_sdf->HasElement("robotNamespace")) {
-    this->robot_namespace = _sdf->GetElement("robotNamespace")->Get<std::string>();
+    robot_namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
   }
-  if (this->robot_namespace == "") {
-    this->n.reset(new ros::NodeHandle);
+  if (robot_namespace_ == "") {
+    n_.reset(new ros::NodeHandle);
   } else {
-    this->n.reset(new ros::NodeHandle(this->robot_namespace));
+    n_.reset(new ros::NodeHandle(robot_namespace_));
   }
-
-  this->update_connection = gazebo::event::Events::ConnectWorldUpdateBegin (
-    boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
 
   ROS_INFO("Loaded hebiros gazebo plugin");
 }
 
 //Update the joints at every simulation iteration
-void HebirosGazeboPlugin::OnUpdate(const gazebo::common::UpdateInfo & info) {
+void HebirosGazeboPlugin::onUpdate(const gazebo::common::UpdateInfo & info) {
 
-  if (this->first_sim_iteration) {
-    this->first_sim_iteration = false;
-    this->add_group_srv =
-      this->n->advertiseService<hebiros::AddGroupFromNamesSrv::Request, hebiros::AddGroupFromNamesSrv::Response>(
+  if (first_sim_iteration_) {
+    first_sim_iteration_ = false;
+    add_group_srv_ =
+      n_->advertiseService<hebiros::AddGroupFromNamesSrv::Request, hebiros::AddGroupFromNamesSrv::Response>(
       "/hebiros_gazebo_plugin/add_group", boost::bind(
-      &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
+      &HebirosGazeboPlugin::addGroupSrv, this, _1, _2));
   }
 
   ros::Time current_time = ros::Time::now();
@@ -46,11 +41,8 @@ void HebirosGazeboPlugin::OnUpdate(const gazebo::common::UpdateInfo & info) {
   // TODO: if we cache commands later for thread-safety, this is where we would read them and
   // set them on the joints.
 
-  // Update the feedback / controller for each joint in the simulation:
-  OnUpdateBase(info);
-
   // Fill in the feedback:
-  for (auto group_pair : hebiros_groups) {
+  for (auto group_pair : hebiros_groups_) {
     auto hebiros_group = group_pair.second;
 
     // TODO: change this to update each module...?
@@ -62,10 +54,10 @@ void HebirosGazeboPlugin::OnUpdate(const gazebo::common::UpdateInfo & info) {
 }
 
 //Service callback which adds a group with corresponding joints
-bool HebirosGazeboPlugin::SrvAddGroup(hebiros::AddGroupFromNamesSrv::Request &req,
+bool HebirosGazeboPlugin::addGroupSrv(hebiros::AddGroupFromNamesSrv::Request &req,
   hebiros::AddGroupFromNamesSrv::Response &res) {
 
-  if (hebiros_groups.find(req.group_name) != hebiros_groups.end()) {
+  if (hebiros_groups_.find(req.group_name) != hebiros_groups_.end()) {
     ROS_WARN("Group %s already exists", req.group_name.c_str());
     return true;
   }
@@ -99,8 +91,9 @@ bool HebirosGazeboPlugin::SrvAddGroup(hebiros::AddGroupFromNamesSrv::Request &re
     // the IMU that generates this data is a separate ROS plugin communicating via ROS
     // messages.
     //
-    // This will be abstracted into the ROS plugin wrapper in a subsequent refactor
-    hebiros_joint_imu_subs.push_back(n->subscribe<sensor_msgs::Imu>(
+    // This is a big hack right now, and should be modified in the future, especially so
+    // these is only one imu sub for a joint, even if it is in two groups.
+    hebiros_joint_imu_subs_.push_back(n_->subscribe<sensor_msgs::Imu>(
       "hebiros_gazebo_plugin/imu/" + joint->getName(), 100, 
       [joint](const boost::shared_ptr<sensor_msgs::Imu const> data) {
         auto a = data->linear_acceleration;
@@ -111,8 +104,8 @@ bool HebirosGazeboPlugin::SrvAddGroup(hebiros::AddGroupFromNamesSrv::Request &re
       }));
   }
 
-  hebiros_groups[req.group_name] = 
-    std::make_shared<HebirosGazeboGroup>(req.group_name, joints, this->n);
+  hebiros_groups_[req.group_name] = 
+    std::make_shared<HebirosGazeboGroup>(req.group_name, joints, n_);
 
   return true;
 }

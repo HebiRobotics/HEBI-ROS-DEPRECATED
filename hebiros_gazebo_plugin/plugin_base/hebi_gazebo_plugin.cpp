@@ -86,9 +86,16 @@ void HebiGazeboPlugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf
       joints_.push_back({ std::move(hebi_joint), j });
     }
   }
+
+  // Call derived class' load:
+  onLoad(model, sdf);
+
+  // Set up the update callbacks
+  this->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin (
+    boost::bind(&HebiGazeboPlugin::onUpdateBase, this, _1));
 }
 
-void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
+void HebiGazeboPlugin::onUpdateBase(const gazebo::common::UpdateInfo& info) {
 
   auto sim_time = info.simTime;
 
@@ -102,18 +109,21 @@ void HebiGazeboPlugin::OnUpdateBase(const gazebo::common::UpdateInfo& info) {
   prev_time_ = sim_time;
 
   for (auto& j : joints_) {
-    j.gazebo_joint->SetProvideFeedback(true);
-    double velocity_fbk = j.gazebo_joint->GetVelocity(0);
-    double position_fbk = GazeboWrapper::position(j.gazebo_joint);
-    double effort_fbk = GazeboWrapper::effort(j.gazebo_joint);
+    j.gazebo_joint_->SetProvideFeedback(true);
+    double velocity_fbk = j.gazebo_joint_->GetVelocity(0);
+    double position_fbk = GazeboWrapper::position(j.gazebo_joint_);
+    double effort_fbk = GazeboWrapper::effort(j.gazebo_joint_);
 
-    j.hebi_joint->update(sim_time.Double(), position_fbk, velocity_fbk, effort_fbk);
-    j.hebi_joint->computePwm(iteration_time);
+    j.hebi_joint_->update(sim_time.Double(), position_fbk, velocity_fbk, effort_fbk);
+    j.hebi_joint_->computePwm(iteration_time);
 
-    double force = j.hebi_joint->generateForce(iteration_time);
+    double force = j.hebi_joint_->generateForce(iteration_time);
 
-    j.gazebo_joint->SetForce(0, force);
+    j.gazebo_joint_->SetForce(0, force);
   }
+
+  // Call derived class' update:
+  onUpdate(info);
 }
   
 Joint* HebiGazeboPlugin::getJoint(const std::string& family, const std::string& name)
@@ -121,9 +131,9 @@ Joint* HebiGazeboPlugin::getJoint(const std::string& family, const std::string& 
   auto full_name = family + "/" + name;
   for (auto& joint : joints_)
   {
-    if (joint.hebi_joint->getName() == full_name)
+    if (joint.hebi_joint_->getName() == full_name)
     {
-      return joint.hebi_joint.get();
+      return joint.hebi_joint_.get();
     }
   }
   return nullptr;
@@ -133,7 +143,7 @@ Joint* HebiGazeboPlugin::getJoint(size_t index)
 {
   if (index >= joints_.size())
     return nullptr;
-  return joints_[index].hebi_joint.get();
+  return joints_[index].hebi_joint_.get();
 }
 
 } // namespace plugin

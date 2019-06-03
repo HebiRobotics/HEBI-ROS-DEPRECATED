@@ -5,16 +5,10 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include "ros/ros.h"
-#include "sensor_msgs/JointState.h"
-#include "std_srvs/Empty.h"
 
 #include "hebi_gazebo_plugin.h"
 
-#include "hebiros/FeedbackMsg.h"
-#include "hebiros/CommandMsg.h"
 #include "hebiros/AddGroupFromNamesSrv.h"
-#include "hebiros/SetCommandLifetimeSrv.h"
-#include "hebiros/SetFeedbackFrequencySrv.h"
 
 #include "hebiros_gazebo_group.h"
 
@@ -27,26 +21,25 @@ class HebirosGazeboPlugin : public HebiGazeboPlugin {
 public:
   HebirosGazeboPlugin() = default;
   
-  void Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) override;
+  void onLoad(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) override;
 
-  void OnUpdate(const gazebo::common::UpdateInfo & info);
+  void onUpdate(const gazebo::common::UpdateInfo& info) override;
 
 private:
 
-  bool first_sim_iteration{true};  
-  gazebo::event::ConnectionPtr update_connection;
-  std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
+  bool first_sim_iteration_{true};  
+  std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups_;
   // To remove the ROS dependency from the hebi::sim::Joint class, we keep
   // the IMU subscriptions here.
-  std::vector<ros::Subscriber> hebiros_joint_imu_subs;
+  std::vector<ros::Subscriber> hebiros_joint_imu_subs_;
 
-  std::string robot_namespace;
-  std::shared_ptr<ros::NodeHandle> n;
-  ros::Subscriber command_sub;
-  ros::ServiceServer add_group_srv;
-  ros::ServiceServer acknowledge_srv;
+  std::string robot_namespace_;
+  std::shared_ptr<ros::NodeHandle> n_;
+  ros::Subscriber command_sub_;
+  ros::ServiceServer add_group_srv_;
+  ros::ServiceServer acknowledge_srv_;
 
-  bool SrvAddGroup(hebiros::AddGroupFromNamesSrv::Request &req, hebiros::AddGroupFromNamesSrv::Response &res);
+  bool addGroupSrv(hebiros::AddGroupFromNamesSrv::Request &req, hebiros::AddGroupFromNamesSrv::Response &res);
 };
 
 }
