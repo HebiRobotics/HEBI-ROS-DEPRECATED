@@ -39,28 +39,28 @@ public:
   void updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro);
   const Eigen::Vector3f getAccelerometer() { return accelerometer_; }
   const Eigen::Vector3f getGyro() { return gyro_; }
-  const hebi::sim::TemperatureModel& getTemperature() { return temperature; }
+  const hebi::sim::TemperatureModel& getTemperature() { return temperature_; }
 
-  hebi::sim::PidController& getPositionPid() { return position_pid; }
-  hebi::sim::PidController& getVelocityPid() { return velocity_pid; }
-  hebi::sim::PidController& getEffortPid() { return effort_pid; }
+  hebi::sim::PidController& getPositionPid() { return position_pid_; }
+  hebi::sim::PidController& getVelocityPid() { return velocity_pid_; }
+  hebi::sim::PidController& getEffortPid() { return effort_pid_; }
 
-  std::string getName() { return name; }
-  void setName(const std::string& name) { this->name = name; }
+  std::string getName() { return name_; }
+  void setName(const std::string& name) { name_ = name; }
 
   // TODO: think about resetting gains on a control strategy switch, as with the modules; potentially
   // add a "controller" child object for each joint at end of refactor
-  void setControlStrategy(ControlStrategy strategy) { control_strategy = strategy; }
-  ControlStrategy getControlStrategy() const { return control_strategy; }
+  void setControlStrategy(ControlStrategy strategy) { control_strategy_ = strategy; }
+  ControlStrategy getControlStrategy() const { return control_strategy_; }
 
-  double getPositionCmd() { return position_cmd; }
-  double getVelocityCmd() { return velocity_cmd; }
-  double getEffortCmd() { return effort_cmd; }
-  double getPwmCmd() { return pwm_cmd; }
+  double getPositionCmd() { return position_cmd_; }
+  double getVelocityCmd() { return velocity_cmd_; }
+  double getEffortCmd() { return effort_cmd_; }
+  double getPwmCmd() { return pwm_cmd_; }
 
-  double getPositionFbk() { return position_fbk; }
-  double getVelocityFbk() { return velocity_fbk; }
-  double getEffortFbk() { return effort_fbk; }
+  double getPositionFbk() { return position_fbk_; }
+  double getVelocityFbk() { return velocity_fbk_; }
+  double getEffortFbk() { return effort_fbk_; }
 
   // Try to set this command on the joint.  Return "false" if it was ignored (e.g., this module was
   // locked out).
@@ -82,44 +82,42 @@ public:
 private:
   Joint(const std::string& name, JointType joint_type);
 
-  const JointType joint_type;
-  const double gear_ratio;
+  const JointType joint_type_;
+  const double gear_ratio_;
 
   //////////////////////////////////////////////////////////////////////////////
   // Internals/Controllers/Settings:
   //////////////////////////////////////////////////////////////////////////////
 
-  hebi::sim::TemperatureModel temperature;
-  hebi::sim::TemperatureSafetyController temperature_safety{155};
+  hebi::sim::TemperatureModel temperature_;
+  hebi::sim::TemperatureSafetyController temperature_safety_{155};
   
   // Module name -- note that this should be kept consistent with the physics' joint
-  std::string name;
+  std::string name_;
 
-  // TODO: make private; update settings through "setSettings"...but then we need a lot of
-  // "optional" logic...perhaps better to handle this in the wrapper classes and expose more here.
-  hebi::sim::PidController position_pid;
-  hebi::sim::PidController velocity_pid;
-  hebi::sim::PidController effort_pid;
+  hebi::sim::PidController position_pid_;
+  hebi::sim::PidController velocity_pid_;
+  hebi::sim::PidController effort_pid_;
 
-  ControlStrategy control_strategy{ControlStrategy::Strategy3};
+  ControlStrategy control_strategy_{ControlStrategy::Strategy3};
 
   //////////////////////////////////////////////////////////////////////////////
   // Commands:
   //////////////////////////////////////////////////////////////////////////////
 
-  SimTime command_end_time {};
+  SimTime command_end_time_ {};
   // If non-zero, this is the sender corresponding to the timeout above. If command end
   // time is zero, this is ignored; otherwise, this is the only sender that can send
   // commands to the module.
-  uint64_t command_sender_id {};
+  uint64_t command_sender_id_ {};
 
   // Currently commanded position, velocity, and effort.
-  double position_cmd { std::numeric_limits<double>::quiet_NaN() };
-  double velocity_cmd { std::numeric_limits<double>::quiet_NaN() };
-  double effort_cmd { std::numeric_limits<double>::quiet_NaN() };
+  double position_cmd_ { std::numeric_limits<double>::quiet_NaN() };
+  double velocity_cmd_ { std::numeric_limits<double>::quiet_NaN() };
+  double effort_cmd_ { std::numeric_limits<double>::quiet_NaN() };
 
   // Internal PWM command; set from PID loops, and computed during update().
-  double pwm_cmd {};
+  double pwm_cmd_ {};
 
   //////////////////////////////////////////////////////////////////////////////
   // Feedback:
@@ -130,9 +128,9 @@ private:
   Eigen::Vector3f gyro_;
 
   // Feedback; set immediately after "update" call.
-  double position_fbk {};
-  double velocity_fbk {};
-  double effort_fbk {};
+  double position_fbk_ {};
+  double velocity_fbk_ {};
+  double effort_fbk_ {};
 
 };
 
