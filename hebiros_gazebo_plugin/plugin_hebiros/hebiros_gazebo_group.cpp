@@ -1,4 +1,4 @@
-#include <hebiros_gazebo_group.h>
+#include "hebiros_gazebo_group.h"
 
 HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   const std::vector<hebi::sim::Joint*>& joints_,

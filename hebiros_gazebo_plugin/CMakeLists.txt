@@ -130,7 +130,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  #include
   sim
   ${catkin_INCLUDE_DIRS}
 )
@@ -138,7 +137,7 @@ include_directories(
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
-include_directories(include plugin_base plugin_hebiros)
+include_directories(plugin_base plugin_hebiros)
 include_directories( ${catkin_INCLUDE_DIRS}
                      ${Boost_INCLUDE_DIR}
                      ${GAZEBO_INCLUDE_DIRS}
@@ -147,7 +146,7 @@ include_directories( ${catkin_INCLUDE_DIRS}
 add_library(hebiros_gazebo_plugin 
   plugin_base/hebi_gazebo_plugin.cpp
   plugin_hebiros/hebiros_gazebo_plugin.cpp
-  include/hebiros_gazebo_group.cpp
+  plugin_hebiros/hebiros_gazebo_group.cpp
   sim/pid_controller.cpp
   sim/joint.cpp
   sim/temperature_model.cpp
