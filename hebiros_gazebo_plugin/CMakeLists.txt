@@ -113,9 +113,6 @@ find_package(gazebo REQUIRED)
 catkin_package(
   #INCLUDE_DIRS include
 
-  #LIBRARIES
-  #boilerplate_motor_plugin
-
   CATKIN_DEPENDS
   gazebo_ros
   gazebo_plugins
@@ -141,15 +138,15 @@ include_directories(
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
-include_directories(include)
+include_directories(include plugin_base plugin_hebiros)
 include_directories( ${catkin_INCLUDE_DIRS}
                      ${Boost_INCLUDE_DIR}
                      ${GAZEBO_INCLUDE_DIRS}
 )
 
 add_library(hebiros_gazebo_plugin 
-  plugin/hebi_gazebo_plugin.cpp
-  plugin/hebiros_gazebo_plugin.cpp
+  plugin_base/hebi_gazebo_plugin.cpp
+  plugin_hebiros/hebiros_gazebo_plugin.cpp
   include/hebiros_gazebo_group.cpp
   sim/pid_controller.cpp
   sim/joint.cpp
@@ -160,11 +157,6 @@ add_dependencies(hebiros_gazebo_plugin ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries( hebiros_gazebo_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} )
-
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/plugin/boilerplate_motor_plugin.cpp
-# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
