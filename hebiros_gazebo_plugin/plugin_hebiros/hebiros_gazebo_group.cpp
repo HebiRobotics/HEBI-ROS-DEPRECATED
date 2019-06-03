@@ -26,7 +26,7 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   feedback.accelerometer.resize(size);
   feedback.gyro.resize(size);
 
-  feedback_pub = n->advertise<FeedbackMsg>(
+  feedback_pub = n->advertise<hebiros::FeedbackMsg>(
     "hebiros_gazebo_plugin/feedback/" + name, 100);
 
   this->name = name;
@@ -36,7 +36,7 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   this->prev_time = current_time;
   this->prev_feedback_time = current_time;
 
-  this->command_sub = n->subscribe<CommandMsg>("hebiros_gazebo_plugin/command/"+name, 100,
+  this->command_sub = n->subscribe<hebiros::CommandMsg>("hebiros_gazebo_plugin/command/"+name, 100,
     boost::bind(&HebirosGazeboGroup::SubCommand, this, _1));
 
   this->acknowledge_srv =
@@ -45,12 +45,12 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
     &HebirosGazeboGroup::SrvAcknowledge, this, _1, _2));
 
   this->command_lifetime_srv =
-    n->advertiseService<SetCommandLifetimeSrv::Request, SetCommandLifetimeSrv::Response>(
+    n->advertiseService<hebiros::SetCommandLifetimeSrv::Request, hebiros::SetCommandLifetimeSrv::Response>(
     "hebiros_gazebo_plugin/set_command_lifetime/"+name, boost::bind(
     &HebirosGazeboGroup::SrvSetCommandLifetime, this, _1, _2));
 
   this->feedback_frequency_srv =
-    n->advertiseService<SetFeedbackFrequencySrv::Request, SetFeedbackFrequencySrv::Response>(
+    n->advertiseService<hebiros::SetFeedbackFrequencySrv::Request, hebiros::SetFeedbackFrequencySrv::Response>(
     "hebiros_gazebo_plugin/set_feedback_frequency/"+name, boost::bind(
     &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
 }
@@ -123,7 +123,7 @@ bool updateGains(hebi::sim::PidGains& gains, const hebiros::PidGainsMsg& msg, si
   return changed;
 }
 
-void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<CommandMsg const> data) {
+void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<hebiros::CommandMsg const> data) {
 
   if (this->check_acknowledgement) {
     this->acknowledgement = true;
@@ -214,15 +214,15 @@ bool HebirosGazeboGroup::SrvAcknowledge(std_srvs::Empty::Request &req,
   }
 }
 
-bool HebirosGazeboGroup::SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req,
-  SetCommandLifetimeSrv::Response &res) {
+bool HebirosGazeboGroup::SrvSetCommandLifetime(hebiros::SetCommandLifetimeSrv::Request &req,
+  hebiros::SetCommandLifetimeSrv::Response &res) {
 
   command_lifetime = req.command_lifetime;
   return true;
 }
 
-bool HebirosGazeboGroup::SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req,
-  SetFeedbackFrequencySrv::Response &res) {
+bool HebirosGazeboGroup::SrvSetFeedbackFrequency(hebiros::SetFeedbackFrequencySrv::Request &req,
+  hebiros::SetFeedbackFrequencySrv::Response &res) {
 
   feedback_frequency = req.feedback_frequency;
   return true;

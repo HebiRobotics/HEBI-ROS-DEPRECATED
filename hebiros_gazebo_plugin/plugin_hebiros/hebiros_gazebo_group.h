@@ -9,8 +9,6 @@
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "joint.h"
 
-using namespace hebiros;
-
 class HebirosGazeboGroup : public std::enable_shared_from_this<HebirosGazeboGroup> {
 
 public:
@@ -25,7 +23,7 @@ public:
 
 private:
   std::string name;
-  FeedbackMsg feedback;
+  hebiros::FeedbackMsg feedback;
   bool check_acknowledgement = false;
   bool acknowledgement = false;
   int command_lifetime = 100;
@@ -41,10 +39,10 @@ private:
   ros::ServiceServer command_lifetime_srv;
   ros::ServiceServer feedback_frequency_srv;
 
-  void SubCommand(const boost::shared_ptr<CommandMsg const> data);
+  void SubCommand(const boost::shared_ptr<hebiros::CommandMsg const> data);
   bool SrvAcknowledge(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
-  bool SrvSetCommandLifetime(SetCommandLifetimeSrv::Request &req, SetCommandLifetimeSrv::Response &res);
-  bool SrvSetFeedbackFrequency(SetFeedbackFrequencySrv::Request &req, SetFeedbackFrequencySrv::Response &res);
+  bool SrvSetCommandLifetime(hebiros::SetCommandLifetimeSrv::Request &req, hebiros::SetCommandLifetimeSrv::Response &res);
+  bool SrvSetFeedbackFrequency(hebiros::SetFeedbackFrequencySrv::Request &req, hebiros::SetFeedbackFrequencySrv::Response &res);
 
   std::vector<hebi::sim::Joint*> joints;
 };
