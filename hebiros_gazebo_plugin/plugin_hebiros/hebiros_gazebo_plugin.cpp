@@ -1,8 +1,12 @@
 #include "hebiros_gazebo_plugin.h"
 #include "sensor_msgs/Imu.h"
 
+namespace hebi {
+namespace sim {
+namespace plugin {
+
 //Load the model and sdf from Gazebo
-void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
+void HebirosGazeboPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
   HebiGazeboPlugin::Load(_model, _sdf);
 
@@ -20,19 +24,19 @@ void HebirosGazeboPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     this->n.reset(new ros::NodeHandle(this->robot_namespace));
   }
 
-  this->update_connection = event::Events::ConnectWorldUpdateBegin (
+  this->update_connection = gazebo::event::Events::ConnectWorldUpdateBegin (
     boost::bind(&HebirosGazeboPlugin::OnUpdate, this, _1));
 
   ROS_INFO("Loaded hebiros gazebo plugin");
 }
 
 //Update the joints at every simulation iteration
-void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
+void HebirosGazeboPlugin::OnUpdate(const gazebo::common::UpdateInfo & info) {
 
   if (this->first_sim_iteration) {
     this->first_sim_iteration = false;
     this->add_group_srv =
-      this->n->advertiseService<AddGroupFromNamesSrv::Request, AddGroupFromNamesSrv::Response>(
+      this->n->advertiseService<hebiros::AddGroupFromNamesSrv::Request, hebiros::AddGroupFromNamesSrv::Response>(
       "/hebiros_gazebo_plugin/add_group", boost::bind(
       &HebirosGazeboPlugin::SrvAddGroup, this, _1, _2));
   }
@@ -58,8 +62,8 @@ void HebirosGazeboPlugin::OnUpdate(const common::UpdateInfo & info) {
 }
 
 //Service callback which adds a group with corresponding joints
-bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
-  AddGroupFromNamesSrv::Response &res) {
+bool HebirosGazeboPlugin::SrvAddGroup(hebiros::AddGroupFromNamesSrv::Request &req,
+  hebiros::AddGroupFromNamesSrv::Response &res) {
 
   if (hebiros_groups.find(req.group_name) != hebiros_groups.end()) {
     ROS_WARN("Group %s already exists", req.group_name.c_str());
@@ -113,5 +117,9 @@ bool HebirosGazeboPlugin::SrvAddGroup(AddGroupFromNamesSrv::Request &req,
   return true;
 }
 
+}
+}
+}
+
 //Tell Gazebo about this plugin
-GZ_REGISTER_MODEL_PLUGIN(HebirosGazeboPlugin);
+GZ_REGISTER_MODEL_PLUGIN(hebi::sim::plugin::HebirosGazeboPlugin);

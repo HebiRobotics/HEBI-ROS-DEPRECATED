@@ -18,27 +18,26 @@
 
 #include "hebiros_gazebo_group.h"
 
-using namespace hebiros;
-using namespace gazebo;
+namespace hebi {
+namespace sim {
+namespace plugin {
 
-class HebirosGazeboPlugin : public hebi::sim::HebiGazeboPlugin {
+class HebirosGazeboPlugin : public HebiGazeboPlugin {
 
 public:
   HebirosGazeboPlugin() = default;
   
-  void Load(physics::ModelPtr model, sdf::ElementPtr sdf) override;
+  void Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) override;
 
-  void OnUpdate(const common::UpdateInfo & info);
+  void OnUpdate(const gazebo::common::UpdateInfo & info);
 
 private:
 
   bool first_sim_iteration{true};  
-  event::ConnectionPtr update_connection;
+  gazebo::event::ConnectionPtr update_connection;
   std::map<std::string, std::shared_ptr<HebirosGazeboGroup>> hebiros_groups;
   // To remove the ROS dependency from the hebi::sim::Joint class, we keep
   // the IMU subscriptions here.
-  // TODO: this will be updated when the base hebi gazebo and hebi gazebo ros plugins
-  // are separated
   std::vector<ros::Subscriber> hebiros_joint_imu_subs;
 
   std::string robot_namespace;
@@ -47,5 +46,9 @@ private:
   ros::ServiceServer add_group_srv;
   ros::ServiceServer acknowledge_srv;
 
-  bool SrvAddGroup(AddGroupFromNamesSrv::Request &req, AddGroupFromNamesSrv::Response &res);
+  bool SrvAddGroup(hebiros::AddGroupFromNamesSrv::Request &req, hebiros::AddGroupFromNamesSrv::Response &res);
 };
+
+}
+}
+}

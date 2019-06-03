@@ -7,6 +7,7 @@
 
 namespace hebi {
 namespace sim {
+namespace plugin {
 
 class HebiGazeboPlugin : public gazebo::ModelPlugin {
 
@@ -45,5 +46,6 @@ private:
   bool first_time_;
 };
     
+} // namespace plugin 
 } // namespace sim
 } // namespace hebi

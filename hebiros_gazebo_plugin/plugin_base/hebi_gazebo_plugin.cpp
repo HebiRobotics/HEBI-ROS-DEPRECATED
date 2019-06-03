@@ -53,6 +53,7 @@ template<typename JointType> struct GazeboHelper<9, JointType> {
 
 namespace hebi {
 namespace sim {
+namespace plugin {
 
 void HebiGazeboPlugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf) {
   model_ = model;
@@ -135,5 +136,6 @@ Joint* HebiGazeboPlugin::getJoint(size_t index)
   return joints_[index].hebi_joint.get();
 }
 
+} // namespace plugin
 } // namespace sim
 } // namespace hebi

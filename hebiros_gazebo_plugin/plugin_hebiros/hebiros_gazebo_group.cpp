@@ -1,5 +1,9 @@
 #include "hebiros_gazebo_group.h"
 
+namespace hebi {
+namespace sim {
+namespace plugin {
+
 HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   const std::vector<hebi::sim::Joint*>& joints_,
   std::shared_ptr<ros::NodeHandle> n) {
@@ -228,8 +232,6 @@ bool HebirosGazeboGroup::SrvSetFeedbackFrequency(hebiros::SetFeedbackFrequencySr
   return true;
 }
 
-
-
-
-
-
+}
+}
+}

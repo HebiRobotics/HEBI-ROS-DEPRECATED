@@ -9,6 +9,10 @@
 #include "hebiros/SetFeedbackFrequencySrv.h"
 #include "joint.h"
 
+namespace hebi {
+namespace sim {
+namespace plugin {
+
 class HebirosGazeboGroup : public std::enable_shared_from_this<HebirosGazeboGroup> {
 
 public:
@@ -46,3 +50,7 @@ private:
 
   std::vector<hebi::sim::Joint*> joints;
 };
+
+}
+}
+}
