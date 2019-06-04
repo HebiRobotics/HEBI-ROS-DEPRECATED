@@ -12,9 +12,9 @@ public:
   void update(double power_in, double dt);
 
   // Winding temperature
-  double getMotorWindingTemperature() { return t_w_; }
-  double getMotorHousingTemperature() { return t_h_; }
-  double getActuatorBodyTemperature() { return t_b_; }
+  double getMotorWindingTemperature() const { return t_w_; }
+  double getMotorHousingTemperature() const { return t_h_; }
+  double getActuatorBodyTemperature() const { return t_b_; }
 
 private:
   TemperatureModel(
