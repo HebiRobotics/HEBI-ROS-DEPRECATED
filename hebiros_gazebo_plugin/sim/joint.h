@@ -37,8 +37,8 @@ public:
   static std::unique_ptr<Joint> tryCreate(const std::string& family, const std::string& name, const std::string& type);
 
   void updateImu(const Eigen::Vector3f& accelerometer, const Eigen::Vector3f& gyro);
-  const Eigen::Vector3f getAccelerometer() { return accelerometer_; }
-  const Eigen::Vector3f getGyro() { return gyro_; }
+  const Eigen::Vector3f& getAccelerometer() { return accelerometer_; }
+  const Eigen::Vector3f& getGyro() { return gyro_; }
   const hebi::sim::TemperatureModel& getTemperature() { return temperature_; }
 
   hebi::sim::PidController& getPositionPid() { return position_pid_; }

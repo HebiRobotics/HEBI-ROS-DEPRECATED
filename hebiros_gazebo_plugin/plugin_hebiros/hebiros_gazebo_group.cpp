@@ -5,55 +5,55 @@ namespace sim {
 namespace plugin {
 
 HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
-  const std::vector<hebi::sim::Joint*>& joints_,
+  const std::vector<hebi::sim::Joint*>& joints,
   std::shared_ptr<ros::NodeHandle> n) {
 
-  int size = joints_.size();
+  int size = joints.size();
 
-  feedback.name.resize(size);
-  for (auto joint : joints_)
+  feedback_.name.resize(size);
+  for (auto joint : joints)
   {
-    joints.push_back(joint);
-    feedback.name.push_back(joint->getName());
+    joints_.push_back(joint);
+    feedback_.name.push_back(joint->getName());
   }
 
-  feedback.position.resize(size);
-  feedback.motor_winding_temperature.resize(size);
-  feedback.motor_housing_temperature.resize(size);
-  feedback.board_temperature.resize(size);
-  feedback.velocity.resize(size);
-  feedback.effort.resize(size);
-  // Default, return "nan" for feedback, until we set something!
-  feedback.position_command.resize(size, std::numeric_limits<float>::quiet_NaN());
-  feedback.velocity_command.resize(size, std::numeric_limits<float>::quiet_NaN());
-  feedback.effort_command.resize(size, std::numeric_limits<float>::quiet_NaN());
-  feedback.accelerometer.resize(size);
-  feedback.gyro.resize(size);
+  feedback_.position.resize(size);
+  feedback_.motor_winding_temperature.resize(size);
+  feedback_.motor_housing_temperature.resize(size);
+  feedback_.board_temperature.resize(size);
+  feedback_.velocity.resize(size);
+  feedback_.effort.resize(size);
+  // Default, return "nan" for feedback_, until we set something!
+  feedback_.position_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  feedback_.velocity_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  feedback_.effort_command.resize(size, std::numeric_limits<float>::quiet_NaN());
+  feedback_.accelerometer.resize(size);
+  feedback_.gyro.resize(size);
 
-  feedback_pub = n->advertise<hebiros::FeedbackMsg>(
+  feedback_pub = n_->advertise<hebiros::FeedbackMsg>(
     "hebiros_gazebo_plugin/feedback/" + name, 100);
 
-  this->name = name;
+  name_ = name;
 
   ros::Time current_time = ros::Time::now();
-  this->start_time = current_time;
-  this->prev_time = current_time;
-  this->prev_feedback_time = current_time;
+  start_time_ = current_time;
+  prev_time_ = current_time;
+  prev_feedback_time_ = current_time;
 
-  this->command_sub = n->subscribe<hebiros::CommandMsg>("hebiros_gazebo_plugin/command/"+name, 100,
+  command_sub_ = n_->subscribe<hebiros::CommandMsg>("hebiros_gazebo_plugin/command/"+name, 100,
     boost::bind(&HebirosGazeboGroup::SubCommand, this, _1));
 
-  this->acknowledge_srv =
+  acknowledge_srv_ =
     n->advertiseService<std_srvs::Empty::Request, std_srvs::Empty::Response>(
     "hebiros_gazebo_plugin/acknowledge/"+name, boost::bind(
     &HebirosGazeboGroup::SrvAcknowledge, this, _1, _2));
 
-  this->command_lifetime_srv =
+  command_lifetime_srv_ =
     n->advertiseService<hebiros::SetCommandLifetimeSrv::Request, hebiros::SetCommandLifetimeSrv::Response>(
     "hebiros_gazebo_plugin/set_command_lifetime/"+name, boost::bind(
     &HebirosGazeboGroup::SrvSetCommandLifetime, this, _1, _2));
 
-  this->feedback_frequency_srv =
+  feedback_frequency_srv_ =
     n->advertiseService<hebiros::SetFeedbackFrequencySrv::Request, hebiros::SetFeedbackFrequencySrv::Response>(
     "hebiros_gazebo_plugin/set_feedback_frequency/"+name, boost::bind(
     &HebirosGazeboGroup::SrvSetFeedbackFrequency, this, _1, _2));
@@ -61,43 +61,43 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   
 void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
   int i = 0;
-  for (auto joint : joints) {
+  for (auto joint : joints_) {
 
     ros::Time current_time = ros::Time::now();
-    ros::Duration elapsed_time = current_time - start_time;
-    ros::Duration feedback_time = current_time - prev_feedback_time;
+    ros::Duration elapsed_time = current_time_ - start_time_;
+    ros::Duration feedback_time = current_time_ - prev_feedback_time_;
 
     //joint->SetProvideFeedback(true);
     //double velocity = joint->GetVelocity(0);
 
-    feedback.position[i] = joint->getPositionFbk();
-    feedback.velocity[i] = joint->getVelocityFbk();
-    feedback.effort[i] = joint->getEffortFbk();
+    feedback_.position[i] = joint->getPositionFbk();
+    feedback_.velocity[i] = joint->getVelocityFbk();
+    feedback_.effort[i] = joint->getEffortFbk();
 
     const auto& accel = joint->getAccelerometer();
-    feedback.accelerometer[i].x = accel.x();
-    feedback.accelerometer[i].y = accel.y();
-    feedback.accelerometer[i].z = accel.z();
+    feedback_.accelerometer[i].x = accel.x();
+    feedback_.accelerometer[i].y = accel.y();
+    feedback_.accelerometer[i].z = accel.z();
     const auto& gyro = joint->getGyro();
-    feedback.gyro[i].x = gyro.x();
-    feedback.gyro[i].y = gyro.y();
-    feedback.gyro[i].z = gyro.z();
+    feedback_.gyro[i].x = gyro.x();
+    feedback_.gyro[i].y = gyro.y();
+    feedback_.gyro[i].z = gyro.z();
 
     // Add temperature feedback
-    feedback.motor_winding_temperature[i] = joint->getTemperature().getMotorWindingTemperature();
-    feedback.motor_housing_temperature[i] = joint->getTemperature().getMotorHousingTemperature();
-    feedback.board_temperature[i] = joint->getTemperature().getActuatorBodyTemperature();
+    feedback_.motor_winding_temperature[i] = joint->getTemperature().getMotorWindingTemperature();
+    feedback_.motor_housing_temperature[i] = joint->getTemperature().getMotorHousingTemperature();
+    feedback_.board_temperature[i] = joint->getTemperature().getActuatorBodyTemperature();
 
     // Command feedback
-    feedback.position_command[i] = joint->getPositionCmd();
-    feedback.velocity_command[i] = joint->getVelocityCmd();
-    feedback.effort_command[i] = joint->getEffortCmd();
+    feedback_.position_command[i] = joint->getPositionCmd();
+    feedback_.velocity_command[i] = joint->getVelocityCmd();
+    feedback_.effort_command[i] = joint->getEffortCmd();
 
-    if (!feedback_pub.getTopic().empty() &&
-      feedback_time.toSec() >= 1.0/feedback_frequency) {
+    if (!feedback_pub_.getTopic().empty() &&
+      feedback_time_.toSec() >= 1.0/feedback_frequency_) {
 
-      feedback_pub.publish(feedback);
-      prev_feedback_time = current_time;
+      feedback_pub_.publish(feedback_);
+      prev_feedback_time_ = current_time_;
     }
 
     ++i;
@@ -129,22 +129,22 @@ bool updateGains(hebi::sim::PidGains& gains, const hebiros::PidGainsMsg& msg, si
 
 void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<hebiros::CommandMsg const> data) {
 
-  if (this->check_acknowledgement) {
-    this->acknowledgement = true;
-    this->check_acknowledgement = false;
+  if (check_acknowledgement_) {
+    acknowledgement_ = true;
+    check_acknowledgement_ = false;
   }
 
   ros::Time current_time = ros::Time::now();
-  this->start_time = current_time;
-  this->prev_time = current_time;
-  ros::Duration elapsed_time = current_time - start_time;
+  start_time_ = current_time_;
+  prev_time_ = current_time_;
+  ros::Duration elapsed_time = current_time_ - start_time_;
 
   for (int i = 0; i < data->name.size(); i++) {
     std::string joint_name = data->name[i];
 
-    auto joint_it = std::find_if(joints.begin(), joints.end(), [&joint_name](auto j) { return j->getName() == joint_name; } );
+    auto joint_it = std::find_if(joints_.begin(), joints_.end(), [&joint_name](auto j) { return j->getName() == joint_name; } );
 
-    if (joint_it != joints.end()) {
+    if (joint_it != joints_.end()) {
       auto joint = *joint_it;
 
       // TODO: SENDER ID!!!!! Generate this properly.
@@ -169,7 +169,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<hebiros::CommandMsg 
       }
       // TODO: verify nans are handled correctly; what about empty commands?
       if (has_command) {
-        joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime/1000.0, current_time.toSec());
+        joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime_/1000.0, current_time_.toSec());
       }
 
       // Set name
@@ -206,11 +206,11 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<hebiros::CommandMsg 
 bool HebirosGazeboGroup::SrvAcknowledge(std_srvs::Empty::Request &req,
   std_srvs::Empty::Response &res) {
 
-  this->check_acknowledgement = true;
+  check_acknowledgement_ = true;
 
-  if (this->acknowledgement) {
-    this->check_acknowledgement = false;
-    this->acknowledgement = false;
+  if (acknowledgement_) {
+    check_acknowledgement_ = false;
+    acknowledgement_ = false;
     return true;
   }
   else {
@@ -221,14 +221,14 @@ bool HebirosGazeboGroup::SrvAcknowledge(std_srvs::Empty::Request &req,
 bool HebirosGazeboGroup::SrvSetCommandLifetime(hebiros::SetCommandLifetimeSrv::Request &req,
   hebiros::SetCommandLifetimeSrv::Response &res) {
 
-  command_lifetime = req.command_lifetime;
+  command_lifetime_ = req.command_lifetime;
   return true;
 }
 
 bool HebirosGazeboGroup::SrvSetFeedbackFrequency(hebiros::SetFeedbackFrequencySrv::Request &req,
   hebiros::SetFeedbackFrequencySrv::Response &res) {
 
-  feedback_frequency = req.feedback_frequency;
+  feedback_frequency_ = req.feedback_frequency;
   return true;
 }
 
