@@ -30,7 +30,7 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   feedback_.accelerometer.resize(size);
   feedback_.gyro.resize(size);
 
-  feedback_pub = n_->advertise<hebiros::FeedbackMsg>(
+  feedback_pub_ = n->advertise<hebiros::FeedbackMsg>(
     "hebiros_gazebo_plugin/feedback/" + name, 100);
 
   name_ = name;
@@ -40,7 +40,7 @@ HebirosGazeboGroup::HebirosGazeboGroup(std::string name,
   prev_time_ = current_time;
   prev_feedback_time_ = current_time;
 
-  command_sub_ = n_->subscribe<hebiros::CommandMsg>("hebiros_gazebo_plugin/command/"+name, 100,
+  command_sub_ = n->subscribe<hebiros::CommandMsg>("hebiros_gazebo_plugin/command/"+name, 100,
     boost::bind(&HebirosGazeboGroup::SubCommand, this, _1));
 
   acknowledge_srv_ =
@@ -64,8 +64,8 @@ void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
   for (auto joint : joints_) {
 
     ros::Time current_time = ros::Time::now();
-    ros::Duration elapsed_time = current_time_ - start_time_;
-    ros::Duration feedback_time = current_time_ - prev_feedback_time_;
+    ros::Duration elapsed_time = current_time - start_time_;
+    ros::Duration feedback_time = current_time - prev_feedback_time_;
 
     //joint->SetProvideFeedback(true);
     //double velocity = joint->GetVelocity(0);
@@ -94,10 +94,10 @@ void HebirosGazeboGroup::UpdateFeedback(const ros::Duration& iteration_time) {
     feedback_.effort_command[i] = joint->getEffortCmd();
 
     if (!feedback_pub_.getTopic().empty() &&
-      feedback_time_.toSec() >= 1.0/feedback_frequency_) {
+      feedback_time.toSec() >= 1.0/feedback_frequency_) {
 
       feedback_pub_.publish(feedback_);
-      prev_feedback_time_ = current_time_;
+      prev_feedback_time_ = current_time;
     }
 
     ++i;
@@ -135,9 +135,9 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<hebiros::CommandMsg 
   }
 
   ros::Time current_time = ros::Time::now();
-  start_time_ = current_time_;
-  prev_time_ = current_time_;
-  ros::Duration elapsed_time = current_time_ - start_time_;
+  start_time_ = current_time;
+  prev_time_ = current_time;
+  ros::Duration elapsed_time = current_time - start_time_;
 
   for (int i = 0; i < data->name.size(); i++) {
     std::string joint_name = data->name[i];
@@ -169,7 +169,7 @@ void HebirosGazeboGroup::SubCommand(const boost::shared_ptr<hebiros::CommandMsg 
       }
       // TODO: verify nans are handled correctly; what about empty commands?
       if (has_command) {
-        joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime_/1000.0, current_time_.toSec());
+        joint->setCommand(p_cmd, v_cmd, e_cmd, sender_id, command_lifetime_/1000.0, current_time.toSec());
       }
 
       // Set name
