@@ -1,4 +1,4 @@
 # HEBI-ROS 1.0
 HEBI ROS Examples/API/etc.
 
-> :warning: This repo contains information and examples about the HEBI ROS 1.0 API, which has been deprecated. You can find examples for the the newer 2.0 API on [HebiRobotics/hebi_cpp_api_ros_examples](https://github.com/HebiRobotics/hebi_cpp_api_ros_examples) 
+> :warning: This repo contains information and examples about the deprecated HEBI ROS API.  The current recommended/supported approach for using ROS with HEBI components is to  use the HEBI C++ API ROS package directly or through the HEBI example nodes which use this package.  Examples and documentation of this approach is as [HebiRobotics/hebi_cpp_api_ros_examples](http://wiki.ros.org/hebi_cpp_api_examples/).
